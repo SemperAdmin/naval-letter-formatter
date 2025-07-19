@@ -26,11 +26,9 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
     "@radix-ui/react-popover": "^1.0.7",
-    "@radix-ui/react-calendar": "^1.0.0",
     "@radix-ui/react-progress": "^1.0.3",
     "@radix-ui/react-scroll-area": "^1.0.5",
     "@radix-ui/react-separator": "^1.0.3",
-    "@radix-ui/react-sheet": "^1.0.0",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-alert-dialog": "^1.0.5",
@@ -45,10 +43,7 @@
     "react-day-picker": "^8.9.1",
     "cmdk": "^0.2.0",
     "embla-carousel-react": "^8.0.0",
-    "recharts": "^2.8.0",
-    "react-hook-form": "^7.47.0",
-    "@hookform/resolvers": "^3.3.2",
-    "zod": "^3.22.4"
+    "recharts": "^2.8.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
