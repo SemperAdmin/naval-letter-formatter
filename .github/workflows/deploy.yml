@@ -56,4 +56,8 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+<<<<<<< HEAD:.github/workflows/deploy.yml
         uses: actions/deploy-pages@v4
+=======
+        uses: actions/deploy-pages@v4
+>>>>>>> b513cd7f85c7f4aecf75113c5177c777391af5cf:.github/workflows/Untitled-1.yml
