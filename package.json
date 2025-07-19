@@ -1,7 +1,7 @@
 {
   "name": "naval-letter-generator",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,20 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@radix-ui/react-toast": "^1.2.14",
+    "next": "^14.0.0",
+    "react": "^18",
+    "react-dom": "^18",
     "docx": "^8.0.0",
-    "file-saver": "^2.0.5",
-    "next": "14.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "tailwind-merge": "^3.3.1"
+    "file-saver": "^2.0.5"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "eslint": "^8.0.0",
-    "eslint-config-next": "14.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "^14.0.0"
   }
 }
