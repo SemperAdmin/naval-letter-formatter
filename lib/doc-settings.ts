@@ -15,8 +15,8 @@ export const DOC_SETTINGS = {
     after: 120      // 6pt spacing after paragraphs
   },
   pageSize: {
-      width: PageSize.LETTER_WIDTH,
-      height: PageSize.LETTER_HEIGHT,
+      width: 12240,  // 8.5 inches in twips
+      height: 15840, // 11 inches in twips
   }
 };
 
