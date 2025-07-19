@@ -126,3 +126,4 @@ export const createSignatureBlock = (name: string, delegation: string | null = n
     spacing: { after: 120 }
   });
 };
+
