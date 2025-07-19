@@ -44,7 +44,10 @@
     "react-day-picker": "^8.9.1",
     "cmdk": "^0.2.0",
     "embla-carousel-react": "^8.0.0",
-    "recharts": "^2.8.0"
+    "recharts": "^2.8.0",
+    "react-hook-form": "^7.47.0",
+    "@hookform/resolvers": "^3.3.2",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
