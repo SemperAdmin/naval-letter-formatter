@@ -1,6 +1,5 @@
 
-import { Paragraph, TextRun, AlignmentType, TabStopType, PageSize } from "docx";
-
+import { Paragraph, TextRun, AlignmentType, TabStopType } from "docx";
 // Constants for SECNAV M-5216.5 compliance
 export const DOC_SETTINGS = {
   font: "Times New Roman",
@@ -15,8 +14,8 @@ export const DOC_SETTINGS = {
     after: 120      // 6pt spacing after paragraphs
   },
   pageSize: {
-      width: PageSize.LETTER_WIDTH,
-      height: PageSize.LETTER_HEIGHT,
+      width: 12240,  // 8.5 inches in twips
+      height: 15840, // 11 inches in twips
   }
 };
 
