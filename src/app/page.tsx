@@ -8,8 +8,24 @@ import { DOC_SETTINGS } from '@/lib/doc-settings';
 import { createFormattedParagraph } from '@/lib/paragraph-formatter';
 import { UNITS, Unit } from '@/lib/units';
 import { SSICS } from '@/lib/ssic';
-import { Combobox } from '@/components/ui/SimpleCombobox';
+import { Combobox } from '@/components/ui/combobox';
 
+// Add this component definition here
+const SimpleViewCounter = () => {
+  return (
+    <div style={{ fontSize: '0.9rem', color: '#6c757d', marginTop: '10px' }}>
+      <i className="fas fa-eye" style={{ marginRight: '4px' }}></i>
+      Document Generator
+    </div>
+  );
+};
+
+interface ParagraphData {
+  id: number;
+  level: number;
+  content: string;
+  acronymError?: string;
+}
 interface ParagraphData {
   id: number;
   level: number;
@@ -656,9 +672,12 @@ export default function NavalLetterGenerator() {
         }]
       });
 
-      const filename = (formData.subj || "NavalLetter") + ".docx";
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, filename);
+    const filename = (formData.subj || "NavalLetter") + ".docx";
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, filename);
+
+      // *** ADD THIS LINE HERE ***
+      fetch('https://api.countapi.xyz/hit/naval-letter-formatter/documents').catch(() => {});
       
     } catch (error) {
       console.error("Error generating document:", error);
@@ -667,20 +686,6 @@ export default function NavalLetterGenerator() {
       setIsGenerating(false);
     }
   };
-
-  const filename = (formData.subj || "NavalLetter") + ".docx";
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, filename);
-
-    // *** ADD THIS LINE HERE ***
-    fetch('https://api.countapi.xyz/hit/naval-letter-formatter/documents').catch(() => {});
-
-    } catch (error) {
-      console.error("Error generating document:", error);
-      alert("Error generating document: " + (error as Error).message);
-    } finally {
-      setIsGenerating(false);
-    }
 
   const unitComboboxData = UNITS.map(unit => ({
     value: `${unit.uic}-${unit.ruc}-${unit.mcc}`,
@@ -724,7 +729,7 @@ export default function NavalLetterGenerator() {
   const clearSsicInfo = () => {
     setFormData(prev => ({ ...prev, ssic: '' }));
     validateSSIC('');
-  };
+    };
 
   return (
     <div>
