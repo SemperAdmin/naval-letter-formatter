@@ -10,16 +10,6 @@ import { UNITS, Unit } from '@/lib/units';
 import { SSICS } from '@/lib/ssic';
 import { Combobox } from '@/components/ui/combobox';
 
-// Add this component definition here
-const SimpleViewCounter = () => {
-  return (
-    <div style={{ fontSize: '0.9rem', color: '#6c757d', marginTop: '10px' }}>
-      <i className="fas fa-eye" style={{ marginRight: '4px' }}></i>
-      Document Generator
-    </div>
-  );
-};
-
 interface ParagraphData {
   id: number;
   level: number;
