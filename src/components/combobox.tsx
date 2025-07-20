@@ -48,26 +48,48 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(4px)',
+            border: '2px solid rgba(156, 163, 175, 0.3)',
+            borderRadius: '12px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.3s ease-out',
+            minHeight: '48px'
+          }}
           className={cn(
-            "w-full justify-between h-12 px-4 py-3",
-            // Modern clean input styling
-            "bg-white/95 backdrop-blur-sm",
-            "border-2 border-gray-200/80 rounded-xl",
-            "text-gray-900 font-medium shadow-sm",
-            // Modern hover effects
-            "hover:border-amber-300/60 hover:bg-white",
-            "hover:shadow-md hover:scale-[1.01]",
-            "transition-all duration-300 ease-out",
-            // Focus states with modern amber glow
-            "focus:border-amber-400 focus:ring-4 focus:ring-amber-100/50",
-            "focus:bg-white focus:shadow-lg",
-            // Selected state
+            "w-full justify-between px-4 py-3 text-gray-900 font-medium",
+            "hover:border-amber-300 hover:shadow-md hover:bg-white",
+            "focus:border-amber-400 focus:ring-4 focus:ring-amber-100",
             value && "border-amber-300 bg-white shadow-md"
           )}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'rgb(252 211 77)';
+            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.transform = 'scale(1.01)';
+          }}
+          onMouseLeave={(e) => {
+            if (!value) {
+              e.currentTarget.style.borderColor = 'rgba(156, 163, 175, 0.3)';
+              e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }
+          }}
         >
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 shadow-sm">
-              <Search className="h-4 w-4 text-white" />
+            <div 
+              style={{
+                background: 'linear-gradient(135deg, rgb(245 158 11), rgb(251 191 36))',
+                borderRadius: '8px',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)'
+              }}
+            >
+              <Search style={{ width: '16px', height: '16px', color: 'white' }} />
             </div>
             <span className={cn(
               "truncate text-left font-medium",
@@ -78,49 +100,82 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
                 : placeholder}
             </span>
           </div>
-          <ChevronsUpDown className={cn(
-            "h-5 w-5 shrink-0 transition-all duration-300",
-            "text-gray-400",
-            open && "rotate-180 text-amber-500"
-          )} />
+          <ChevronsUpDown 
+            className={cn(
+              "h-5 w-5 shrink-0 transition-all duration-300 text-gray-400",
+              open && "rotate-180 text-amber-500"
+            )} 
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className={cn(
-          "w-[var(--radix-popover-trigger-width)] p-0",
-          "bg-white/98 backdrop-blur-xl border border-gray-200/50",
-          "rounded-xl shadow-2xl shadow-gray-900/10",
-          "animate-in fade-in-0 zoom-in-96 duration-300 ease-out"
-        )}
+        style={{
+          background: 'rgba(255, 255, 255, 0.98)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(156, 163, 175, 0.2)',
+          borderRadius: '12px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+        className="w-[var(--radix-popover-trigger-width)] p-0"
         sideOffset={8}
       >
-        <Command className="rounded-xl">
-          <div className="relative border-b border-gray-100">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2">
-              <div className="flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-amber-400 to-amber-500">
-                <Search className="h-3 w-3 text-white" />
-              </div>
+        <Command style={{ borderRadius: '12px' }}>
+          <div style={{ 
+            position: 'relative', 
+            borderBottom: '1px solid rgb(243 244 246)',
+            paddingLeft: '16px',
+            paddingRight: '16px'
+          }}>
+            <div style={{
+              position: 'absolute',
+              left: '16px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'linear-gradient(135deg, rgb(245 158 11), rgb(251 191 36))',
+              borderRadius: '6px',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Search style={{ width: '12px', height: '12px', color: 'white' }} />
             </div>
             <CommandInput 
               placeholder={inputPlaceholder}
-              className={cn(
-                "pl-14 pr-4 py-4 h-14",
-                "border-0 bg-transparent",
-                "text-gray-900 placeholder:text-gray-500",
-                "focus:ring-0 font-medium",
-                "rounded-t-xl"
-              )}
+              style={{
+                paddingLeft: '56px',
+                paddingRight: '16px',
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                height: '56px',
+                border: 'none',
+                background: 'transparent',
+                fontSize: '14px',
+                fontWeight: '500',
+                borderRadius: '12px 12px 0 0'
+              }}
+              className="text-gray-900 placeholder:text-gray-500 focus:ring-0"
             />
           </div>
-          <CommandList className="max-h-[320px] overflow-auto p-2">
-            <CommandEmpty className="py-12 text-center">
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner">
-                  <Search className="h-7 w-7 text-gray-400" />
+          <CommandList style={{ maxHeight: '320px', overflowY: 'auto', padding: '8px' }}>
+            <CommandEmpty style={{ padding: '48px 0', textAlign: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, rgb(243 244 246), rgb(229 231 235))',
+                  borderRadius: '16px',
+                  width: '64px',
+                  height: '64px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <Search style={{ width: '28px', height: '28px', color: 'rgb(156 163 175)' }} />
                 </div>
                 <div>
-                  <p className="text-gray-600 font-medium text-sm">{searchMessage}</p>
-                  <p className="text-gray-400 text-xs mt-1">Try adjusting your search terms</p>
+                  <p style={{ color: 'rgb(75 85 99)', fontWeight: '500', fontSize: '14px' }}>{searchMessage}</p>
+                  <p style={{ color: 'rgb(156 163 175)', fontSize: '12px', marginTop: '4px' }}>Try adjusting your search terms</p>
                 </div>
               </div>
             </CommandEmpty>
@@ -130,42 +185,72 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
                   key={item.value}
                   value={item.label}
                   onSelect={() => handleSelect(item.value)}
-                  className={cn(
-                    "flex items-center justify-between px-4 py-4 mx-1 my-1",
-                    "rounded-lg cursor-pointer transition-all duration-200",
-                    "text-gray-700 font-medium",
-                    "border border-transparent",
-                    // Modern hover effects
-                    "hover:bg-gradient-to-r hover:from-amber-50/80 hover:to-amber-100/50",
-                    "hover:border-amber-200/50 hover:text-gray-900",
-                    "hover:shadow-sm hover:scale-[1.02]",
-                    // Selected state with modern styling
-                    value === item.value && cn(
-                      "bg-gradient-to-r from-amber-500 to-amber-600",
-                      "text-white font-semibold shadow-lg border-amber-300",
-                      "transform scale-[1.02]"
-                    ),
-                    // Stagger animation
-                    "animate-in slide-in-from-left-2 duration-200",
-                    `delay-[${Math.min(index * 30, 300)}ms]`
-                  )}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px',
+                    margin: '4px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    fontWeight: '500',
+                    border: '1px solid transparent',
+                    background: value === item.value 
+                      ? 'linear-gradient(90deg, rgb(245 158 11), rgb(251 191 36))'
+                      : 'transparent',
+                    color: value === item.value ? 'white' : 'rgb(55 65 81)',
+                    transform: value === item.value ? 'scale(1.02)' : 'scale(1)',
+                    boxShadow: value === item.value ? '0 4px 12px rgba(245, 158, 11, 0.3)' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (value !== item.value) {
+                      e.currentTarget.style.background = 'linear-gradient(90deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.05))';
+                      e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.2)';
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (value !== item.value) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.borderColor = 'transparent';
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }
+                  }}
                 >
-                  <span className="truncate pr-4 flex-1 leading-relaxed">
+                  <span style={{ 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis', 
+                    whiteSpace: 'nowrap',
+                    paddingRight: '16px',
+                    flex: '1',
+                    lineHeight: '1.5'
+                  }}>
                     {item.label}
                   </span>
-                  <div className={cn(
-                    "flex items-center justify-center w-6 h-6 rounded-md transition-all duration-200",
-                    value === item.value 
-                      ? "bg-white/20" 
-                      : "bg-amber-100"
-                  )}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '6px',
+                    background: value === item.value 
+                      ? 'rgba(255, 255, 255, 0.2)' 
+                      : 'rgb(254 243 199)',
+                    transition: 'all 0.2s ease'
+                  }}>
                     <Check
-                      className={cn(
-                        "h-4 w-4 transition-all duration-200",
-                        value === item.value 
-                          ? "opacity-100 scale-110 text-white" 
-                          : "opacity-0 scale-75 text-amber-600"
-                      )}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        transition: 'all 0.2s ease',
+                        opacity: value === item.value ? '1' : '0',
+                        transform: value === item.value ? 'scale(1.1)' : 'scale(0.75)',
+                        color: value === item.value ? 'white' : 'rgb(245 158 11)'
+                      }}
                     />
                   </div>
                 </CommandItem>
