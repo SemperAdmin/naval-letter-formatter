@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { Check, ChevronsUpDown, Search } from "lucide-react"
-import { cn } from "@/lib/utils"
 import {
   Command,
   CommandEmpty,
@@ -40,140 +39,153 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
     setOpen(false);
   }
 
-  // Custom button styles that exactly match your form-control styling
-  const buttonBaseStyles: React.CSSProperties = {
-    // Form control base styling - matching your Bootstrap exactly
-    flex: '1',
-    border: '2px solid #e9ecef',
-    borderRadius: '0 8px 8px 0',
-    padding: '12px',
-    minHeight: '48px',
-    transition: 'all 0.3s ease',
-    fontSize: '16px',
-    fontWeight: '400',
-    color: '#495057',
-    backgroundColor: '#ffffff',
-    boxShadow: 'none',
-    cursor: 'pointer',
-    outline: 'none',
-    
-    // Layout
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    textAlign: 'left',
-    
-    // Remove all default button styling
-    appearance: 'none',
-    WebkitAppearance: 'none',
-    MozAppearance: 'none',
-    
-    // Prevent text selection
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
-    
-    // Modern enhancements
-    backdropFilter: 'blur(2px)',
-    position: 'relative'
-  };
+  // COMPLETELY CUSTOM BUTTON - NO TAILWIND/SHADCN INTERFERENCE
+  const CustomTriggerButton = React.forwardRef<
+    HTMLButtonElement,
+    React.ButtonHTMLAttributes<HTMLButtonElement>
+  >((props, ref) => {
+    const [isHovered, setIsHovered] = React.useState(false);
+    const [isFocused, setIsFocused] = React.useState(false);
 
-  const buttonFocusStyles: React.CSSProperties = {
-    borderColor: '#b8860b',
-    boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.25)',
-    outline: 'none'
-  };
-
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [isFocused, setIsFocused] = React.useState(false);
+    return (
+      <button
+        ref={ref}
+        type="button"
+        role="combobox"
+        aria-expanded={open}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        onClick={() => setOpen(!open)}
+        style={{
+          // EXACT Bootstrap .form-control styling - FORCE OVERRIDE EVERYTHING
+          flex: '1',
+          border: '2px solid #e9ecef',
+          borderRadius: '0 8px 8px 0',
+          padding: '12px',
+          minHeight: '48px',
+          transition: 'all 0.3s ease',
+          fontSize: '16px',
+          fontWeight: '400',
+          color: '#495057',
+          backgroundColor: '#ffffff',
+          boxShadow: 'none',
+          cursor: 'pointer',
+          outline: 'none',
+          
+          // Layout properties
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          textAlign: 'left',
+          
+          // FORCE REMOVE ALL DEFAULT STYLING
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          MozAppearance: 'none',
+          border: '2px solid #e9ecef',
+          borderImage: 'none',
+          borderStyle: 'solid',
+          borderWidth: '2px',
+          
+          // Prevent text selection
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          
+          // FORCE OVERRIDE ANY INHERITED STYLES
+          margin: '0',
+          padding: '12px',
+          lineHeight: 'normal',
+          textDecoration: 'none',
+          textTransform: 'none',
+          verticalAlign: 'baseline',
+          
+          // Modern enhancements
+          backdropFilter: 'blur(2px)',
+          position: 'relative',
+          
+          // Dynamic styling based on state
+          ...(isHovered || value ? {
+            borderColor: '#b8860b !important',
+            boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.15) !important',
+            transform: 'translateY(-1px)'
+          } : {}),
+          ...(isFocused ? {
+            borderColor: '#b8860b !important',
+            boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.25) !important',
+            outline: 'none !important'
+          } : {}),
+          ...(value ? {
+            borderColor: '#b8860b !important',
+            backgroundColor: '#fefefe !important',
+            fontWeight: '500'
+          } : {})
+        }}
+        {...props}
+      >
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px', 
+          width: '100%',
+          overflow: 'hidden'
+        }}>
+          {/* Modern Search Icon Badge */}
+          <div 
+            style={{
+              background: 'linear-gradient(135deg, #b8860b, #ffd700)',
+              borderRadius: '6px',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              flexShrink: '0',
+              transition: 'all 0.3s ease',
+              transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+            }}
+          >
+            <Search style={{ width: '14px', height: '14px', color: 'white' }} />
+          </div>
+          
+          {/* Text Content */}
+          <span style={{ 
+            flex: '1',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: value ? '#495057' : '#6c757d',
+            fontWeight: value ? '500' : '400',
+            fontSize: '16px'
+          }}>
+            {value
+              ? items.find((item) => item.value === value)?.label
+              : placeholder}
+          </span>
+          
+          {/* Chevron Icon */}
+          <ChevronsUpDown 
+            style={{
+              width: '16px',
+              height: '16px',
+              color: '#6c757d',
+              transition: 'all 0.3s ease',
+              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+              flexShrink: '0'
+            }}
+          />
+        </div>
+      </button>
+    );
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div
-          role="combobox"
-          aria-expanded={open}
-          tabIndex={0}
-          style={{
-            ...buttonBaseStyles,
-            ...(isHovered || value ? {
-              borderColor: '#b8860b',
-              boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.15)',
-              transform: 'translateY(-1px)'
-            } : {}),
-            ...(isFocused ? buttonFocusStyles : {}),
-            ...(value ? {
-              borderColor: '#b8860b',
-              backgroundColor: '#fefefe',
-              fontWeight: '500'
-            } : {})
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          onClick={() => setOpen(!open)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setOpen(!open);
-            }
-          }}
-        >
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px', 
-            width: '100%',
-            overflow: 'hidden'
-          }}>
-            {/* Modern Search Icon Badge */}
-            <div 
-              style={{
-                background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-                borderRadius: '6px',
-                width: '28px',
-                height: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                flexShrink: '0',
-                transition: 'all 0.3s ease',
-                transform: isHovered ? 'scale(1.05)' : 'scale(1)'
-              }}
-            >
-              <Search style={{ width: '14px', height: '14px', color: 'white' }} />
-            </div>
-            
-            {/* Text Content */}
-            <span style={{ 
-              flex: '1',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              color: value ? '#495057' : '#6c757d',
-              fontWeight: value ? '500' : '400',
-              fontSize: '16px'
-            }}>
-              {value
-                ? items.find((item) => item.value === value)?.label
-                : placeholder}
-            </span>
-            
-            {/* Chevron Icon */}
-            <ChevronsUpDown 
-              style={{
-                width: '16px',
-                height: '16px',
-                color: '#6c757d',
-                transition: 'all 0.3s ease',
-                transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-                flexShrink: '0'
-              }}
-            />
-          </div>
-        </div>
+        <CustomTriggerButton />
       </PopoverTrigger>
       
       <PopoverContent 
@@ -226,7 +238,6 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
                 borderRadius: '12px 12px 0 0',
                 color: '#495057'
               }}
-              className="text-gray-900 placeholder:text-gray-500 focus:ring-0"
             />
           </div>
           
