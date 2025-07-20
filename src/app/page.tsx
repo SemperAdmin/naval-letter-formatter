@@ -8,7 +8,7 @@ import { DOC_SETTINGS } from '@/lib/doc-settings';
 import { createFormattedParagraph } from '@/lib/paragraph-formatter';
 import { UNITS, Unit } from '@/lib/units';
 import { SSICS } from '@/lib/ssic';
-import { Combobox } from '@/components/ui/combobox';
+import { Combobox } from '@/components/ui/SimpleCombobox';
 
 
 interface ParagraphData {
@@ -1315,7 +1315,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               Unit Information
             </div>
 
-            <div style={{ marginBottom: '1rem', display: 'none' }}>
+            <div style={{ marginBottom: '1rem' }}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Find Unit (by Name, RUC, MCC, or UIC):
               </label>
@@ -1388,7 +1388,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               Header Information
             </div>
 
-            <div style={{ marginBottom: '1rem', display: 'none' }}>
+            <div style={{ marginBottom: '1rem' }}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Find SSIC by Nomenclature:
               </label>
