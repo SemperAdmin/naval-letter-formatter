@@ -1315,7 +1315,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               Unit Information
             </div>
 
-            <div style={{ marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '1rem', display: 'none' }}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Find Unit (by Name, RUC, MCC, or UIC):
               </label>
@@ -1388,7 +1388,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               Header Information
             </div>
 
-            <div style={{ marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '1rem', display: 'none' }}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Find SSIC by Nomenclature:
               </label>
