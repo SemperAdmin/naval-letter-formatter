@@ -9,7 +9,8 @@ import { createFormattedParagraph } from '@/lib/paragraph-formatter';
 import { UNITS, Unit } from '@/lib/units';
 import { SSICS } from '@/lib/ssic';
 import { Combobox } from '@/components/ui/SimpleCombobox';
-
+import { StatsDisplay } from '@/components/StatsDisplay';
+import { useStats } from '@/hooks/useStats';
 
 interface ParagraphData {
   id: number;
@@ -42,7 +43,6 @@ interface SavedLetter extends FormData {
   paragraphs: ParagraphData[];
 }
 
-
 interface ValidationState {
   ssic: { isValid: boolean; message: string; };
   subj: { isValid: boolean; message: string; };
@@ -73,8 +73,10 @@ const splitSubject = (str: string, chunkSize: number): string[] => {
     return chunks;
 };
 
-
 export default function NavalLetterGenerator() {
+  // Add stats tracking
+  const { incrementDocumentCount, incrementSaveCount, incrementLoadCount } = useStats();
+
   const [formData, setFormData] = useState<FormData>({
     line1: '', line2: '', line3: '', ssic: '', originatorCode: '', date: '', from: '', to: '', subj: '', sig: '', delegationText: ''
   });
@@ -113,16 +115,15 @@ export default function NavalLetterGenerator() {
     }
   }, []);
 
-
   // Set today's date on component mount
   useEffect(() => {
     setTodaysDate();
   }, []);
 
-  const saveLetter = () => {
+  const saveLetter = async () => {
     const newLetter: SavedLetter = {
       ...formData,
-      id: new Date().toISOString(), // Unique ID
+      id: new Date().toISOString(),
       savedAt: new Date().toLocaleString(),
       vias,
       references,
@@ -131,12 +132,15 @@ export default function NavalLetterGenerator() {
       paragraphs,
     };
 
-    const updatedLetters = [newLetter, ...savedLetters].slice(0, 10); // Keep max 10 saves
+    const updatedLetters = [newLetter, ...savedLetters].slice(0, 10);
     setSavedLetters(updatedLetters);
     localStorage.setItem('navalLetters', JSON.stringify(updatedLetters));
+    
+    // Track save action
+    await incrementSaveCount();
   };
   
-  const loadLetter = (letterId: string) => {
+  const loadLetter = async (letterId: string) => {
     const letterToLoad = savedLetters.find(l => l.id === letterId);
     if (letterToLoad) {
       setFormData({
@@ -158,21 +162,21 @@ export default function NavalLetterGenerator() {
       setCopyTos(letterToLoad.copyTos);
       setParagraphs(letterToLoad.paragraphs);
       
-      // Also update the UI toggles
       setShowVia(letterToLoad.vias.some(v => v.trim() !== ''));
       setShowRef(letterToLoad.references.some(r => r.trim() !== ''));
       setShowEncl(letterToLoad.enclosures.some(e => e.trim() !== ''));
       setShowCopy(letterToLoad.copyTos.some(c => c.trim() !== ''));
       setShowDelegation(!!letterToLoad.delegationText);
 
-      // Re-validate fields after loading
       validateSSIC(letterToLoad.ssic);
       validateSubject(letterToLoad.subj);
       validateFromTo(letterToLoad.from, 'from');
       validateFromTo(letterToLoad.to, 'to');
+      
+      // Track load action
+      await incrementLoadCount();
     }
   };
-
 
   // Validation Functions
   const validateSSIC = (value: string) => {
@@ -241,7 +245,6 @@ export default function NavalLetterGenerator() {
   const parseAndFormatDate = (dateString: string) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    // If already in Naval format, return as-is
     const navalPattern = /^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{2}$/i;
     if (navalPattern.test(dateString)) {
       return dateString;
@@ -249,7 +252,6 @@ export default function NavalLetterGenerator() {
 
     let date: Date | null = null;
 
-    // Handle various date formats
     if (dateString.toLowerCase() === 'today' || dateString.toLowerCase() === 'now') {
       date = new Date();
     } else if (/^\d{8}$/.test(dateString)) {
@@ -274,41 +276,34 @@ export default function NavalLetterGenerator() {
     }
 
     if (!date || isNaN(date.getTime())) {
-      return dateString; // Return original if can't parse
+      return dateString;
     }
 
     const day = date.getDate();
     const month = months[date.getMonth()];
     const year = date.getFullYear().toString().slice(-2);
-    
     return `${day} ${month} ${year}`;
   };
 
   const handleDateChange = (value: string) => {
-    const formatted = parseAndFormatDate(value);
-    setFormData(prev => ({ ...prev, date: formatted }));
+    const formattedDate = parseAndFormatDate(value);
+    setFormData(prev => ({ ...prev, date: formattedDate }));
   };
 
-  const numbersOnly = (value: string) => {
-    return value.replace(/\D/g, '');
-  };
-
-  const autoUppercase = (value: string) => {
-    return value.toUpperCase();
-  };
+  const autoUppercase = (value: string) => value.toUpperCase();
+  const numbersOnly = (value: string) => value.replace(/\D/g, '');
 
   const addItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter((prev: string[]) => [...prev, '']);
+    setter(prev => [...prev, '']);
   };
 
   const removeItem = (index: number, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter((prev: string[]) => prev.filter((_, i) => i !== index));
+    setter(prev => prev.filter((_, i) => i !== index));
   };
 
   const updateItem = (index: number, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter((prev: string[]) => prev.map((item: string, i: number) => i === index ? value : item));
+    setter(prev => prev.map((item, i) => i === index ? value : item));
   };
-
 
   const addParagraph = (type: 'main' | 'sub' | 'same' | 'up', afterId: number) => {
     const currentParagraph = paragraphs.find(p => p.id === afterId);
@@ -339,11 +334,10 @@ export default function NavalLetterGenerator() {
     setParagraphs(prev => prev.filter(p => p.id !== id));
   };
   
-const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
+  const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
     const fullText = allParagraphs.map(p => p.content).join('\n');
     const definedAcronyms = new Set<string>();
     
-    // Regex to find explicit definitions: e.g., "Full Name (ACRONYM)"
     const acronymDefinitionRegex = /\b[A-Za-z\s]+?\s+\(([A-Z]{2,})\)/g;
     
     let match;
@@ -354,18 +348,16 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
     const globallyDefined = new Set<string>();
     const finalParagraphs = allParagraphs.map(p => {
         let error = '';
-        // Find all potential acronyms (2+ capital letters in a row)
         const potentialAcronyms = p.content.match(/\b[A-Z]{2,}\b/g) || [];
 
         for (const acronym of potentialAcronyms) {
             const isDefined = globallyDefined.has(acronym);
-            // Check if the acronym is being defined *in this paragraph*
             const definitionPattern = new RegExp(`\\b([A-Za-z][a-z]+(?:\\s[A-Za-z][a-z]+)*)\\s*\\(\\s*${acronym}\\s*\\)`);
             const isDefiningNow = definitionPattern.test(p.content);
 
             if (!isDefined && !isDefiningNow) {
                  error = `Acronym "${acronym}" used without being defined first. Please define it as "Full Name (${acronym})".`;
-                 break; // Stop after the first error in the paragraph
+                 break;
             }
             if (isDefiningNow) {
                 globallyDefined.add(acronym);
@@ -375,8 +367,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
     });
 
     setParagraphs(finalParagraphs);
-}, []);
-
+  }, []);
 
   const updateParagraphContent = (id: number, content: string) => {
     const newParagraphs = paragraphs.map(p => p.id === id ? { ...p, content } : p)
@@ -390,7 +381,6 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
       const currentPara = paragraphs[currentIndex];
       const paraAbove = paragraphs[currentIndex - 1];
 
-      // Prevent a sub-paragraph from moving above its parent
       if (currentPara.level > paraAbove.level) {
         return; 
       }
@@ -421,365 +411,103 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
     setFormData(prev => ({ ...prev, delegationText }));
   };
 
-  /**
-   * Generates the correct citation string (e.g., "1.", "a.", "(1)") for a given paragraph for UI display.
-   */
-  const getUiCitation = (paragraph: ParagraphData, index: number, allParagraphs: ParagraphData[]): string => {
+  const generateCitationForUI = (paragraph: ParagraphData, index: number, allParagraphs: ParagraphData[]) => {
     const { level } = paragraph;
-
-    // Helper to get the citation for a single level
-    const getCitationPart = (targetLevel: number, parentIndex: number) => {
-      let listStartIndex = 0;
-      if (targetLevel > 1) {
-          for (let i = parentIndex - 1; i >= 0; i--) {
-              if (allParagraphs[i].level < targetLevel) {
-                  listStartIndex = i + 1;
-                  break;
-              }
-          }
-      }
-
-      let count = 0;
-      for (let i = listStartIndex; i <= parentIndex; i++) {
-          if (allParagraphs[i].level === targetLevel) {
-              count++;
-          }
-      }
-
-      switch (targetLevel) {
-          case 1: return `${count}.`;
-          case 2: return `${String.fromCharCode(96 + count)}`;
-          case 3: return `(${count})`;
-          case 4: return `(${String.fromCharCode(96 + count)})`;
-          case 5: return `${count}.`;
-          case 6: return `${String.fromCharCode(96 + count)}.`;
-          case 7: return `(${count})`;
-          case 8: return `(${String.fromCharCode(96 + count)})`;
-          default: return '';
-      }
-    };
-
-    if (level === 1) {
-        return getCitationPart(1, index);
-    }
-    if (level === 2) {
-        let parentCitation = '';
+    
+    let listStartIndex = 0;
+    if (level > 1) {
         for (let i = index - 1; i >= 0; i--) {
-            if (allParagraphs[i].level === 1) {
-                parentCitation = getCitationPart(1, i).replace('.', '');
+            if (allParagraphs[i].level < level) {
+                listStartIndex = i + 1;
                 break;
             }
         }
-        return `${parentCitation}${getCitationPart(2, index)}`;
     }
-    
-    // Build the hierarchical citation for deeper levels
-    let citationPath = [];
-    let parentLevel = level - 1;
 
-    // Look backwards to find all ancestors
-    for (let i = index - 1; i >= 0; i--) {
-      const p = allParagraphs[i];
-      if (p.level === parentLevel) {
-          citationPath.unshift(getCitationPart(p.level, i).replace(/[.()]/g, ''));
-          parentLevel--;
-          if (parentLevel === 0) break;
-      }
+    let count = 0;
+    for (let i = listStartIndex; i <= index; i++) {
+        const p = allParagraphs[i];
+        if (p.level === level) {
+             if (p.content.trim() || p.id === paragraph.id) {
+                count++;
+            }
+        }
     }
     
-    // Add the current level's citation
-    citationPath.push(getCitationPart(level, index));
-    
-    return citationPath.join('');
-  }
+    if (count === 0) count = 1;
+
+    let citation = '';
+    switch (level) {
+        case 1: citation = `${count}.`; break;
+        case 2: citation = `${String.fromCharCode(96 + count)}.`; break;
+        case 3: citation = `(${count})`; break;
+        case 4: citation = `(${String.fromCharCode(96 + count)})`; break;
+        case 5: citation = `${count}.`; break; 
+        case 6: citation = `${String.fromCharCode(96 + count)}.`; break;
+        case 7: citation = `(${count})`; break;
+        case 8: citation = `(${String.fromCharCode(96 + count)})`; break;
+        default: citation = '';
+    }
+
+    return citation;
+  };
 
   const generateDocument = async () => {
+    if (isGenerating) return;
     setIsGenerating(true);
+    
     try {
-      saveLetter(); // Save the current state before generating
-      
-      const sealBuffer = await fetchImageAsBase64("https://www.lrsm.upenn.edu/wp-content/uploads/1960/05/dod-logo.png")
-        .catch(error => {
-            console.error("Could not fetch seal, proceeding without it.", error);
-            return null; // Return null if fetch fails
-        });
-
-      const content = [];
-      
-      content.push(new Paragraph({
-          children: [new TextRun({
-              text: "UNITED STATES MARINE CORPS",
-              bold: true,
-              font: "Times New Roman",
-              size: 20
-          })],
-          alignment: AlignmentType.CENTER
-      }));
-
-      if (formData.line1) {
-          content.push(new Paragraph({
-              children: [new TextRun({ text: formData.line1, font: "Times New Roman", size: 16 })],
-              alignment: AlignmentType.CENTER
-          }));
-      }
-      if (formData.line2) {
-          content.push(new Paragraph({
-              children: [new TextRun({ text: formData.line2, font: "Times New Roman", size: 16 })],
-              alignment: AlignmentType.CENTER
-          }));
-      }
-      if (formData.line3) {
-          content.push(new Paragraph({
-              children: [new TextRun({ text: formData.line3, font: "Times New Roman", size: 16 })],
-              alignment: AlignmentType.CENTER
-          }));
-      }
-      
-      content.push(new Paragraph({ text: "" }));
-      
-      // Sender symbols at 5.5 inches
-      content.push(new Paragraph({
-        children: [new TextRun({
-          text: formData.ssic || "",
-          font: "Times New Roman",
-          size: 24
-        })],
-        alignment: AlignmentType.LEFT,
-        indent: { left: 7920 }
-      }));
-
-      content.push(new Paragraph({
-        children: [new TextRun({
-          text: formData.originatorCode || "",
-          font: "Times New Roman",
-          size: 24
-        })],
-        alignment: AlignmentType.LEFT,
-        indent: { left: 7920 }
-      }));
-
-      content.push(new Paragraph({
-        children: [new TextRun({
-          text: formData.date || "",
-          font: "Times New Roman",
-          size: 24
-        })],
-        alignment: AlignmentType.LEFT,
-        indent: { left: 7920 }
-      }));
-
-      content.push(new Paragraph({ text: "" }));
-
-      // From/To section
-      content.push(new Paragraph({
-        children: [new TextRun({
-          text: "From:\t" + formData.from,
-          font: "Times New Roman",
-          size: 24
-        })],
-        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-      }));
-
-      content.push(new Paragraph({
-        children: [new TextRun({
-          text: "To:\t" + formData.to,
-          font: "Times New Roman",
-          size: 24
-        })],
-        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-      }));
-
-      const viasWithContent = vias.filter(via => via.trim());
-      if (viasWithContent.length > 0) {
-        for (let i = 0; i < viasWithContent.length; i++) {
-          const viaText = i === 0 
-            ? `Via:\t(${i + 1})\t${viasWithContent[i]}` 
-            : `\t(${i + 1})\t${viasWithContent[i]}`;
-          content.push(new Paragraph({
-            children: [new TextRun({
-              text: viaText,
-              font: "Times New Roman",
-              size: 24
-            })],
-            tabStops: [
-              { type: TabStopType.LEFT, position: 720 },
-              { type: TabStopType.LEFT, position: 1046 }
-            ],
-          }));
-        }
-      }
-       if (viasWithContent.length > 0) {
-        content.push(new Paragraph({ text: "" }));
+      let sealBuffer: Buffer | null = null;
+      try {
+        const sealBase64 = await fetchImageAsBase64('https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/EGA_%28Eagle%2C_Globe%2C_and_Anchor%29_emblem.svg/512px-EGA_%28Eagle%2C_Globe%2C_and_Anchor%29_emblem.svg.png');
+        sealBuffer = Buffer.from(sealBase64, 'base64');
+      } catch (imgError) {
+        console.warn("Could not load Marine Corps seal image:", imgError);
       }
 
-      // Subject line
-      const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
-      if (formattedSubjLines.length === 0) {
-          content.push(new Paragraph({
-              children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
-              tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-          }));
-      } else {
-          const firstLineOptions: IParagraphOptions = {
-              children: [
-                  new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
-                  new TextRun({ text: formattedSubjLines[0], font: "Times New Roman", size: 24 }),
-              ],
-              tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-          };
-          content.push(new Paragraph(firstLineOptions));
+      const allNonEmptyReferences = references.filter(ref => ref.trim() !== '');
+      const allNonEmptyEnclosures = enclosures.filter(encl => encl.trim() !== '');
+      const allNonEmptyVias = vias.filter(via => via.trim() !== '');
+      const allNonEmptyCopyTos = copyTos.filter(copy => copy.trim() !== '');
 
-          for (let i = 1; i < formattedSubjLines.length; i++) {
-              content.push(new Paragraph({
-                  children: [ new TextRun({ text: "\t" + formattedSubjLines[i], font: "Times New Roman", size: 24 }) ],
-                  tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-              }));
-          }
-      }
-      content.push(new Paragraph({ text: "" }));
-      
+      const content: Paragraph[] = [];
+      const headerParagraphs: Paragraph[] = [];
 
-      // References
-      const refsWithContent = references.filter(ref => ref.trim());
-      if (refsWithContent.length > 0) {
-        for (let i = 0; i < refsWithContent.length; i++) {
-          const refLetter = String.fromCharCode(97 + i);
-          const refText = i === 0 ? "Ref:\t(" + refLetter + ")\t" + refsWithContent[i] : "\t(" + refLetter + ")\t" + refsWithContent[i];
-          content.push(new Paragraph({
-            children: [new TextRun({
-              text: refText,
-              font: "Times New Roman",
-              size: 24
-            })],
-            tabStops: [
-              { type: TabStopType.LEFT, position: 720 },
-              { type: TabStopType.LEFT, position: 1046 }
-            ],
-          }));
-        }
-      }
-      
-      // Enclosures
-      const enclsWithContent = enclosures.filter(encl => encl.trim());
-      if (enclsWithContent.length > 0) {
-          if (refsWithContent.length > 0) {
-              content.push(new Paragraph({ text: "" }));
-          }
-          for (let i = 0; i < enclsWithContent.length; i++) {
-            const enclText = i === 0 ? "Encl:\t(" + (i+1) + ")\t" + enclsWithContent[i] : "\t(" + (i+1) + ")\t" + enclsWithContent[i];
-            content.push(new Paragraph({
-              children: [new TextRun({
-                text: enclText,
-                font: "Times New Roman",
-                size: 24
-              })],
-              tabStops: [
-                { type: TabStopType.LEFT, position: 720 },
-                { type: TabStopType.LEFT, position: 1046 }
-              ],
-            }));
-          }
-      }
-      
-      // Add a blank line after the last Ref/Encl and before the first body paragraph
-      if (refsWithContent.length > 0 || enclsWithContent.length > 0) {
-          content.push(new Paragraph({ text: "" }));
-      }
+      const headerFormattedLines = splitSubject(formData.subj, 60);
 
-
-      // Body paragraphs
-      paragraphs
-        .filter(p => p.content.trim())
-        .forEach((p, i, all) => {
-            const formattedParagraph = createFormattedParagraph(p, i, all);
-            content.push(formattedParagraph);
-            // Add a hard space after each paragraph
-            content.push(new Paragraph({ text: "" }));
-        });
-
-
-      // Signature
-      if (formData.sig) {
-        content.push(new Paragraph({ text: "" }));
-        content.push(new Paragraph({ text: "" }));
-        
-        content.push(new Paragraph({
-          children: [new TextRun({
-            text: formData.sig.toUpperCase(),
-            font: "Times New Roman",
-            size: 24
-          })],
-          alignment: AlignmentType.LEFT,
-          indent: { left: 4680 }
-        }));
-        
-        if (formData.delegationText) {
-          content.push(new Paragraph({
-            children: [new TextRun({
-              text: formData.delegationText,
-              font: "Times New Roman",
-              size: 24
-            })],
-            alignment: AlignmentType.LEFT,
-            indent: { left: 4680 }
-          }));
-        }
-      }
-
-      // Copy to
-      const copiesWithContent = copyTos.filter(copy => copy.trim());
-      if (copiesWithContent.length > 0) {
-        content.push(new Paragraph({ text: "" }));
-        content.push(new Paragraph({
-          children: [new TextRun({
-            text: "Copy to:",
-            font: "Times New Roman",
-            size: 24
-          })],
-          alignment: AlignmentType.LEFT
-        }));
-        
-        for (const copy of copiesWithContent) {
-          content.push(new Paragraph({
-            children: [new TextRun({
-              text: copy,
-              font: "Times New Roman",
-              size: 24
-            })],
-            indent: { left: 720 }
-          }));
-        }
-      }
-
-// Create default header content - CORRECTED TO MATCH MAIN PAGE EXACTLY
-const headerParagraphs: Paragraph[] = [];
-const headerFormattedLines = splitSubject(formData.subj.toUpperCase(), 57); // Changed back to 57 to match main page
-if (headerFormattedLines.length === 0) {
-    headerParagraphs.push(new Paragraph({
-        children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
-        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-    }));
-} else {
-    const firstLineOptions: IParagraphOptions = {
-        children: [
-            new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
-            new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 }),
-        ],
-        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-    };
-    headerParagraphs.push(new Paragraph(firstLineOptions));
-
-    for (let i = 1; i < headerFormattedLines.length; i++) {
+      if (headerFormattedLines.length === 1) {
         headerParagraphs.push(new Paragraph({
-            children: [ new TextRun({ text: "\t" + headerFormattedLines[i], font: "Times New Roman", size: 24 }) ],
+            children: [
+                new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
+                new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 }),
+            ],
             tabStops: [{ type: TabStopType.LEFT, position: 720 }],
         }));
-    }
-}
-// Add one hard space after the header subject line
-headerParagraphs.push(new Paragraph({ text: "" }));
+      } else if (headerFormattedLines.length === 0) {
+        headerParagraphs.push(new Paragraph({
+            children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
+            tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+        }));
+      } else {
+        const firstLineOptions: IParagraphOptions = {
+            children: [
+                new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
+                new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 }),
+            ],
+            tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+        };
+        headerParagraphs.push(new Paragraph(firstLineOptions));
 
-      // Create document
+        for (let i = 1; i < headerFormattedLines.length; i++) {
+            headerParagraphs.push(new Paragraph({
+                children: [ new TextRun({ text: "\t" + headerFormattedLines[i], font: "Times New Roman", size: 24 }) ],
+                tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+            }));
+        }
+      }
+
+      headerParagraphs.push(new Paragraph({ text: "" }));
+
       const doc = new Document({
         creator: "by Semper Admin",
         title: formData.subj || "Naval Letter",
@@ -806,11 +534,11 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                       floating: {
                         horizontalPosition: {
                             relative: HorizontalPositionRelativeFrom.PAGE,
-                            offset: 457200, // 0.5 inches
+                            offset: 457200,
                         },
                         verticalPosition: {
                             relative: VerticalPositionRelativeFrom.PAGE,
-                            offset: 457200, // 0.5 inches
+                            offset: 457200,
                         },
                       },
                     }),
@@ -824,7 +552,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           },
           footers: {
             first: new Footer({
-              children: [], // No footer on first page
+              children: [],
             }),
             default: new Footer({
               children: [
@@ -845,10 +573,12 @@ headerParagraphs.push(new Paragraph({ text: "" }));
         }]
       });
 
-      // Generate and save
       const filename = (formData.subj || "NavalLetter") + ".docx";
       const blob = await Packer.toBlob(doc);
       saveAs(blob, filename);
+      
+      // Track document generation
+      await incrementDocumentCount();
       
     } catch (error) {
       console.error("Error generating document:", error);
@@ -859,7 +589,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
   };
 
   const unitComboboxData = UNITS.map(unit => ({
-    value: `${unit.uic}-${unit.ruc}-${unit.mcc}`, // Create a truly unique value
+    value: `${unit.uic}-${unit.ruc}-${unit.mcc}`,
     label: `${unit.unitName} (RUC: ${unit.ruc}, MCC: ${unit.mcc})`,
     ...unit,
   }));
@@ -881,9 +611,9 @@ headerParagraphs.push(new Paragraph({ text: "" }));
   };
 
   const ssicComboboxData = SSICS.map((ssic, index) => ({
-    value: `${ssic.code}-${index}`, // Make value unique by appending index
+    value: `${ssic.code}-${index}`,
     label: `${ssic.code} - ${ssic.nomenclature}`,
-    originalCode: ssic.code, // Keep the original code for populating the form
+    originalCode: ssic.code,
   }));
 
   const handleSsicSelect = (value: string) => {
@@ -902,13 +632,10 @@ headerParagraphs.push(new Paragraph({ text: "" }));
     validateSSIC('');
   };
 
-
   return (
     <div>
-      {/* Font Awesome CSS */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
-      {/* Custom CSS */}
       <style jsx>{`
         .naval-gradient-bg {
           background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -1104,80 +831,12 @@ headerParagraphs.push(new Paragraph({ text: "" }));
         .paragraph-container {
           margin-bottom: 20px;
           padding: 15px;
-          border: 1px solid #ddd;
+          border: 1px solid #dee2e6;
           border-radius: 8px;
-          position: relative;
-          transition: all 0.3s ease;
-          display: flex;
-          flex-direction: column;
+          background: rgba(255, 255, 255, 0.9);
         }
-        
-        .paragraph-container[data-level="1"] {
-          margin-left: 0px;
-          border-left: 4px solid #007bff;
-          background: rgba(0, 123, 255, 0.05);
-        }
-        
-        .paragraph-container[data-level="2"] {
-          margin-left: 30px;
-          border-left: 4px solid #ffc107;
-          background: rgba(255, 193, 7, 0.05);
-        }
-        
-        .paragraph-container[data-level="3"] {
-          margin-left: 60px;
-          border-left: 4px solid #28a745;
-          background: rgba(40, 167, 69, 0.05);
-        }
-        
-        .paragraph-container[data-level="4"] {
-          margin-left: 90px;
-          border-left: 4px solid #17a2b8;
-          background: rgba(23, 162, 184, 0.05);
-        }
-        
-        .paragraph-container[data-level="5"] {
-          margin-left: 120px;
-          border-left: 4px solid #6f42c1;
-          background: rgba(111, 66, 193, 0.05);
-        }
-        
-        .paragraph-container[data-level="6"] {
-          margin-left: 150px;
-          border-left: 4px solid #e83e8c;
-          background: rgba(232, 62, 140, 0.05);
-        }
-        
-        .paragraph-container[data-level="7"] {
-          margin-left: 180px;
-          border-left: 4px solid #fd7e14;
-          background: rgba(253, 126, 20, 0.05);
-        }
-        
-        .paragraph-container[data-level="8"] {
-          margin-left: 210px;
-          border-left: 4px solid #dc3545;
-          background: rgba(220, 53, 69, 0.05);
-        }
-        
-        .paragraph-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        }
-        
-        .paragraph-level-badge {
-          background: linear-gradient(45deg, #b8860b, #ffd700);
-          color: white;
-          padding: 4px 8px;
-          border-radius: 12px;
-          font-size: 0.8rem;
-          font-weight: bold;
-          margin-right: 10px;
-        }
-        
-        .paragraph-number-preview {
+
+        .paragraph-level-preview {
           font-family: monospace;
           color: #666;
           font-size: 1.1rem;
@@ -1306,6 +965,9 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               Naval Letter Format Generator
             </h1>
             <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
+            
+            {/* Enhanced Stats Display */}
+            <StatsDisplay />
           </div>
 
           {/* Unit Information Section */}
@@ -1558,42 +1220,33 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 Via?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifVia" 
-                    value="yes" 
-                    checked={showVia}
-                    onChange={() => setShowVia(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="via" 
+                    checked={!showVia} 
+                    onChange={() => setShowVia(false)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  No
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifVia" 
-                    value="no" 
-                    checked={!showVia}
-                    onChange={() => setShowVia(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="via" 
+                    checked={showVia} 
+                    onChange={() => setShowVia(true)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  Yes
                 </label>
               </div>
-
               {showVia && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
-                    Enter Via Addressee(s):
-                  </label>
                   {vias.map((via, index) => (
-                    <div key={index} className="input-group">
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        placeholder="Enter via information"
+                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                      <input
+                        className="form-control"
+                        type="text"
+                        placeholder="Via entry..."
                         value={via}
                         onChange={(e) => updateItem(index, e.target.value, setVias)}
                       />
@@ -1621,49 +1274,40 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 </div>
               )}
             </div>
-            
+
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-bookmark" style={{ marginRight: '8px' }}></i>
-                Reference(s)?
+                <i className="fas fa-file-alt" style={{ marginRight: '8px' }}></i>
+                References?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifRef" 
-                    value="yes" 
-                    checked={showRef}
-                    onChange={() => setShowRef(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="ref" 
+                    checked={!showRef} 
+                    onChange={() => setShowRef(false)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  No
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifRef" 
-                    value="no" 
-                    checked={!showRef}
-                    onChange={() => setShowRef(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="ref" 
+                    checked={showRef} 
+                    onChange={() => setShowRef(true)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  Yes
                 </label>
               </div>
-
               {showRef && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-bookmark" style={{ marginRight: '8px' }}></i>
-                    Enter Reference(s):
-                  </label>
                   {references.map((ref, index) => (
-                    <div key={index} className="input-group">
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        placeholder="Enter reference information"
+                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                      <input
+                        className="form-control"
+                        type="text"
+                        placeholder="Reference entry..."
                         value={ref}
                         onChange={(e) => updateItem(index, e.target.value, setReferences)}
                       />
@@ -1691,49 +1335,40 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 </div>
               )}
             </div>
-            
+
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 <i className="fas fa-paperclip" style={{ marginRight: '8px' }}></i>
-                Enclosure(s)?
+                Enclosures?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifEncl" 
-                    value="yes" 
-                    checked={showEncl}
-                    onChange={() => setShowEncl(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="encl" 
+                    checked={!showEncl} 
+                    onChange={() => setShowEncl(false)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  No
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifEncl" 
-                    value="no" 
-                    checked={!showEncl}
-                    onChange={() => setShowEncl(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="encl" 
+                    checked={showEncl} 
+                    onChange={() => setShowEncl(true)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  Yes
                 </label>
               </div>
-
               {showEncl && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-paperclip" style={{ marginRight: '8px' }}></i>
-                    Enter Enclosure(s):
-                  </label>
                   {enclosures.map((encl, index) => (
-                    <div key={index} className="input-group">
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        placeholder="Enter enclosure information"
+                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                      <input
+                        className="form-control"
+                        type="text"
+                        placeholder="Enclosure entry..."
                         value={encl}
                         onChange={(e) => updateItem(index, e.target.value, setEnclosures)}
                       />
@@ -1761,228 +1396,6 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Body Paragraphs Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-paragraph" style={{ marginRight: '8px' }}></i>
-              Body Paragraphs
-            </div>
-            
-            <div>
-              {paragraphs.map((paragraph, index) => {
-                const citation = getUiCitation(paragraph, index, paragraphs);
-                return (
-                  <div 
-                    key={paragraph.id} 
-                    className='paragraph-container'
-                    data-level={paragraph.level}
-                  >
-                    <div className="paragraph-header">
-                      <div>
-                        <span className="paragraph-level-badge">Level {paragraph.level}&nbsp;&nbsp;{citation}</span>
-                      </div>
-                      <div>
-                        {index > 0 && (
-                          <button 
-                            className="btn btn-sm" 
-                            style={{ background: '#f8f9fa', border: '1px solid #dee2e6', marginRight: '4px' }}
-                            onClick={() => moveParagraphUp(paragraph.id)}
-                            title="Move Up"
-                          >
-                            ↑
-                          </button>
-                        )}
-                        <button 
-                          className="btn btn-sm" 
-                          style={{ background: '#f8f9fa', border: '1px solid #dee2e6' }}
-                          onClick={() => moveParagraphDown(paragraph.id)} 
-                          disabled={index === paragraphs.length - 1}
-                          title="Move Down"
-                        >
-                          ↓
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <textarea 
-                      className="form-control" 
-                      rows={4}
-                      placeholder="Enter your paragraph content here..."
-                      value={paragraph.content}
-                      onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
-                      style={{ marginBottom: '12px', flex: 1 }}
-                    />
-
-                    {paragraph.acronymError && (
-                        <div className="acronym-error">
-                            <i className="fas fa-exclamation-triangle" style={{ marginRight: '4px' }}></i>
-                            <small>{paragraph.acronymError}</small>
-                        </div>
-                    )}
-                    
-                    
-                    <div>
-                      <button 
-                        className="btn btn-smart-main btn-sm" 
-                        onClick={() => addParagraph('main', paragraph.id)}
-                      >
-                        Main Paragraph
-                      </button>
-                      {paragraph.level < 8 && (
-                        <button 
-                          className="btn btn-smart-sub btn-sm" 
-                          onClick={() => addParagraph('sub', paragraph.id)}
-                        >
-                          Sub-paragraph
-                        </button>
-                      )}
-                      
-                      {paragraph.level > 1 && (
-                        <button 
-                          className="btn btn-smart-same btn-sm" 
-                          onClick={() => addParagraph('same', paragraph.id)}
-                        >
-                          Same
-                        </button>
-                      )}
-                      
-                      {paragraph.level > 1 && (
-                        <button 
-                          className="btn btn-smart-up btn-sm" 
-                          onClick={() => addParagraph('up', paragraph.id)}
-                        >
-                          One Up
-                        </button>
-                      )}
-                      
-                        <button 
-                          className="btn btn-danger btn-sm" 
-                          onClick={() => removeParagraph(paragraph.id)}
-                          style={{ marginLeft: '8px' }}
-                        >
-                          Delete
-                        </button>
-                      
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-          </div>
-
-          {/* Closing Block Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-signature" style={{ marginRight: '8px' }}></i>
-              Closing Block
-            </div>
-            
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-pen-fancy" style={{ marginRight: '8px' }}></i>
-                Signature Name:
-              </span>
-              <input 
-                className="form-control" 
-                type="text" 
-                placeholder="F. M. LASTNAME"
-                value={formData.sig}
-                onChange={(e) => setFormData(prev => ({ ...prev, sig: autoUppercase(e.target.value) }))}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
-                Delegation of Signature Authority?
-              </label>
-              <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
-                  <input 
-                    type="radio" 
-                    name="ifDelegation" 
-                    value="yes" 
-                    checked={showDelegation}
-                    onChange={() => setShowDelegation(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
-                  <input 
-                    type="radio" 
-                    name="ifDelegation" 
-                    value="no" 
-                    checked={!showDelegation}
-                    onChange={() => setShowDelegation(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
-                </label>
-              </div>
-
-              {showDelegation && (
-                <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
-                    Delegation Authority Type:
-                  </label>
-                  
-                  <div style={{ marginBottom: '1rem' }}>
-                    <select 
-                      className="form-control" 
-                      style={{ marginBottom: '8px' }}
-                      onChange={(e) => updateDelegationType(e.target.value)}
-                    >
-                      <option value="">Select delegation type...</option>
-                      <option value="by_direction">By direction</option>
-                      <option value="acting_commander">Acting for Commander/CO/OIC</option>
-                      <option value="acting_title">Acting for Official by Title</option>
-                      <option value="signing_for">Signing "For" an Absent Official</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                  </div>
-
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
-                      Delegation Text:
-                    </span>
-                    <input 
-                      className="form-control" 
-                      type="text" 
-                      placeholder="Enter delegation authority text (e.g., By direction, Acting, etc.)"
-                      value={formData.delegationText}
-                      onChange={(e) => setFormData(prev => ({ ...prev, delegationText: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div style={{ 
-                    marginTop: '12px', 
-                    padding: '12px', 
-                    backgroundColor: 'rgba(23, 162, 184, 0.1)', 
-                    borderRadius: '8px', 
-                    border: '1px solid #17a2b8',
-                    fontSize: '0.85rem'
-                  }}>
-                    <strong style={{ color: '#17a2b8' }}>
-                      <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
-                      Examples:
-                    </strong>
-                    <br />
-                    <div style={{ marginTop: '4px', color: '#17a2b8' }}>
-                      • <strong>By direction:</strong> For routine correspondence when specifically authorized<br />
-                      • <strong>Acting:</strong> When temporarily succeeding to command or appointed to replace an official<br />
-                      • <strong>Deputy Acting:</strong> For deputy positions acting in absence<br />
-                      • <strong>For:</strong> When signing for an absent official (hand-written "for" before typed name)
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
@@ -1990,42 +1403,33 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 Copy To?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifCopy" 
-                    value="yes" 
-                    checked={showCopy}
-                    onChange={() => setShowCopy(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="copy" 
+                    checked={!showCopy} 
+                    onChange={() => setShowCopy(false)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  No
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="radio" 
-                    name="ifCopy" 
-                    value="no" 
-                    checked={!showCopy}
-                    onChange={() => setShowCopy(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    name="copy" 
+                    checked={showCopy} 
+                    onChange={() => setShowCopy(true)} 
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  Yes
                 </label>
               </div>
-
               {showCopy && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-mail-bulk" style={{ marginRight: '8px' }}></i>
-                    Enter Addressee(s):
-                  </label>
                   {copyTos.map((copy, index) => (
-                    <div key={index} className="input-group">
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        placeholder="Enter copy to information"
+                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                      <input
+                        className="form-control"
+                        type="text"
+                        placeholder="Copy to entry..."
                         value={copy}
                         onChange={(e) => updateItem(index, e.target.value, setCopyTos)}
                       />
@@ -2052,6 +1456,206 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Letter Body Section */}
+          <div className="form-section">
+            <div className="section-legend">
+              <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
+              Letter Body
+            </div>
+            
+            {paragraphs.map((paragraph, index) => (
+              <div key={paragraph.id} className={`paragraph-container ${paragraph.acronymError ? 'invalid-structure' : ''}`}>
+                <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <span className="paragraph-level-preview">
+                    {generateCitationForUI(paragraph, index, paragraphs)}
+                  </span>
+                  <textarea
+                    className="form-control"
+                    rows={3}
+                    placeholder="Enter paragraph text..."
+                    value={paragraph.content}
+                    onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
+                    style={{ flex: 1 }}
+                  />
+                </div>
+                
+                {paragraph.acronymError && (
+                  <div className="acronym-error">
+                    <i className="fas fa-exclamation-triangle" style={{ marginRight: '4px' }}></i>
+                    <small>{paragraph.acronymError}</small>
+                  </div>
+                )}
+                
+                <div>
+                  <button 
+                    className="btn btn-smart-main btn-sm" 
+                    onClick={() => addParagraph('main', paragraph.id)}
+                  >
+                    Main Paragraph
+                  </button>
+                  {paragraph.level < 8 && (
+                    <button 
+                      className="btn btn-smart-sub btn-sm" 
+                      onClick={() => addParagraph('sub', paragraph.id)}
+                    >
+                      Sub-paragraph
+                    </button>
+                  )}
+                  
+                  {paragraph.level > 1 && (
+                    <button 
+                      className="btn btn-smart-same btn-sm" 
+                      onClick={() => addParagraph('same', paragraph.id)}
+                    >
+                      Same
+                    </button>
+                  )}
+                  
+                  {paragraph.level > 1 && (
+                    <button 
+                      className="btn btn-smart-up btn-sm" 
+                      onClick={() => addParagraph('up', paragraph.id)}
+                    >
+                      One Up
+                    </button>
+                  )}
+                  
+                  <button 
+                    className="btn btn-danger btn-sm" 
+                    onClick={() => removeParagraph(paragraph.id)}
+                    style={{ marginLeft: '10px' }}
+                  >
+                    <i className="fas fa-trash"></i>
+                  </button>
+                  
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={() => moveParagraphUp(paragraph.id)}
+                    disabled={index === 0}
+                  >
+                    <i className="fas fa-arrow-up"></i>
+                  </button>
+                  
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={() => moveParagraphDown(paragraph.id)}
+                    disabled={index === paragraphs.length - 1}
+                  >
+                    <i className="fas fa-arrow-down"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Signature Section */}
+          <div className="form-section">
+            <div className="section-legend">
+              <i className="fas fa-signature" style={{ marginRight: '8px' }}></i>
+              Signature Block
+            </div>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
+                Delegation of Authority?
+              </label>
+              <div className="radio-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input 
+                    type="radio" 
+                    name="delegation" 
+                    checked={!showDelegation} 
+                    onChange={() => setShowDelegation(false)} 
+                  />
+                  No
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input 
+                    type="radio" 
+                    name="delegation" 
+                    checked={showDelegation} 
+                    onChange={() => setShowDelegation(true)} 
+                  />
+                  Yes
+                </label>
+              </div>
+              {showDelegation && (
+                <div className="dynamic-section">
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Type of Delegation:</label>
+                  <select 
+                    className="form-control" 
+                    onChange={(e) => updateDelegationType(e.target.value)}
+                    style={{ marginBottom: '1rem' }}
+                  >
+                    <option value="">Select delegation type...</option>
+                    <option value="by_direction">By direction</option>
+                    <option value="acting_commander">Acting (as commander)</option>
+                    <option value="acting_title">Acting (in title)</option>
+                    <option value="signing_for">For (signing for)</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            
+            <div className="input-group">
+              <span className="input-group-text">
+                <i className="fas fa-pen" style={{ marginRight: '8px' }}></i>
+                Signature:
+              </span>
+              <input 
+                className="form-control" 
+                type="text" 
+                placeholder="e.g., J. DOE"
+                value={formData.sig}
+                onChange={(e) => setFormData(prev => ({ ...prev, sig: autoUppercase(e.target.value) }))}
+              />
+            </div>
+          </div>
+
+          {/* Actions Section */}
+          <div className="form-section">
+            <div className="section-legend">
+              <i className="fas fa-cogs" style={{ marginRight: '8px' }}></i>
+              Actions
+            </div>
+            
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={saveLetter}
+                title="Save Current Letter"
+              >
+                <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
+                Save Letter
+              </button>
+              
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setFormData({
+                    line1: '', line2: '', line3: '', ssic: '', originatorCode: '', 
+                    date: '', from: '', to: '', subj: '', sig: '', delegationText: ''
+                  });
+                  setVias(['']);
+                  setReferences(['']);
+                  setEnclosures(['']);
+                  setCopyTos(['']);
+                  setParagraphs([{ id: 1, level: 1, content: '', acronymError: '' }]);
+                  setShowVia(false);
+                  setShowRef(false);
+                  setShowEncl(false);
+                  setShowCopy(false);
+                  setShowDelegation(false);
+                }}
+                title="Clear All Fields"
+              >
+                <i className="fas fa-eraser" style={{ marginRight: '8px' }}></i>
+                Clear All
+              </button>
             </div>
           </div>
           
@@ -2088,54 +1692,19 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             >
               {isGenerating ? (
                 <>
-                  <span style={{ 
-                    display: 'inline-block', 
-                    width: '20px', 
-                    height: '20px', 
-                    border: '2px solid white', 
-                    borderTop: '2px solid transparent', 
-                    borderRadius: '50%', 
-                    animation: 'spin 1s linear infinite',
-                    marginRight: '8px'
-                  }}></span>
-                  Generating Document...
+                  <i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>
+                  Generating...
                 </>
               ) : (
                 <>
-                  <i className="fas fa-file-download" style={{ marginRight: '8px' }}></i>
-                  Generate Document
+                  <i className="fas fa-download" style={{ marginRight: '8px' }}></i>
+                  Generate Naval Letter
                 </>
               )}
             </button>
           </div>
-
-          {/* Footer */}
-          <div style={{ 
-            marginTop: '32px', 
-            textAlign: 'center', 
-            fontSize: '0.875rem', 
-            color: '#6c757d' 
-          }}>
-            <p>
-              <i className="fas fa-shield-alt" style={{ marginRight: '4px' }}></i>
-              DoD Seal automatically included • Format compliant with SECNAV M-5216.5
-            </p>
-            <p style={{ marginTop: '8px' }}>
-              <a href="https://linktr.ee/semperadmin" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'none' }}>
-                Connect with Semper Admin
-              </a>
-            </p>
-          </div>
         </div>
       </div>
-
-      {/* Spinning animation for loading */}
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
