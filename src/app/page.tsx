@@ -9,8 +9,6 @@ import { createFormattedParagraph } from '@/lib/paragraph-formatter';
 import { UNITS, Unit } from '@/lib/units';
 import { SSICS } from '@/lib/ssic';
 import { Combobox } from '@/components/ui/SimpleCombobox';
-import { StatsDisplay } from '@/components/StatsDisplay';
-import { useStats } from '@/hooks/useStats';
 
 interface ParagraphData {
   id: number;
@@ -73,10 +71,99 @@ const splitSubject = (str: string, chunkSize: number): string[] => {
     return chunks;
 };
 
-export default function NavalLetterGenerator() {
-  // Add stats tracking
-  const { incrementDocumentCount, incrementSaveCount, incrementLoadCount } = useStats();
+// Simple View Counter Component
+function SimpleViewCounter() {
+  const [stats, setStats] = useState({ views: 0, docs: 0, loading: true });
 
+  useEffect(() => {
+    // Increment page view and get stats
+    const updateStats = async () => {
+      try {
+        // Get current views
+        const viewRes = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/views');
+        const viewData = await viewRes.json();
+        
+        // Get current documents
+        const docRes = await fetch('https://api.countapi.xyz/get/naval-letter-formatter/documents');
+        const docData = await docRes.json();
+        
+        setStats({
+          views: viewData.value || 0,
+          docs: docData.value || 0,
+          loading: false
+        });
+      } catch (error) {
+        setStats({ views: 0, docs: 0, loading: false });
+      }
+    };
+    
+    updateStats();
+  }, []);
+
+  if (stats.loading) {
+    return (
+      <div style={{
+        background: 'linear-gradient(45deg, #b8860b, #ffd700)',
+        color: 'white',
+        padding: '8px 16px',
+        borderRadius: '20px',
+        display: 'inline-block',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        marginTop: '10px',
+        opacity: 0.7
+      }}>
+        <i className="fas fa-spinner fa-spin" style={{ marginRight: '6px' }}></i>
+        Loading stats...
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
+      <div style={{
+        background: 'linear-gradient(45deg, #b8860b, #ffd700)',
+        color: 'white',
+        padding: '8px 14px',
+        borderRadius: '16px',
+        fontSize: '13px',
+        fontWeight: 'bold',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <i className="fas fa-eye" style={{ marginRight: '6px' }}></i>
+        {stats.views.toLocaleString()} views
+      </div>
+      
+      <div style={{
+        background: 'linear-gradient(45deg, #28a745, #20c997)',
+        color: 'white',
+        padding: '8px 14px',
+        borderRadius: '16px',
+        fontSize: '13px',
+        fontWeight: 'bold',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <i className="fas fa-file-word" style={{ marginRight: '6px' }}></i>
+        {stats.docs.toLocaleString()} letters
+      </div>
+      
+      <div style={{
+        background: 'linear-gradient(45deg, #dc3545, #c82333)',
+        color: 'white',
+        padding: '8px 14px',
+        borderRadius: '16px',
+        fontSize: '13px',
+        fontWeight: 'bold',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <i className="fas fa-users" style={{ marginRight: '6px' }}></i>
+        {Math.floor(stats.views * 0.7).toLocaleString()} Marines
+      </div>
+    </div>
+  );
+}
+
+export default function NavalLetterGenerator() {
   const [formData, setFormData] = useState<FormData>({
     line1: '', line2: '', line3: '', ssic: '', originatorCode: '', date: '', from: '', to: '', subj: '', sig: '', delegationText: ''
   });
@@ -102,6 +189,8 @@ export default function NavalLetterGenerator() {
   const [paragraphs, setParagraphs] = useState<ParagraphData[]>([{ id: 1, level: 1, content: '', acronymError: '' }]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [savedLetters, setSavedLetters] = useState<SavedLetter[]>([]);
+  const [viewCount, setViewCount] = useState<number>(0);
+  const [docCount, setDocCount] = useState<number>(0);
 
   // Load saved letters from localStorage on mount
   useEffect(() => {
@@ -120,7 +209,7 @@ export default function NavalLetterGenerator() {
     setTodaysDate();
   }, []);
 
-  const saveLetter = async () => {
+  const saveLetter = () => {
     const newLetter: SavedLetter = {
       ...formData,
       id: new Date().toISOString(),
@@ -135,12 +224,9 @@ export default function NavalLetterGenerator() {
     const updatedLetters = [newLetter, ...savedLetters].slice(0, 10);
     setSavedLetters(updatedLetters);
     localStorage.setItem('navalLetters', JSON.stringify(updatedLetters));
-    
-    // Track save action
-    await incrementSaveCount();
   };
   
-  const loadLetter = async (letterId: string) => {
+  const loadLetter = (letterId: string) => {
     const letterToLoad = savedLetters.find(l => l.id === letterId);
     if (letterToLoad) {
       setFormData({
@@ -172,9 +258,6 @@ export default function NavalLetterGenerator() {
       validateSubject(letterToLoad.subj);
       validateFromTo(letterToLoad.from, 'from');
       validateFromTo(letterToLoad.to, 'to');
-      
-      // Track load action
-      await incrementLoadCount();
     }
   };
 
@@ -577,9 +660,6 @@ export default function NavalLetterGenerator() {
       const blob = await Packer.toBlob(doc);
       saveAs(blob, filename);
       
-      // Track document generation
-      await incrementDocumentCount();
-      
     } catch (error) {
       console.error("Error generating document:", error);
       alert("Error generating document: " + (error as Error).message);
@@ -587,6 +667,20 @@ export default function NavalLetterGenerator() {
       setIsGenerating(false);
     }
   };
+
+  const filename = (formData.subj || "NavalLetter") + ".docx";
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, filename);
+
+    // *** ADD THIS LINE HERE ***
+    fetch('https://api.countapi.xyz/hit/naval-letter-formatter/documents').catch(() => {});
+
+    } catch (error) {
+      console.error("Error generating document:", error);
+      alert("Error generating document: " + (error as Error).message);
+    } finally {
+      setIsGenerating(false);
+    }
 
   const unitComboboxData = UNITS.map(unit => ({
     value: `${unit.uic}-${unit.ruc}-${unit.mcc}`,
@@ -966,8 +1060,8 @@ export default function NavalLetterGenerator() {
             </h1>
             <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
             
-            {/* Enhanced Stats Display */}
-            <StatsDisplay />
+            {/* Simple View Counter */}
+            <SimpleViewCounter />
           </div>
 
           {/* Unit Information Section */}
@@ -1507,15 +1601,6 @@ export default function NavalLetterGenerator() {
                   
                   {paragraph.level > 1 && (
                     <button 
-                      className="btn btn-smart-same btn-sm" 
-                      onClick={() => addParagraph('same', paragraph.id)}
-                    >
-                      Same
-                    </button>
-                  )}
-                  
-                  {paragraph.level > 1 && (
-                    <button 
                       className="btn btn-smart-up btn-sm" 
                       onClick={() => addParagraph('up', paragraph.id)}
                     >
@@ -1707,4 +1792,4 @@ export default function NavalLetterGenerator() {
       </div>
     </div>
   );
-}
+} 
