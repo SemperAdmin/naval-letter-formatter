@@ -1,4 +1,4 @@
-// src/components/combobox.tsx - Updated styling to match your app theme
+// src/components/combobox.tsx - RED theme to match your app
 
 'use client';
 
@@ -57,32 +57,30 @@ export function Combobox({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            // Match your app's styling
+            // RED theme to match your form fields (like in image 2)
             "w-full justify-between h-11 px-4 py-2",
-            "bg-white border-2 border-amber-200 rounded-lg",
-            "text-gray-900 font-medium",
-            "hover:border-amber-300 hover:bg-amber-50",
-            "focus:border-amber-400 focus:ring-2 focus:ring-amber-200",
+            "bg-red-500 border-0 rounded-lg", // Red background, no border
+            "text-white font-medium", // White text
+            "hover:bg-red-600 transition-colors duration-200",
+            "focus:bg-red-600 focus:ring-2 focus:ring-red-300 focus:ring-opacity-50",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            "shadow-sm transition-all duration-200",
-            // When selected, match the golden theme
-            selectedOption && "border-amber-400 bg-amber-50",
+            "shadow-sm",
             className
           )}
         >
           <span className={cn(
-            "truncate text-left",
-            !selectedOption && "text-gray-500"
+            "truncate text-left text-white",
+            !selectedOption && "text-red-100 opacity-90"
           )}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-amber-600" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-white" />
         </Button>
       </PopoverTrigger>
       <PopoverContent 
         className={cn(
           "w-[var(--radix-popover-trigger-width)] p-0",
-          "border-2 border-amber-200 shadow-lg",
+          "border border-red-200 shadow-lg",
           "bg-white rounded-lg"
         )}
         sideOffset={4}
@@ -91,8 +89,8 @@ export function Combobox({
           <CommandInput 
             placeholder={`Search ${placeholder.toLowerCase()}...`}
             className={cn(
-              "border-b border-amber-100",
-              "focus:ring-0 focus:border-amber-300"
+              "border-b border-red-100 text-gray-900",
+              "focus:ring-0 focus:border-red-300"
             )}
           />
           <CommandList className="max-h-[300px] overflow-auto">
@@ -111,17 +109,17 @@ export function Combobox({
                   }}
                   className={cn(
                     "flex items-center justify-between px-4 py-3",
-                    "hover:bg-amber-50 cursor-pointer",
+                    "hover:bg-red-50 cursor-pointer",
                     "text-gray-900 font-medium",
                     "border-b border-gray-100 last:border-b-0",
-                    // Highlight selected item
-                    value === option.value && "bg-amber-100 text-amber-900"
+                    // Highlight selected item in red theme
+                    value === option.value && "bg-red-100 text-red-900"
                   )}
                 >
                   <span className="truncate pr-2">{option.label}</span>
                   <Check
                     className={cn(
-                      "h-4 w-4 text-amber-600 shrink-0",
+                      "h-4 w-4 text-red-600 shrink-0",
                       value === option.value ? "opacity-100" : "opacity-0"
                     )}
                   />
