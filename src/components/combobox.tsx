@@ -3,7 +3,6 @@
 import * as React from "react"
 import { Check, ChevronsUpDown, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -41,55 +40,93 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
     setOpen(false);
   }
 
+  // Custom button styles that exactly match your form-control styling
+  const buttonBaseStyles: React.CSSProperties = {
+    // Form control base styling - matching your Bootstrap exactly
+    flex: '1',
+    border: '2px solid #e9ecef',
+    borderRadius: '0 8px 8px 0',
+    padding: '12px',
+    minHeight: '48px',
+    transition: 'all 0.3s ease',
+    fontSize: '16px',
+    fontWeight: '400',
+    color: '#495057',
+    backgroundColor: '#ffffff',
+    boxShadow: 'none',
+    cursor: 'pointer',
+    outline: 'none',
+    
+    // Layout
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    textAlign: 'left',
+    
+    // Remove all default button styling
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    
+    // Prevent text selection
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    
+    // Modern enhancements
+    backdropFilter: 'blur(2px)',
+    position: 'relative'
+  };
+
+  const buttonFocusStyles: React.CSSProperties = {
+    borderColor: '#b8860b',
+    boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.25)',
+    outline: 'none'
+  };
+
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+        <div
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          tabIndex={0}
           style={{
-            // Override Bootstrap .form-control styling
-            background: '#ffffff',
-            border: '2px solid #e9ecef',
-            borderRadius: '0 8px 8px 0',
-            padding: '12px',
-            minHeight: '48px',
-            transition: 'all 0.3s ease',
-            fontSize: '16px',
-            fontWeight: '400',
-            color: '#495057',
-            boxShadow: 'none',
-            // Modern enhancements
-            backdropFilter: 'blur(4px)',
-            position: 'relative',
-            zIndex: '1'
+            ...buttonBaseStyles,
+            ...(isHovered || value ? {
+              borderColor: '#b8860b',
+              boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.15)',
+              transform: 'translateY(-1px)'
+            } : {}),
+            ...(isFocused ? buttonFocusStyles : {}),
+            ...(value ? {
+              borderColor: '#b8860b',
+              backgroundColor: '#fefefe',
+              fontWeight: '500'
+            } : {})
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#b8860b';
-            e.currentTarget.style.boxShadow = '0 0 0 0.2rem rgba(184, 134, 11, 0.25)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={(e) => {
-            if (!value) {
-              e.currentTarget.style.borderColor = '#e9ecef';
-              e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = '#b8860b';
-            e.currentTarget.style.boxShadow = '0 0 0 0.2rem rgba(184, 134, 11, 0.25)';
-          }}
-          onBlur={(e) => {
-            if (!value) {
-              e.currentTarget.style.borderColor = '#e9ecef';
-              e.currentTarget.style.boxShadow = 'none';
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onClick={() => setOpen(!open)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setOpen(!open);
             }
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px', 
+            width: '100%',
+            overflow: 'hidden'
+          }}>
             {/* Modern Search Icon Badge */}
             <div 
               style={{
@@ -101,7 +138,9 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                flexShrink: '0'
+                flexShrink: '0',
+                transition: 'all 0.3s ease',
+                transform: isHovered ? 'scale(1.05)' : 'scale(1)'
               }}
             >
               <Search style={{ width: '14px', height: '14px', color: 'white' }} />
@@ -110,12 +149,12 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
             {/* Text Content */}
             <span style={{ 
               flex: '1',
-              textAlign: 'left',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               color: value ? '#495057' : '#6c757d',
-              fontWeight: value ? '500' : '400'
+              fontWeight: value ? '500' : '400',
+              fontSize: '16px'
             }}>
               {value
                 ? items.find((item) => item.value === value)?.label
@@ -134,7 +173,7 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
               }}
             />
           </div>
-        </Button>
+        </div>
       </PopoverTrigger>
       
       <PopoverContent 
