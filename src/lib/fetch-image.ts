@@ -1,5 +1,3 @@
-'use server';
-
 export async function fetchImageAsBase64(imageUrl: string): Promise<string> {
   try {
     const response = await fetch(imageUrl);
