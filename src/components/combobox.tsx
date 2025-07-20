@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { Check, ChevronsUpDown, Search } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -39,250 +41,69 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
     setOpen(false);
   }
 
-  // COMPLETELY CUSTOM BUTTON - NO TAILWIND/SHADCN INTERFERENCE
-  const CustomTriggerButton = React.forwardRef<
-    HTMLButtonElement,
-    React.ButtonHTMLAttributes<HTMLButtonElement>
-  >((props, ref) => {
-    const [isHovered, setIsHovered] = React.useState(false);
-    const [isFocused, setIsFocused] = React.useState(false);
-
-    return (
-      <button
-        ref={ref}
-        type="button"
-        role="combobox"
-        aria-expanded={open}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        onClick={() => setOpen(!open)}
-        style={{
-          // EXACT Bootstrap .form-control styling - FORCE OVERRIDE EVERYTHING
-          flex: '1',
-          border: '2px solid #e9ecef',
-          borderRadius: '0 8px 8px 0',
-          padding: '12px',
-          minHeight: '48px',
-          transition: 'all 0.3s ease',
-          fontSize: '16px',
-          fontWeight: '400',
-          color: '#495057',
-          backgroundColor: '#ffffff',
-          boxShadow: 'none',
-          cursor: 'pointer',
-          outline: 'none',
-          
-          // Layout properties
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          textAlign: 'left',
-          
-          // FORCE REMOVE ALL DEFAULT STYLING
-          appearance: 'none',
-          WebkitAppearance: 'none',
-          MozAppearance: 'none',
-          border: '2px solid #e9ecef',
-          borderImage: 'none',
-          borderStyle: 'solid',
-          borderWidth: '2px',
-          
-          // Prevent text selection
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          
-          // FORCE OVERRIDE ANY INHERITED STYLES
-          margin: '0',
-          padding: '12px',
-          lineHeight: 'normal',
-          textDecoration: 'none',
-          textTransform: 'none',
-          verticalAlign: 'baseline',
-          
-          // Modern enhancements
-          backdropFilter: 'blur(2px)',
-          position: 'relative',
-          
-          // Dynamic styling based on state
-          ...(isHovered || value ? {
-            borderColor: '#b8860b !important',
-            boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.15) !important',
-            transform: 'translateY(-1px)'
-          } : {}),
-          ...(isFocused ? {
-            borderColor: '#b8860b !important',
-            boxShadow: '0 0 0 0.2rem rgba(184, 134, 11, 0.25) !important',
-            outline: 'none !important'
-          } : {}),
-          ...(value ? {
-            borderColor: '#b8860b !important',
-            backgroundColor: '#fefefe !important',
-            fontWeight: '500'
-          } : {})
-        }}
-        {...props}
-      >
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px', 
-          width: '100%',
-          overflow: 'hidden'
-        }}>
-          {/* Modern Search Icon Badge */}
-          <div 
-            style={{
-              background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-              borderRadius: '6px',
-              width: '28px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              flexShrink: '0',
-              transition: 'all 0.3s ease',
-              transform: isHovered ? 'scale(1.05)' : 'scale(1)'
-            }}
-          >
-            <Search style={{ width: '14px', height: '14px', color: 'white' }} />
-          </div>
-          
-          {/* Text Content */}
-          <span style={{ 
-            flex: '1',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            color: value ? '#495057' : '#6c757d',
-            fontWeight: value ? '500' : '400',
-            fontSize: '16px'
-          }}>
-            {value
-              ? items.find((item) => item.value === value)?.label
-              : placeholder}
-          </span>
-          
-          {/* Chevron Icon */}
-          <ChevronsUpDown 
-            style={{
-              width: '16px',
-              height: '16px',
-              color: '#6c757d',
-              transition: 'all 0.3s ease',
-              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-              flexShrink: '0'
-            }}
-          />
-        </div>
-      </button>
-    );
-  });
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <CustomTriggerButton />
+        <Button
+          variant="naval-search"
+          size="naval"
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            "w-full justify-between",
+            value && "border-naval-gold bg-white/99 font-medium"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            {/* Naval Search Badge */}
+            <div className="naval-search-badge">
+              <Search className="h-3.5 w-3.5 text-white" />
+            </div>
+            
+            {/* Text Content */}
+            <span className={cn(
+              "flex-1 truncate text-left",
+              value ? "text-naval-gray font-medium" : "text-naval-text-muted font-normal"
+            )}>
+              {value
+                ? items.find((item) => item.value === value)?.label
+                : placeholder}
+            </span>
+          </div>
+          
+          {/* Chevron */}
+          <ChevronsUpDown className={cn(
+            "h-4 w-4 shrink-0 text-naval-text-muted transition-transform duration-300",
+            open && "rotate-180 text-naval-gold"
+          )} />
+        </Button>
       </PopoverTrigger>
       
-      <PopoverContent 
-        style={{
-          background: 'rgba(255, 255, 255, 0.98)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(184, 134, 11, 0.2)',
-          borderRadius: '12px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          zIndex: '9999'
-        }}
-        className="w-[var(--radix-popover-trigger-width)] p-0"
-        sideOffset={8}
-      >
-        <Command style={{ borderRadius: '12px' }}>
-          {/* Search Input Header */}
-          <div style={{ 
-            position: 'relative', 
-            borderBottom: '1px solid #e9ecef',
-            padding: '0'
-          }}>
-            <div style={{
-              position: 'absolute',
-              left: '16px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-              borderRadius: '6px',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: '2'
-            }}>
-              <Search style={{ width: '12px', height: '12px', color: 'white' }} />
+      <PopoverContent className="naval-dropdown w-[var(--radix-popover-trigger-width)]" sideOffset={8}>
+        <Command className="rounded-xl">
+          {/* Search Header */}
+          <div className="relative border-b border-naval-gray-lighter">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+              <div className="naval-search-badge h-6 w-6">
+                <Search className="h-3 w-3 text-white" />
+              </div>
             </div>
             <CommandInput 
               placeholder={inputPlaceholder}
-              style={{
-                paddingLeft: '56px',
-                paddingRight: '16px',
-                paddingTop: '16px',
-                paddingBottom: '16px',
-                height: '56px',
-                border: 'none',
-                background: 'transparent',
-                fontSize: '14px',
-                fontWeight: '500',
-                borderRadius: '12px 12px 0 0',
-                color: '#495057'
-              }}
+              className="h-14 pl-14 pr-4 border-0 bg-transparent text-naval-gray placeholder:text-naval-text-muted focus:ring-0"
             />
           </div>
           
-          {/* Results List */}
-          <CommandList style={{ 
-            maxHeight: '300px', 
-            overflowY: 'auto', 
-            padding: '8px',
-            background: 'rgba(255, 255, 255, 0.95)'
-          }}>
-            <CommandEmpty style={{ padding: '32px 16px', textAlign: 'center' }}>
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                gap: '12px' 
-              }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
-                  borderRadius: '12px',
-                  width: '48px',
-                  height: '48px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)'
-                }}>
-                  <Search style={{ width: '20px', height: '20px', color: '#6c757d' }} />
+          {/* Results */}
+          <CommandList className="max-h-80 overflow-y-auto p-2">
+            <CommandEmpty className="py-8 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner">
+                  <Search className="h-5 w-5 text-naval-text-muted" />
                 </div>
                 <div>
-                  <p style={{ 
-                    color: '#495057', 
-                    fontWeight: '500', 
-                    fontSize: '14px',
-                    margin: '0 0 4px 0'
-                  }}>
-                    {searchMessage}
-                  </p>
-                  <p style={{ 
-                    color: '#6c757d', 
-                    fontSize: '12px', 
-                    margin: '0'
-                  }}>
-                    Try different search terms
-                  </p>
+                  <p className="text-sm font-medium text-naval-gray">{searchMessage}</p>
+                  <p className="text-xs text-naval-text-muted mt-1">Try different search terms</p>
                 </div>
               </div>
             </CommandEmpty>
@@ -293,77 +114,25 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
                   key={item.value}
                   value={item.label}
                   onSelect={() => handleSelect(item.value)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    margin: '2px 0',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    fontWeight: '500',
-                    fontSize: '14px',
-                    border: '1px solid transparent',
-                    background: value === item.value 
-                      ? 'linear-gradient(90deg, #b8860b, #ffd700)'
-                      : 'transparent',
-                    color: value === item.value ? 'white' : '#495057',
-                    transform: value === item.value ? 'scale(1.02)' : 'scale(1)',
-                    boxShadow: value === item.value ? '0 4px 12px rgba(184, 134, 11, 0.25)' : 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (value !== item.value) {
-                      e.currentTarget.style.background = 'linear-gradient(90deg, rgba(184, 134, 11, 0.1), rgba(255, 215, 0, 0.05))';
-                      e.currentTarget.style.borderColor = 'rgba(184, 134, 11, 0.2)';
-                      e.currentTarget.style.transform = 'scale(1.01)';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (value !== item.value) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.borderColor = 'transparent';
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }
-                  }}
+                  className="naval-command-item"
                 >
-                  <span style={{ 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
-                    whiteSpace: 'nowrap',
-                    paddingRight: '16px',
-                    flex: '1',
-                    lineHeight: '1.4'
-                  }}>
+                  <span className="flex-1 truncate pr-4 leading-relaxed">
                     {item.label}
                   </span>
                   
-                  {/* Check Icon Container */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '4px',
-                    background: value === item.value 
-                      ? 'rgba(255, 255, 255, 0.2)' 
-                      : 'rgba(184, 134, 11, 0.1)',
-                    transition: 'all 0.2s ease',
-                    flexShrink: '0'
-                  }}>
-                    <Check
-                      style={{
-                        width: '12px',
-                        height: '12px',
-                        transition: 'all 0.2s ease',
-                        opacity: value === item.value ? '1' : '0',
-                        transform: value === item.value ? 'scale(1.1)' : 'scale(0.8)',
-                        color: value === item.value ? 'white' : '#b8860b'
-                      }}
-                    />
+                  {/* Check Icon */}
+                  <div className={cn(
+                    "flex h-5 w-5 items-center justify-center rounded transition-all duration-200",
+                    value === item.value 
+                      ? "bg-white/20" 
+                      : "bg-naval-gold/10"
+                  )}>
+                    <Check className={cn(
+                      "h-3 w-3 transition-all duration-200",
+                      value === item.value 
+                        ? "opacity-100 scale-110 text-white" 
+                        : "opacity-0 scale-75 text-naval-gold"
+                    )} />
                   </div>
                 </CommandItem>
               ))}

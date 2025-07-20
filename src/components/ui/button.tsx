@@ -13,17 +13,22 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "naval-button-outline", // Use our naval styling
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Add naval-specific variants
+        "naval-form": "naval-input justify-between text-left",
+        "naval-search": "naval-button-outline",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        // Naval-specific sizes
+        "naval": "h-[48px] px-[12px] py-[12px]",
       },
     },
     defaultVariants: {
