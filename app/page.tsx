@@ -1131,13 +1131,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Unit Information Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-building" className="mr-2"></i>
+              <i className="fas fa-building mr-2"></i>
               Unit Information
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-building" className="mr-2"></i>
+                <i className="fas fa-building mr-2"></i>
                 Unit Name:
               </span>
               <input 
@@ -1151,7 +1151,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-road" className="mr-2"></i>
+                <i className="fas fa-road mr-2"></i>
                 Address Line 1:
               </span>
               <input 
@@ -1165,7 +1165,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-map" className="mr-2"></i>
+                <i className="fas fa-map mr-2"></i>
                 Address Line 2:
               </span>
               <input 
@@ -1181,13 +1181,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Header Information */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-info-circle" className="mr-2"></i>
+              <i className="fas fa-info-circle mr-2"></i>
               Header Information
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-hashtag" className="mr-2"></i>
+                <i className="fas fa-hashtag mr-2"></i>
                 SSIC:
               </span>
               <input 
@@ -1204,14 +1204,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.ssic.message && (
               <div className={`feedback-message ${validation.ssic.isValid ? 'text-success' : 'text-danger'}`}>
-                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} className="mr-1"></i>
+                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
                 {validation.ssic.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-code" className="mr-2"></i>
+                <i className="fas fa-code mr-2"></i>
                 Originator's Code:
               </span>
               <input 
@@ -1225,7 +1225,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-calendar-alt" className="mr-2"></i>
+                <i className="fas fa-calendar-alt mr-2"></i>
                 Date:
               </span>
               <input 
@@ -1247,14 +1247,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             <div className="text-sm text-gray-500 -mt-2.5 mb-4">
               <small>
-                <i className="fas fa-info-circle" className="mr-1"></i>
+                <i className="fas fa-info-circle mr-1"></i>
                 Accepts: YYYYMMDD, MM/DD/YYYY, YYYY-MM-DD, DD MMM YY, or "today". Auto-formats to Naval standard.
               </small>
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-user" className="mr-2"></i>
+                <i className="fas fa-user mr-2"></i>
                 From:
               </span>
               <input 
@@ -1268,14 +1268,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.from.message && (
               <div className={`feedback-message ${validation.from.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'}`} className="mr-1"></i>
+                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'} mr-1`}></i>
                 {validation.from.message}
               </div>
             )}
 
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-users" className="mr-2"></i>
+                <i className="fas fa-users mr-2"></i>
                 To:
               </span>
               <input 
@@ -1289,14 +1289,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.to.message && (
               <div className={`feedback-message ${validation.to.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'}`} className="mr-1"></i>
+                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'} mr-1`}></i>
                 {validation.to.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-book" className="mr-2"></i>
+                <i className="fas fa-book mr-2"></i>
                 Subject:
               </span>
               <input 
@@ -1313,7 +1313,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.subj.message && (
               <div className={`feedback-message ${validation.subj.isValid ? 'text-success' : 'text-warning'}`}>
-                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} className="mr-1"></i>
+                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
                 {validation.subj.message}
               </div>
             )}
@@ -1322,13 +1322,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Optional Items Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-plus-circle" className="mr-2"></i>
+              <i className="fas fa-plus-circle mr-2"></i>
               Optional Items
             </div>
             
             <div className="mb-6">
               <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-route" className="mr-2"></i>
+                <i className="fas fa-route mr-2"></i>
                 Via?
               </label>
               <div className="radio-group">
@@ -1359,7 +1359,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               {showVia && (
                 <div className="dynamic-section">
                   <label className="block font-semibold mb-2">
-                    <i className="fas fa-route" className="mr-2"></i>
+                    <i className="fas fa-route mr-2"></i>
                     Enter Via Addressee(s):
                   </label>
                   {vias.map((via, index) => (
@@ -1377,7 +1377,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setVias)}
                         >
-                          <i className="fas fa-plus" className="mr-1"></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1386,7 +1386,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setVias)}
                         >
-                          <i className="fas fa-trash" className="mr-1"></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1398,7 +1398,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="mb-6">
               <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-bookmark" className="mr-2"></i>
+                <i className="fas fa-bookmark mr-2"></i>
                 Reference(s)?
               </label>
               <div className="radio-group">
@@ -1429,7 +1429,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               {showRef && (
                 <div className="dynamic-section">
                   <label className="block font-semibold mb-2">
-                    <i className="fas fa-bookmark" className="mr-2"></i>
+                    <i className="fas fa-bookmark mr-2"></i>
                     Enter Reference(s):
                   </label>
                   {references.map((ref, index) => (
@@ -1447,7 +1447,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setReferences)}
                         >
-                          <i className="fas fa-plus" className="mr-1"></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1456,7 +1456,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setReferences)}
                         >
-                          <i className="fas fa-trash" className="mr-1"></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1468,7 +1468,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="mb-6">
               <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-paperclip" className="mr-2"></i>
+                <i className="fas fa-paperclip mr-2"></i>
                 Enclosure(s)?
               </label>
               <div className="radio-group">
@@ -1499,7 +1499,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               {showEncl && (
                 <div className="dynamic-section">
                   <label className="block font-semibold mb-2">
-                    <i className="fas fa-paperclip" className="mr-2"></i>
+                    <i className="fas fa-paperclip mr-2"></i>
                     Enter Enclosure(s):
                   </label>
                   {enclosures.map((encl, index) => (
@@ -1517,7 +1517,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setEnclosures)}
                         >
-                          <i className="fas fa-plus" className="mr-1"></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1526,7 +1526,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setEnclosures)}
                         >
-                          <i className="fas fa-trash" className="mr-1"></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1540,7 +1540,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Body Paragraphs Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-paragraph" className="mr-2"></i>
+              <i className="fas fa-paragraph mr-2"></i>
               Body Paragraphs
             </div>
             
@@ -1560,7 +1560,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                       <div>
                         <button 
                           className="btn btn-sm" 
-                          style={{ background: '#f8f9fa', border: '1px solid #dee2e6', marginRight: '4px' }}
+                          style={{ background: "#f8f9fa", border: "1px solid #dee2e6", marginRight: "4px" } as React.CSSProperties}
                           onClick={() => moveParagraphUp(paragraph.id)} 
                           disabled={index === 0}
                           title="Move Up"
@@ -1569,7 +1569,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                         </button>
                         <button 
                           className="btn btn-sm" 
-                          style={{ background: '#f8f9fa', border: '1px solid #dee2e6' }}
+                          style={{ background: "#f8f9fa", border: "1px solid #dee2e6" } as React.CSSProperties}
                           onClick={() => moveParagraphDown(paragraph.id)} 
                           disabled={index === paragraphs.length - 1}
                           title="Move Down"
@@ -1585,7 +1585,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                       placeholder="Enter your paragraph content here..."
                       value={paragraph.content}
                       onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
-                      style={{ marginBottom: '12px', flex: 1 }}
+                      style={{ marginBottom: '12px', flex: 1 } as React.CSSProperties}
                     />
                     
                     
@@ -1622,9 +1622,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                       )}
                       
                         <button 
-                          className="btn btn-danger btn-sm" 
-                          onClick={() => removeParagraph(paragraph.id)}
-                          className="ml-2"
+                          className="btn btn-danger btn-sm ml-2" onClick={() => removeParagraph(paragraph.id)}
                         >
                           Delete
                         </button>
@@ -1640,13 +1638,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Closing Block Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-signature" className="mr-2"></i>
+              <i className="fas fa-signature mr-2"></i>
               Closing Block
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-pen-fancy" className="mr-2"></i>
+                <i className="fas fa-pen-fancy mr-2"></i>
                 Signature Name:
               </span>
               <input 
@@ -1660,7 +1658,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
             <div className="mb-6">
               <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-user-tie" className="mr-2"></i>
+                <i className="fas fa-user-tie mr-2"></i>
                 Delegation of Signature Authority?
               </label>
               <div className="radio-group">
@@ -1691,14 +1689,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               {showDelegation && (
                 <div className="dynamic-section">
                   <label className="block font-semibold mb-2">
-                    <i className="fas fa-user-tie" className="mr-2"></i>
+                    <i className="fas fa-user-tie mr-2"></i>
                     Delegation Authority Type:
                   </label>
                   
                   <div className="mb-4">
                     <select 
-                      className="form-control" 
-                      className="mb-2"
+                      className="form-control mb-2" 
+                      
                       onChange={(e) => updateDelegationType(e.target.value)}
                     >
                       <option value="">Select delegation type...</option>
@@ -1712,7 +1710,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
                   <div className="input-group">
                     <span className="input-group-text">
-                      <i className="fas fa-edit" className="mr-2"></i>
+                      <i className="fas fa-edit mr-2"></i>
                       Delegation Text:
                     </span>
                     <input 
@@ -1731,13 +1729,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                     borderRadius: '8px', 
                     border: '1px solid #17a2b8',
                     fontSize: '0.85rem'
-                  }}>
+                  } as React.CSSProperties}>
                     <strong className="text-cyan-600">
-                      <i className="fas fa-info-circle" className="mr-1"></i>
+                      <i className="fas fa-info-circle mr-1"></i>
                       Examples:
                     </strong>
                     <br />
-                    <div style={{ marginTop: '4px', color: '#17a2b8' }}>
+                    <div style={{ marginTop: '4px', color: '#17a2b8' } as React.CSSProperties}>
                       • <strong>By direction:</strong> For routine correspondence when specifically authorized<br />
                       • <strong>Acting:</strong> When temporarily succeeding to command or appointed to replace an official<br />
                       • <strong>Deputy Acting:</strong> For deputy positions acting in absence<br />
@@ -1750,7 +1748,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
             <div className="mb-6">
               <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-copy" className="mr-2"></i>
+                <i className="fas fa-copy mr-2"></i>
                 Copy To?
               </label>
               <div className="radio-group">
@@ -1781,7 +1779,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               {showCopy && (
                 <div className="dynamic-section">
                   <label className="block font-semibold mb-2">
-                    <i className="fas fa-mail-bulk" className="mr-2"></i>
+                    <i className="fas fa-mail-bulk mr-2"></i>
                     Enter Addressee(s):
                   </label>
                   {copyTos.map((copy, index) => (
@@ -1799,7 +1797,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setCopyTos)}
                         >
-                          <i className="fas fa-plus" className="mr-1"></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1808,7 +1806,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setCopyTos)}
                         >
-                          <i className="fas fa-trash" className="mr-1"></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1823,7 +1821,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {savedLetters.length > 0 && (
             <div className="form-section">
                 <div className="section-legend">
-                    <i className="fas fa-save" className="mr-2"></i>
+                    <i className="fas fa-save mr-2"></i>
                     Saved Versions
                 </div>
                 {savedLetters.map(letter => (
@@ -1834,7 +1832,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                         </div>
                         <div className="saved-letter-actions">
                             <button className="btn btn-sm btn-success" onClick={() => loadLetter(letter.id)}>
-                              <i className="fas fa-upload" className="mr-1"></i>
+                              <i className="fas fa-upload mr-1"></i>
                               Load
                             </button>
                         </div>
@@ -1861,12 +1859,12 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                     borderRadius: '50%', 
                     animation: 'spin 1s linear infinite',
                     marginRight: '8px'
-                  }}></span>
+                  } as React.CSSProperties}></span>
                   Generating Document...
                 </>
               ) : (
                 <>
-                  <i className="fas fa-file-download" className="mr-2"></i>
+                  <i className="fas fa-file-download mr-2"></i>
                   Generate Document
                 </>
               )}
@@ -1879,13 +1877,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             textAlign: 'center', 
             fontSize: '0.875rem', 
             color: '#6c757d' 
-          }}>
+          } as React.CSSProperties}>
             <p>
-              <i className="fas fa-shield-alt" className="mr-1"></i>
+              <i className="fas fa-shield-alt mr-1"></i>
               DoD Seal automatically included • Format compliant with SECNAV M-5216.5
             </p>
             <p className="mt-2">
-              <a href="https://linktr.ee/semperadmin" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'none' }}>
+              <a href="https://linktr.ee/semperadmin" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'none' } as React.CSSProperties}>
                 Connect with Semper Admin
               </a>
             </p>
@@ -1905,6 +1903,10 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 }
 
     
+
+
+
+
 
 
 
