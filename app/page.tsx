@@ -1122,10 +1122,10 @@ headerParagraphs.push(new Paragraph({ text: "" }));
         <div className="main-container">
           <div className="text-center mb-5">
             <img src="https://yt3.googleusercontent.com/KxVUCCrrOygiNK4sof8n_pGMIjEu3w0M3eY7pFWPmD20xjBzHFjbXgtSBzor8UBuwg6pWsBI=s160-c-k-c0x00ffffff-no-rj" alt="Semper Admin Logo" className="w-24 h-24 mx-auto rounded-full" />
-            <h1 className="main-title" className="mb-0 mt-2.5">
+            <h1 className="main-title mb-0 mt-2.5">
               Naval Letter Format Generator
             </h1>
-            <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
+            <p className="mt-0 text-xl text-gray-500">by Semper Admin</p>
           </div>
 
           {/* Unit Information Section */}
@@ -1905,6 +1905,9 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 }
 
     
+
+
+
 
 
 
