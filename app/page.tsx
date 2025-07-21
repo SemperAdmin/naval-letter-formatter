@@ -1,26 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions } from 'docx';
+import { useState, useEffect } from 'react';
+import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, IParagraphOptions } from 'docx';
 import { saveAs } from 'file-saver';
 import { fetchImageAsBase64 } from '@/lib/fetch-image';
 import { DOC_SETTINGS } from '@/lib/doc-settings';
 import { createFormattedParagraph } from '@/lib/paragraph-formatter';
-import { UNITS, Unit } from '@/lib/units';
-import { SSICS } from '@/lib/ssic';
-import { Combobox } from '@/components/ui/combobox';
+
 
 interface ParagraphData {
   id: number;
   level: number;
   content: string;
-  acronymError?: string;
-}
-interface ParagraphData {
-  id: number;
-  level: number;
-  content: string;
-  acronymError?: string;
 }
 
 interface FormData {
@@ -46,6 +37,7 @@ interface SavedLetter extends FormData {
   copyTos: string[];
   paragraphs: ParagraphData[];
 }
+
 
 interface ValidationState {
   ssic: { isValid: boolean; message: string; };
@@ -77,97 +69,6 @@ const splitSubject = (str: string, chunkSize: number): string[] => {
     return chunks;
 };
 
-// Simple View Counter Component
-function SimpleViewCounter() {
-  const [stats, setStats] = useState({ views: 0, docs: 0, loading: true });
-
-  useEffect(() => {
-    // Increment page view and get stats
-    const updateStats = async () => {
-      try {
-        // Get current views
-        const viewRes = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/views');
-        const viewData = await viewRes.json();
-        
-        // Get current documents
-        const docRes = await fetch('https://api.countapi.xyz/get/naval-letter-formatter/documents');
-        const docData = await docRes.json();
-        
-        setStats({
-          views: viewData.value || 0,
-          docs: docData.value || 0,
-          loading: false
-        });
-      } catch (error) {
-        setStats({ views: 0, docs: 0, loading: false });
-      }
-    };
-    
-    updateStats();
-  }, []);
-
-  if (stats.loading) {
-    return (
-      <div style={{
-        background: 'linear-gradient(45deg, #b8860b, #ffd700)',
-        color: 'white',
-        padding: '8px 16px',
-        borderRadius: '20px',
-        display: 'inline-block',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        marginTop: '10px',
-        opacity: 0.7
-      }}>
-        <i className="fas fa-spinner fa-spin" style={{ marginRight: '6px' }}></i>
-        Loading stats...
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
-      <div style={{
-        background: 'linear-gradient(45deg, #b8860b, #ffd700)',
-        color: 'white',
-        padding: '8px 14px',
-        borderRadius: '16px',
-        fontSize: '13px',
-        fontWeight: 'bold',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <i className="fas fa-eye" style={{ marginRight: '6px' }}></i>
-        {stats.views.toLocaleString()} views
-      </div>
-      
-      <div style={{
-        background: 'linear-gradient(45deg, #28a745, #20c997)',
-        color: 'white',
-        padding: '8px 14px',
-        borderRadius: '16px',
-        fontSize: '13px',
-        fontWeight: 'bold',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <i className="fas fa-file-word" style={{ marginRight: '6px' }}></i>
-        {stats.docs.toLocaleString()} letters
-      </div>
-      
-      <div style={{
-        background: 'linear-gradient(45deg, #dc3545, #c82333)',
-        color: 'white',
-        padding: '8px 14px',
-        borderRadius: '16px',
-        fontSize: '13px',
-        fontWeight: 'bold',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <i className="fas fa-users" style={{ marginRight: '6px' }}></i>
-        {Math.floor(stats.views * 0.7).toLocaleString()} Marines
-      </div>
-    </div>
-  );
-}
 
 export default function NavalLetterGenerator() {
   const [formData, setFormData] = useState<FormData>({
@@ -192,11 +93,9 @@ export default function NavalLetterGenerator() {
   const [enclosures, setEnclosures] = useState<string[]>(['']);
   const [copyTos, setCopyTos] = useState<string[]>(['']);
   
-  const [paragraphs, setParagraphs] = useState<ParagraphData[]>([{ id: 1, level: 1, content: '', acronymError: '' }]);
+  const [paragraphs, setParagraphs] = useState<ParagraphData[]>([{ id: 1, level: 1, content: '' }]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [savedLetters, setSavedLetters] = useState<SavedLetter[]>([]);
-  const [viewCount, setViewCount] = useState<number>(0);
-  const [docCount, setDocCount] = useState<number>(0);
 
   // Load saved letters from localStorage on mount
   useEffect(() => {
@@ -210,6 +109,7 @@ export default function NavalLetterGenerator() {
     }
   }, []);
 
+
   // Set today's date on component mount
   useEffect(() => {
     setTodaysDate();
@@ -218,7 +118,7 @@ export default function NavalLetterGenerator() {
   const saveLetter = () => {
     const newLetter: SavedLetter = {
       ...formData,
-      id: new Date().toISOString(),
+      id: new Date().toISOString(), // Unique ID
       savedAt: new Date().toLocaleString(),
       vias,
       references,
@@ -227,7 +127,7 @@ export default function NavalLetterGenerator() {
       paragraphs,
     };
 
-    const updatedLetters = [newLetter, ...savedLetters].slice(0, 10);
+    const updatedLetters = [newLetter, ...savedLetters].slice(0, 10); // Keep max 10 saves
     setSavedLetters(updatedLetters);
     localStorage.setItem('navalLetters', JSON.stringify(updatedLetters));
   };
@@ -254,18 +154,21 @@ export default function NavalLetterGenerator() {
       setCopyTos(letterToLoad.copyTos);
       setParagraphs(letterToLoad.paragraphs);
       
+      // Also update the UI toggles
       setShowVia(letterToLoad.vias.some(v => v.trim() !== ''));
       setShowRef(letterToLoad.references.some(r => r.trim() !== ''));
       setShowEncl(letterToLoad.enclosures.some(e => e.trim() !== ''));
       setShowCopy(letterToLoad.copyTos.some(c => c.trim() !== ''));
       setShowDelegation(!!letterToLoad.delegationText);
 
+      // Re-validate fields after loading
       validateSSIC(letterToLoad.ssic);
       validateSubject(letterToLoad.subj);
       validateFromTo(letterToLoad.from, 'from');
       validateFromTo(letterToLoad.to, 'to');
     }
   };
+
 
   // Validation Functions
   const validateSSIC = (value: string) => {
@@ -334,6 +237,7 @@ export default function NavalLetterGenerator() {
   const parseAndFormatDate = (dateString: string) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
+    // If already in Naval format, return as-is
     const navalPattern = /^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{2}$/i;
     if (navalPattern.test(dateString)) {
       return dateString;
@@ -341,6 +245,7 @@ export default function NavalLetterGenerator() {
 
     let date: Date | null = null;
 
+    // Handle various date formats
     if (dateString.toLowerCase() === 'today' || dateString.toLowerCase() === 'now') {
       date = new Date();
     } else if (/^\d{8}$/.test(dateString)) {
@@ -365,34 +270,41 @@ export default function NavalLetterGenerator() {
     }
 
     if (!date || isNaN(date.getTime())) {
-      return dateString;
+      return dateString; // Return original if can't parse
     }
 
     const day = date.getDate();
     const month = months[date.getMonth()];
     const year = date.getFullYear().toString().slice(-2);
+    
     return `${day} ${month} ${year}`;
   };
 
   const handleDateChange = (value: string) => {
-    const formattedDate = parseAndFormatDate(value);
-    setFormData(prev => ({ ...prev, date: formattedDate }));
+    const formatted = parseAndFormatDate(value);
+    setFormData(prev => ({ ...prev, date: formatted }));
   };
 
-  const autoUppercase = (value: string) => value.toUpperCase();
-  const numbersOnly = (value: string) => value.replace(/\D/g, '');
+  const numbersOnly = (value: string) => {
+    return value.replace(/\D/g, '');
+  };
+
+  const autoUppercase = (value: string) => {
+    return value.toUpperCase();
+  };
 
   const addItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter(prev => [...prev, '']);
+    setter((prev: string[]) => [...prev, '']);
   };
 
   const removeItem = (index: number, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter(prev => prev.filter((_, i) => i !== index));
+    setter((prev: string[]) => prev.filter((_, i) => i !== index));
   };
 
   const updateItem = (index: number, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter(prev => prev.map((item, i) => i === index ? value : item));
+    setter((prev: string[]) => prev.map((item: string, i: number) => i === index ? value : item));
   };
+
 
   const addParagraph = (type: 'main' | 'sub' | 'same' | 'up', afterId: number) => {
     const currentParagraph = paragraphs.find(p => p.id === afterId);
@@ -422,58 +334,14 @@ export default function NavalLetterGenerator() {
     }
     setParagraphs(prev => prev.filter(p => p.id !== id));
   };
-  
-  const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
-    const fullText = allParagraphs.map(p => p.content).join('\n');
-    const definedAcronyms = new Set<string>();
-    
-    const acronymDefinitionRegex = /\b[A-Za-z\s]+?\s+\(([A-Z]{2,})\)/g;
-    
-    let match;
-    while ((match = acronymDefinitionRegex.exec(fullText)) !== null) {
-        definedAcronyms.add(match[1]);
-    }
-
-    const globallyDefined = new Set<string>();
-    const finalParagraphs = allParagraphs.map(p => {
-        let error = '';
-        const potentialAcronyms = p.content.match(/\b[A-Z]{2,}\b/g) || [];
-
-        for (const acronym of potentialAcronyms) {
-            const isDefined = globallyDefined.has(acronym);
-            const definitionPattern = new RegExp(`\\b([A-Za-z][a-z]+(?:\\s[A-Za-z][a-z]+)*)\\s*\\(\\s*${acronym}\\s*\\)`);
-            const isDefiningNow = definitionPattern.test(p.content);
-
-            if (!isDefined && !isDefiningNow) {
-                 error = `Acronym "${acronym}" used without being defined first. Please define it as "Full Name (${acronym})".`;
-                 break;
-            }
-            if (isDefiningNow) {
-                globallyDefined.add(acronym);
-            }
-        }
-        return { ...p, acronymError: error };
-    });
-
-    setParagraphs(finalParagraphs);
-  }, []);
 
   const updateParagraphContent = (id: number, content: string) => {
-    const newParagraphs = paragraphs.map(p => p.id === id ? { ...p, content } : p)
-    setParagraphs(newParagraphs);
-    validateAcronyms(newParagraphs);
+    setParagraphs(prev => prev.map(p => p.id === id ? { ...p, content } : p));
   };
 
   const moveParagraphUp = (id: number) => {
     const currentIndex = paragraphs.findIndex(p => p.id === id);
     if (currentIndex > 0) {
-      const currentPara = paragraphs[currentIndex];
-      const paraAbove = paragraphs[currentIndex - 1];
-
-      if (currentPara.level > paraAbove.level) {
-        return; 
-      }
-
       const newParagraphs = [...paragraphs];
       [newParagraphs[currentIndex - 1], newParagraphs[currentIndex]] = [newParagraphs[currentIndex], newParagraphs[currentIndex - 1]];
       setParagraphs(newParagraphs);
@@ -500,103 +368,293 @@ export default function NavalLetterGenerator() {
     setFormData(prev => ({ ...prev, delegationText }));
   };
 
-  const generateCitationForUI = (paragraph: ParagraphData, index: number, allParagraphs: ParagraphData[]) => {
-    const { level } = paragraph;
-    
-    let listStartIndex = 0;
-    if (level > 1) {
-        for (let i = index - 1; i >= 0; i--) {
-            if (allParagraphs[i].level < level) {
-                listStartIndex = i + 1;
-                break;
-            }
-        }
-    }
-
-    let count = 0;
-    for (let i = listStartIndex; i <= index; i++) {
-        const p = allParagraphs[i];
-        if (p.level === level) {
-             if (p.content.trim() || p.id === paragraph.id) {
-                count++;
-            }
-        }
-    }
-    
-    if (count === 0) count = 1;
-
-    let citation = '';
-    switch (level) {
-        case 1: citation = `${count}.`; break;
-        case 2: citation = `${String.fromCharCode(96 + count)}.`; break;
-        case 3: citation = `(${count})`; break;
-        case 4: citation = `(${String.fromCharCode(96 + count)})`; break;
-        case 5: citation = `${count}.`; break; 
-        case 6: citation = `${String.fromCharCode(96 + count)}.`; break;
-        case 7: citation = `(${count})`; break;
-        case 8: citation = `(${String.fromCharCode(96 + count)})`; break;
-        default: citation = '';
-    }
-
-    return citation;
-  };
-
   const generateDocument = async () => {
-    if (isGenerating) return;
     setIsGenerating(true);
-    
     try {
-      let sealBuffer: Buffer | null = null;
-      try {
-        const sealBase64 = await fetchImageAsBase64('https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/EGA_%28Eagle%2C_Globe%2C_and_Anchor%29_emblem.svg/512px-EGA_%28Eagle%2C_Globe%2C_and_Anchor%29_emblem.svg.png');
-        sealBuffer = Buffer.from(sealBase64, 'base64');
-      } catch (imgError) {
-        console.warn("Could not load Marine Corps seal image:", imgError);
+      saveLetter(); // Save the current state before generating
+      
+      const sealBuffer = await fetchImageAsBase64("https://www.lrsm.upenn.edu/wp-content/uploads/1960/05/dod-logo.png")
+        .catch(error => {
+            console.error("Could not fetch seal, proceeding without it.", error);
+            return null; // Return null if fetch fails
+        });
+
+      const content = [];
+      
+      content.push(new Paragraph({
+          children: [new TextRun({
+              text: "UNITED STATES MARINE CORPS",
+              bold: true,
+              font: "Times New Roman",
+              size: 20
+          })],
+          alignment: AlignmentType.CENTER
+      }));
+
+      if (formData.line1) {
+          content.push(new Paragraph({
+              children: [new TextRun({ text: formData.line1, font: "Times New Roman", size: 16 })],
+              alignment: AlignmentType.CENTER
+          }));
+      }
+      if (formData.line2) {
+          content.push(new Paragraph({
+              children: [new TextRun({ text: formData.line2, font: "Times New Roman", size: 16 })],
+              alignment: AlignmentType.CENTER
+          }));
+      }
+      if (formData.line3) {
+          content.push(new Paragraph({
+              children: [new TextRun({ text: formData.line3, font: "Times New Roman", size: 16 })],
+              alignment: AlignmentType.CENTER
+          }));
+      }
+      
+      content.push(new Paragraph({ text: "" }));
+      
+      // Sender symbols at 5.5 inches
+      content.push(new Paragraph({
+        children: [new TextRun({
+          text: formData.ssic || "",
+          font: "Times New Roman",
+          size: 24
+        })],
+        alignment: AlignmentType.LEFT,
+        indent: { left: 7920 }
+      }));
+
+      content.push(new Paragraph({
+        children: [new TextRun({
+          text: formData.originatorCode || "",
+          font: "Times New Roman",
+          size: 24
+        })],
+        alignment: AlignmentType.LEFT,
+        indent: { left: 7920 }
+      }));
+
+      content.push(new Paragraph({
+        children: [new TextRun({
+          text: formData.date || "",
+          font: "Times New Roman",
+          size: 24
+        })],
+        alignment: AlignmentType.LEFT,
+        indent: { left: 7920 }
+      }));
+
+      content.push(new Paragraph({ text: "" }));
+
+      // From/To section
+      content.push(new Paragraph({
+        children: [new TextRun({
+          text: "From:\t" + formData.from,
+          font: "Times New Roman",
+          size: 24
+        })],
+        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+      }));
+
+      content.push(new Paragraph({
+        children: [new TextRun({
+          text: "To:\t" + formData.to,
+          font: "Times New Roman",
+          size: 24
+        })],
+        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+      }));
+
+      const viasWithContent = vias.filter(via => via.trim());
+      if (viasWithContent.length > 0) {
+        for (let i = 0; i < viasWithContent.length; i++) {
+          const viaText = i === 0 
+            ? `Via:\t(${i + 1})\t${viasWithContent[i]}` 
+            : `\t(${i + 1})\t${viasWithContent[i]}`;
+          content.push(new Paragraph({
+            children: [new TextRun({
+              text: viaText,
+              font: "Times New Roman",
+              size: 24
+            })],
+            tabStops: [
+              { type: TabStopType.LEFT, position: 720 },
+              { type: TabStopType.LEFT, position: 1046 }
+            ],
+          }));
+        }
+      }
+       if (viasWithContent.length > 0) {
+        content.push(new Paragraph({ text: "" }));
       }
 
-      const allNonEmptyReferences = references.filter(ref => ref.trim() !== '');
-      const allNonEmptyEnclosures = enclosures.filter(encl => encl.trim() !== '');
-      const allNonEmptyVias = vias.filter(via => via.trim() !== '');
-      const allNonEmptyCopyTos = copyTos.filter(copy => copy.trim() !== '');
-
-      const content: Paragraph[] = [];
-      const headerParagraphs: Paragraph[] = [];
-
-      const headerFormattedLines = splitSubject(formData.subj, 60);
-
-      if (headerFormattedLines.length === 1) {
-        headerParagraphs.push(new Paragraph({
-            children: [
-                new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
-                new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 }),
-            ],
-            tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-        }));
-      } else if (headerFormattedLines.length === 0) {
-        headerParagraphs.push(new Paragraph({
-            children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
-            tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-        }));
+      // Subject line
+      const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
+      if (formattedSubjLines.length === 0) {
+          content.push(new Paragraph({
+              children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
+              tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+          }));
       } else {
-        const firstLineOptions: IParagraphOptions = {
-            children: [
-                new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
-                new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 }),
-            ],
-            tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-        };
-        headerParagraphs.push(new Paragraph(firstLineOptions));
+          const firstLineOptions: IParagraphOptions = {
+              children: [
+                  new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
+                  new TextRun({ text: formattedSubjLines[0], font: "Times New Roman", size: 24 }),
+              ],
+              tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+          };
+          content.push(new Paragraph(firstLineOptions));
 
-        for (let i = 1; i < headerFormattedLines.length; i++) {
-            headerParagraphs.push(new Paragraph({
-                children: [ new TextRun({ text: "\t" + headerFormattedLines[i], font: "Times New Roman", size: 24 }) ],
-                tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+          for (let i = 1; i < formattedSubjLines.length; i++) {
+              content.push(new Paragraph({
+                  children: [ new TextRun({ text: "\t" + formattedSubjLines[i], font: "Times New Roman", size: 24 }) ],
+                  tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+              }));
+          }
+      }
+      content.push(new Paragraph({ text: "" }));
+      
+
+      // References
+      const refsWithContent = references.filter(ref => ref.trim());
+      if (refsWithContent.length > 0) {
+        for (let i = 0; i < refsWithContent.length; i++) {
+          const refLetter = String.fromCharCode(97 + i);
+          const refText = i === 0 ? "Ref:\t(" + refLetter + ")\t" + refsWithContent[i] : "\t(" + refLetter + ")\t" + refsWithContent[i];
+          content.push(new Paragraph({
+            children: [new TextRun({
+              text: refText,
+              font: "Times New Roman",
+              size: 24
+            })],
+            tabStops: [
+              { type: TabStopType.LEFT, position: 720 },
+              { type: TabStopType.LEFT, position: 1046 }
+            ],
+          }));
+        }
+      }
+      
+      // Enclosures
+      const enclsWithContent = enclosures.filter(encl => encl.trim());
+      if (enclsWithContent.length > 0) {
+          if (refsWithContent.length > 0) {
+              content.push(new Paragraph({ text: "" }));
+          }
+          for (let i = 0; i < enclsWithContent.length; i++) {
+            const enclText = i === 0 ? "Encl:\t(" + (i+1) + ")\t" + enclsWithContent[i] : "\t(" + (i+1) + ")\t" + enclsWithContent[i];
+            content.push(new Paragraph({
+              children: [new TextRun({
+                text: enclText,
+                font: "Times New Roman",
+                size: 24
+              })],
+              tabStops: [
+                { type: TabStopType.LEFT, position: 720 },
+                { type: TabStopType.LEFT, position: 1046 }
+              ],
             }));
+          }
+      }
+      
+      // Add a blank line after the last Ref/Encl and before the first body paragraph
+      if (refsWithContent.length > 0 || enclsWithContent.length > 0) {
+          content.push(new Paragraph({ text: "" }));
+      }
+
+
+      // Body paragraphs
+      paragraphs
+        .filter(p => p.content.trim())
+        .forEach((p, i, all) => {
+            const formattedParagraph = createFormattedParagraph(p, i, all);
+            content.push(formattedParagraph);
+            // Add a hard space after each paragraph
+            content.push(new Paragraph({ text: "" }));
+        });
+
+
+      // Signature
+      if (formData.sig) {
+        content.push(new Paragraph({ text: "" }));
+        content.push(new Paragraph({ text: "" }));
+        
+        content.push(new Paragraph({
+          children: [new TextRun({
+            text: formData.sig.toUpperCase(),
+            font: "Times New Roman",
+            size: 24
+          })],
+          alignment: AlignmentType.LEFT,
+          indent: { left: 4680 }
+        }));
+        
+        if (formData.delegationText) {
+          content.push(new Paragraph({
+            children: [new TextRun({
+              text: formData.delegationText,
+              font: "Times New Roman",
+              size: 24
+            })],
+            alignment: AlignmentType.LEFT,
+            indent: { left: 4680 }
+          }));
         }
       }
 
-      headerParagraphs.push(new Paragraph({ text: "" }));
+      // Copy to
+      const copiesWithContent = copyTos.filter(copy => copy.trim());
+      if (copiesWithContent.length > 0) {
+        content.push(new Paragraph({ text: "" }));
+        content.push(new Paragraph({
+          children: [new TextRun({
+            text: "Copy to:",
+            font: "Times New Roman",
+            size: 24
+          })],
+          alignment: AlignmentType.LEFT
+        }));
+        
+        for (const copy of copiesWithContent) {
+          content.push(new Paragraph({
+            children: [new TextRun({
+              text: copy,
+              font: "Times New Roman",
+              size: 24
+            })],
+            indent: { left: 720 }
+          }));
+        }
+      }
 
+// Create default header content - CORRECTED TO MATCH MAIN PAGE EXACTLY
+const headerParagraphs: Paragraph[] = [];
+const headerFormattedLines = splitSubject(formData.subj.toUpperCase(), 57); // Changed back to 57 to match main page
+if (headerFormattedLines.length === 0) {
+    headerParagraphs.push(new Paragraph({
+        children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
+        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+    }));
+} else {
+    const firstLineOptions: IParagraphOptions = {
+        children: [
+            new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
+            new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 }),
+        ],
+        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+    };
+    headerParagraphs.push(new Paragraph(firstLineOptions));
+
+    for (let i = 1; i < headerFormattedLines.length; i++) {
+        headerParagraphs.push(new Paragraph({
+            children: [ new TextRun({ text: "\t" + headerFormattedLines[i], font: "Times New Roman", size: 24 }) ],
+            tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+        }));
+    }
+}
+// Add one hard space after the header subject line
+headerParagraphs.push(new Paragraph({ text: "" }));
+
+      // Create document
       const doc = new Document({
         creator: "by Semper Admin",
         title: formData.subj || "Naval Letter",
@@ -623,11 +681,11 @@ export default function NavalLetterGenerator() {
                       floating: {
                         horizontalPosition: {
                             relative: HorizontalPositionRelativeFrom.PAGE,
-                            offset: 457200,
+                            offset: 457200, // 0.5 inches
                         },
                         verticalPosition: {
                             relative: VerticalPositionRelativeFrom.PAGE,
-                            offset: 457200,
+                            offset: 457200, // 0.5 inches
                         },
                       },
                     }),
@@ -641,7 +699,7 @@ export default function NavalLetterGenerator() {
           },
           footers: {
             first: new Footer({
-              children: [],
+              children: [], // No footer on first page
             }),
             default: new Footer({
               children: [
@@ -649,7 +707,7 @@ export default function NavalLetterGenerator() {
                   alignment: AlignmentType.CENTER,
                   children: [
                     new TextRun({
-                      children: [PageNumber.CURRENT],
+                      text: "1",
                       font: "Times New Roman",
                       size: 24,
                     })
@@ -662,12 +720,10 @@ export default function NavalLetterGenerator() {
         }]
       });
 
-    const filename = (formData.subj || "NavalLetter") + ".docx";
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, filename);
-
-      // *** ADD THIS LINE HERE ***
-      fetch('https://api.countapi.xyz/hit/naval-letter-formatter/documents').catch(() => {});
+      // Generate and save
+      const filename = (formData.subj || "NavalLetter") + ".docx";
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, filename);
       
     } catch (error) {
       console.error("Error generating document:", error);
@@ -677,54 +733,12 @@ export default function NavalLetterGenerator() {
     }
   };
 
-  const unitComboboxData = UNITS.map(unit => ({
-    value: `${unit.uic}-${unit.ruc}-${unit.mcc}`,
-    label: `${unit.unitName} (RUC: ${unit.ruc}, MCC: ${unit.mcc})`,
-    ...unit,
-  }));
-
-  const handleUnitSelect = (value: string) => {
-    const selectedUnit = unitComboboxData.find(unit => unit.value === value);
-    if (selectedUnit) {
-      setFormData(prev => ({
-        ...prev,
-        line1: selectedUnit.unitName.toUpperCase(),
-        line2: selectedUnit.streetAddress.toUpperCase(),
-        line3: `${selectedUnit.cityState} ${selectedUnit.zip}`.toUpperCase(),
-      }));
-    }
-  };
-
-  const clearUnitInfo = () => {
-    setFormData(prev => ({ ...prev, line1: '', line2: '', line3: '' }));
-  };
-
-  const ssicComboboxData = SSICS.map((ssic, index) => ({
-    value: `${ssic.code}-${index}`,
-    label: `${ssic.code} - ${ssic.nomenclature}`,
-    originalCode: ssic.code,
-  }));
-
-  const handleSsicSelect = (value: string) => {
-    const selectedSsic = ssicComboboxData.find(ssic => ssic.value === value);
-    if (selectedSsic) {
-      setFormData(prev => ({
-        ...prev,
-        ssic: selectedSsic.originalCode,
-      }));
-      validateSSIC(selectedSsic.originalCode);
-    }
-  };
-
-  const clearSsicInfo = () => {
-    setFormData(prev => ({ ...prev, ssic: '' }));
-    validateSSIC('');
-    };
-
   return (
     <div>
+      {/* Font Awesome CSS */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
+      {/* Custom CSS */}
       <style jsx>{`
         .naval-gradient-bg {
           background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -920,12 +934,80 @@ export default function NavalLetterGenerator() {
         .paragraph-container {
           margin-bottom: 20px;
           padding: 15px;
-          border: 1px solid #dee2e6;
+          border: 1px solid #ddd;
           border-radius: 8px;
-          background: rgba(255, 255, 255, 0.9);
+          position: relative;
+          transition: all 0.3s ease;
+          display: flex;
+          flex-direction: column;
         }
-
-        .paragraph-level-preview {
+        
+        .paragraph-container[data-level="1"] {
+          margin-left: 0px;
+          border-left: 4px solid #007bff;
+          background: rgba(0, 123, 255, 0.05);
+        }
+        
+        .paragraph-container[data-level="2"] {
+          margin-left: 30px;
+          border-left: 4px solid #ffc107;
+          background: rgba(255, 193, 7, 0.05);
+        }
+        
+        .paragraph-container[data-level="3"] {
+          margin-left: 60px;
+          border-left: 4px solid #28a745;
+          background: rgba(40, 167, 69, 0.05);
+        }
+        
+        .paragraph-container[data-level="4"] {
+          margin-left: 90px;
+          border-left: 4px solid #17a2b8;
+          background: rgba(23, 162, 184, 0.05);
+        }
+        
+        .paragraph-container[data-level="5"] {
+          margin-left: 120px;
+          border-left: 4px solid #6f42c1;
+          background: rgba(111, 66, 193, 0.05);
+        }
+        
+        .paragraph-container[data-level="6"] {
+          margin-left: 150px;
+          border-left: 4px solid #e83e8c;
+          background: rgba(232, 62, 140, 0.05);
+        }
+        
+        .paragraph-container[data-level="7"] {
+          margin-left: 180px;
+          border-left: 4px solid #fd7e14;
+          background: rgba(253, 126, 20, 0.05);
+        }
+        
+        .paragraph-container[data-level="8"] {
+          margin-left: 210px;
+          border-left: 4px solid #dc3545;
+          background: rgba(220, 53, 69, 0.05);
+        }
+        
+        .paragraph-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        }
+        
+        .paragraph-level-badge {
+          background: linear-gradient(45deg, #b8860b, #ffd700);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: bold;
+          margin-right: 10px;
+        }
+        
+        .paragraph-number-preview {
           font-family: monospace;
           color: #666;
           font-size: 1.1rem;
@@ -970,16 +1052,6 @@ export default function NavalLetterGenerator() {
           border-radius: 4px;
           font-size: 0.85rem;
           color: #dc3545;
-        }
-        
-        .acronym-error {
-          margin-top: 10px;
-          padding: 8px 12px;
-          background-color: rgba(255, 193, 7, 0.1);
-          border: 1px solid #ffc107;
-          border-radius: 4px;
-          font-size: 0.85rem;
-          color: #856404;
         }
 
         .validation-summary {
@@ -1048,50 +1120,24 @@ export default function NavalLetterGenerator() {
 
       <div className="naval-gradient-bg">
         <div className="main-container">
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <img src="https://yt3.googleusercontent.com/KxVUCCrrOygiNK4sof8n_pGMIjEu3w0M3eY7pFWPmD20xjBzHFjbXgtSBzor8UBuwg6pWsBI=s160-c-k-c0x00ffffff-no-rj" alt="Semper Admin Logo" style={{ width: '100px', height: '100px', margin: '0 auto', borderRadius: '50%' }} />
-            <h1 className="main-title" style={{ marginBottom: '0', marginTop: '10px' }}>
+          <div className="text-center mb-5">
+            <img src="https://yt3.googleusercontent.com/KxVUCCrrOygiNK4sof8n_pGMIjEu3w0M3eY7pFWPmD20xjBzHFjbXgtSBzor8UBuwg6pWsBI=s160-c-k-c0x00ffffff-no-rj" alt="Semper Admin Logo" className="w-24 h-24 mx-auto rounded-full" />
+            <h1 className="main-title mb-0 mt-2.5">
               Naval Letter Format Generator
             </h1>
-            <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
-            
-            {/* Simple View Counter */}
-            <SimpleViewCounter />
+            <p className="mt-0 text-xl text-gray-500">by Semper Admin</p>
           </div>
 
           {/* Unit Information Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-building mr-2"></i>
               Unit Information
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Find Unit (by Name, RUC, MCC, or UIC):
-              </label>
-              <div className="flex items-center gap-2">
-                <Combobox
-                  items={unitComboboxData}
-                  onSelect={handleUnitSelect}
-                  placeholder="Search for a unit..."
-                  searchMessage="No unit found."
-                  inputPlaceholder="Search units..."
-                />
-                <button
-                  className="btn btn-danger"
-                  type="button"
-                  onClick={clearUnitInfo}
-                  title="Clear Unit Information"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-building mr-2"></i>
                 Unit Name:
               </span>
               <input 
@@ -1105,7 +1151,7 @@ export default function NavalLetterGenerator() {
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-road" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-road mr-2"></i>
                 Address Line 1:
               </span>
               <input 
@@ -1119,7 +1165,7 @@ export default function NavalLetterGenerator() {
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-map" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-map mr-2"></i>
                 Address Line 2:
               </span>
               <input 
@@ -1135,36 +1181,13 @@ export default function NavalLetterGenerator() {
           {/* Header Information */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-info-circle mr-2"></i>
               Header Information
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Find SSIC by Nomenclature:
-              </label>
-              <div className="flex items-center gap-2">
-                <Combobox
-                  items={ssicComboboxData}
-                  onSelect={handleSsicSelect}
-                  placeholder="Search SSIC by subject..."
-                  searchMessage="No SSIC found."
-                  inputPlaceholder="Search nomenclatures..."
-                />
-                 <button
-                  className="btn btn-danger"
-                  type="button"
-                  onClick={clearSsicInfo}
-                  title="Clear SSIC"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-hashtag" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-hashtag mr-2"></i>
                 SSIC:
               </span>
               <input 
@@ -1181,14 +1204,14 @@ export default function NavalLetterGenerator() {
             </div>
             {validation.ssic.message && (
               <div className={`feedback-message ${validation.ssic.isValid ? 'text-success' : 'text-danger'}`}>
-                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
                 {validation.ssic.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-code" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-code mr-2"></i>
                 Originator's Code:
               </span>
               <input 
@@ -1202,7 +1225,7 @@ export default function NavalLetterGenerator() {
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-calendar-alt" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-calendar-alt mr-2"></i>
                 Date:
               </span>
               <input 
@@ -1222,16 +1245,16 @@ export default function NavalLetterGenerator() {
                 <i className="fas fa-calendar-day"></i>
               </button>
             </div>
-            <div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
+            <div className="text-sm text-gray-500 -mt-2.5 mb-4">
               <small>
-                <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
+                <i className="fas fa-info-circle mr-1"></i>
                 Accepts: YYYYMMDD, MM/DD/YYYY, YYYY-MM-DD, DD MMM YY, or "today". Auto-formats to Naval standard.
               </small>
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-user" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-user mr-2"></i>
                 From:
               </span>
               <input 
@@ -1245,14 +1268,14 @@ export default function NavalLetterGenerator() {
             </div>
             {validation.from.message && (
               <div className={`feedback-message ${validation.from.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'} mr-1`}></i>
                 {validation.from.message}
               </div>
             )}
 
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-users" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-users mr-2"></i>
                 To:
               </span>
               <input 
@@ -1266,14 +1289,14 @@ export default function NavalLetterGenerator() {
             </div>
             {validation.to.message && (
               <div className={`feedback-message ${validation.to.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'} mr-1`}></i>
                 {validation.to.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-book" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-book mr-2"></i>
                 Subject:
               </span>
               <input 
@@ -1290,7 +1313,7 @@ export default function NavalLetterGenerator() {
             </div>
             {validation.subj.message && (
               <div className={`feedback-message ${validation.subj.isValid ? 'text-success' : 'text-warning'}`}>
-                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
                 {validation.subj.message}
               </div>
             )}
@@ -1299,43 +1322,52 @@ export default function NavalLetterGenerator() {
           {/* Optional Items Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-plus-circle" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-plus-circle mr-2"></i>
               Optional Items
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-route mr-2"></i>
                 Via?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="via" 
-                    checked={!showVia} 
-                    onChange={() => setShowVia(false)} 
+                    name="ifVia" 
+                    value="yes" 
+                    checked={showVia}
+                    onChange={() => setShowVia(true)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  No
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="via" 
-                    checked={showVia} 
-                    onChange={() => setShowVia(true)} 
+                    name="ifVia" 
+                    value="no" 
+                    checked={!showVia}
+                    onChange={() => setShowVia(false)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  Yes
+                  <span className="text-lg">No</span>
                 </label>
               </div>
+
               {showVia && (
                 <div className="dynamic-section">
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-route mr-2"></i>
+                    Enter Via Addressee(s):
+                  </label>
                   {vias.map((via, index) => (
-                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                      <input
-                        className="form-control"
-                        type="text"
-                        placeholder="Via entry..."
+                    <div key={index} className="input-group">
+                      <input 
+                        className="form-control" 
+                        type="text" 
+                        placeholder="Enter via information"
                         value={via}
                         onChange={(e) => updateItem(index, e.target.value, setVias)}
                       />
@@ -1345,7 +1377,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => addItem(setVias)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1354,7 +1386,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => removeItem(index, setVias)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1363,40 +1395,49 @@ export default function NavalLetterGenerator() {
                 </div>
               )}
             </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-file-alt" style={{ marginRight: '8px' }}></i>
-                References?
+            
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-bookmark mr-2"></i>
+                Reference(s)?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="ref" 
-                    checked={!showRef} 
-                    onChange={() => setShowRef(false)} 
+                    name="ifRef" 
+                    value="yes" 
+                    checked={showRef}
+                    onChange={() => setShowRef(true)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  No
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="ref" 
-                    checked={showRef} 
-                    onChange={() => setShowRef(true)} 
+                    name="ifRef" 
+                    value="no" 
+                    checked={!showRef}
+                    onChange={() => setShowRef(false)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  Yes
+                  <span className="text-lg">No</span>
                 </label>
               </div>
+
               {showRef && (
                 <div className="dynamic-section">
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-bookmark mr-2"></i>
+                    Enter Reference(s):
+                  </label>
                   {references.map((ref, index) => (
-                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                      <input
-                        className="form-control"
-                        type="text"
-                        placeholder="Reference entry..."
+                    <div key={index} className="input-group">
+                      <input 
+                        className="form-control" 
+                        type="text" 
+                        placeholder="Enter reference information"
                         value={ref}
                         onChange={(e) => updateItem(index, e.target.value, setReferences)}
                       />
@@ -1406,7 +1447,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => addItem(setReferences)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1415,7 +1456,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => removeItem(index, setReferences)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1424,40 +1465,49 @@ export default function NavalLetterGenerator() {
                 </div>
               )}
             </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-paperclip" style={{ marginRight: '8px' }}></i>
-                Enclosures?
+            
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-paperclip mr-2"></i>
+                Enclosure(s)?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="encl" 
-                    checked={!showEncl} 
-                    onChange={() => setShowEncl(false)} 
+                    name="ifEncl" 
+                    value="yes" 
+                    checked={showEncl}
+                    onChange={() => setShowEncl(true)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  No
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="encl" 
-                    checked={showEncl} 
-                    onChange={() => setShowEncl(true)} 
+                    name="ifEncl" 
+                    value="no" 
+                    checked={!showEncl}
+                    onChange={() => setShowEncl(false)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  Yes
+                  <span className="text-lg">No</span>
                 </label>
               </div>
+
               {showEncl && (
                 <div className="dynamic-section">
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-paperclip mr-2"></i>
+                    Enter Enclosure(s):
+                  </label>
                   {enclosures.map((encl, index) => (
-                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                      <input
-                        className="form-control"
-                        type="text"
-                        placeholder="Enclosure entry..."
+                    <div key={index} className="input-group">
+                      <input 
+                        className="form-control" 
+                        type="text" 
+                        placeholder="Enter enclosure information"
                         value={encl}
                         onChange={(e) => updateItem(index, e.target.value, setEnclosures)}
                       />
@@ -1467,7 +1517,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => addItem(setEnclosures)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1476,7 +1526,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => removeItem(index, setEnclosures)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1485,40 +1535,259 @@ export default function NavalLetterGenerator() {
                 </div>
               )}
             </div>
+          </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-copy" style={{ marginRight: '8px' }}></i>
+          {/* Body Paragraphs Section */}
+          <div className="form-section">
+            <div className="section-legend">
+              <i className="fas fa-paragraph mr-2"></i>
+              Body Paragraphs
+            </div>
+            
+            <div>
+              {paragraphs.map((paragraph, index) => {
+                
+                return (
+                  <div 
+                    key={paragraph.id} 
+                    className='paragraph-container'
+                    data-level={paragraph.level}
+                  >
+                    <div className="paragraph-header">
+                      <div>
+                        
+                      </div>
+                      <div>
+                        <button 
+                          className="btn btn-sm" 
+                          style={{ background: "#f8f9fa", border: "1px solid #dee2e6", marginRight: "4px" } as React.CSSProperties}
+                          onClick={() => moveParagraphUp(paragraph.id)} 
+                          disabled={index === 0}
+                          title="Move Up"
+                        >
+                          ↑
+                        </button>
+                        <button 
+                          className="btn btn-sm" 
+                          style={{ background: "#f8f9fa", border: "1px solid #dee2e6" } as React.CSSProperties}
+                          onClick={() => moveParagraphDown(paragraph.id)} 
+                          disabled={index === paragraphs.length - 1}
+                          title="Move Down"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <textarea 
+                      className="form-control" 
+                      rows={4}
+                      placeholder="Enter your paragraph content here..."
+                      value={paragraph.content}
+                      onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
+                      style={{ marginBottom: '12px', flex: 1 } as React.CSSProperties}
+                    />
+                    
+                    
+                    <div>
+                      <button 
+                        className="btn btn-smart-main btn-sm" 
+                        onClick={() => addParagraph('main', paragraph.id)}
+                      >
+                        Main Paragraph
+                      </button>
+                      {paragraph.level < 8 && (
+                        <button 
+                          className="btn btn-smart-sub btn-sm" 
+                          onClick={() => addParagraph('sub', paragraph.id)}
+                        >
+                          Sub-paragraph
+                        </button>
+                      )}
+                      
+                        <button 
+                          className="btn btn-smart-same btn-sm" 
+                          onClick={() => addParagraph('same', paragraph.id)}
+                        >
+                          Same
+                        </button>
+                      
+                      {paragraph.level > 1 && (
+                        <button 
+                          className="btn btn-smart-up btn-sm" 
+                          onClick={() => addParagraph('up', paragraph.id)}
+                        >
+                          One Up
+                        </button>
+                      )}
+                      
+                        <button 
+                          className="btn btn-danger btn-sm ml-2" onClick={() => removeParagraph(paragraph.id)}
+                        >
+                          Delete
+                        </button>
+                      
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+          </div>
+
+          {/* Closing Block Section */}
+          <div className="form-section">
+            <div className="section-legend">
+              <i className="fas fa-signature mr-2"></i>
+              Closing Block
+            </div>
+            
+            <div className="input-group">
+              <span className="input-group-text">
+                <i className="fas fa-pen-fancy mr-2"></i>
+                Signature Name:
+              </span>
+              <input 
+                className="form-control" 
+                type="text" 
+                placeholder="F. M. LASTNAME"
+                value={formData.sig}
+                onChange={(e) => setFormData(prev => ({ ...prev, sig: autoUppercase(e.target.value) }))}
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-user-tie mr-2"></i>
+                Delegation of Signature Authority?
+              </label>
+              <div className="radio-group">
+                <label className="flex items-center">
+                  <input 
+                    type="radio" 
+                    name="ifDelegation" 
+                    value="yes" 
+                    checked={showDelegation}
+                    onChange={() => setShowDelegation(true)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                  />
+                  <span className="text-lg">Yes</span>
+                </label>
+                <label className="flex items-center">
+                  <input 
+                    type="radio" 
+                    name="ifDelegation" 
+                    value="no" 
+                    checked={!showDelegation}
+                    onChange={() => setShowDelegation(false)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                  />
+                  <span className="text-lg">No</span>
+                </label>
+              </div>
+
+              {showDelegation && (
+                <div className="dynamic-section">
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-user-tie mr-2"></i>
+                    Delegation Authority Type:
+                  </label>
+                  
+                  <div className="mb-4">
+                    <select 
+                      className="form-control mb-2" 
+                      
+                      onChange={(e) => updateDelegationType(e.target.value)}
+                    >
+                      <option value="">Select delegation type...</option>
+                      <option value="by_direction">By direction</option>
+                      <option value="acting_commander">Acting for Commander/CO/OIC</option>
+                      <option value="acting_title">Acting for Official by Title</option>
+                      <option value="signing_for">Signing "For" an Absent Official</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="fas fa-edit mr-2"></i>
+                      Delegation Text:
+                    </span>
+                    <input 
+                      className="form-control" 
+                      type="text" 
+                      placeholder="Enter delegation authority text (e.g., By direction, Acting, etc.)"
+                      value={formData.delegationText}
+                      onChange={(e) => setFormData(prev => ({ ...prev, delegationText: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '12px', 
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)', 
+                    borderRadius: '8px', 
+                    border: '1px solid #17a2b8',
+                    fontSize: '0.85rem'
+                  } as React.CSSProperties}>
+                    <strong className="text-cyan-600">
+                      <i className="fas fa-info-circle mr-1"></i>
+                      Examples:
+                    </strong>
+                    <br />
+                    <div style={{ marginTop: '4px', color: '#17a2b8' } as React.CSSProperties}>
+                      • <strong>By direction:</strong> For routine correspondence when specifically authorized<br />
+                      • <strong>Acting:</strong> When temporarily succeeding to command or appointed to replace an official<br />
+                      • <strong>Deputy Acting:</strong> For deputy positions acting in absence<br />
+                      • <strong>For:</strong> When signing for an absent official (hand-written "for" before typed name)
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-copy mr-2"></i>
                 Copy To?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="copy" 
-                    checked={!showCopy} 
-                    onChange={() => setShowCopy(false)} 
+                    name="ifCopy" 
+                    value="yes" 
+                    checked={showCopy}
+                    onChange={() => setShowCopy(true)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  No
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
-                    name="copy" 
-                    checked={showCopy} 
-                    onChange={() => setShowCopy(true)} 
+                    name="ifCopy" 
+                    value="no" 
+                    checked={!showCopy}
+                    onChange={() => setShowCopy(false)}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  Yes
+                  <span className="text-lg">No</span>
                 </label>
               </div>
+
               {showCopy && (
                 <div className="dynamic-section">
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-mail-bulk mr-2"></i>
+                    Enter Addressee(s):
+                  </label>
                   {copyTos.map((copy, index) => (
-                    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                      <input
-                        className="form-control"
-                        type="text"
-                        placeholder="Copy to entry..."
+                    <div key={index} className="input-group">
+                      <input 
+                        className="form-control" 
+                        type="text" 
+                        placeholder="Enter copy to information"
                         value={copy}
                         onChange={(e) => updateItem(index, e.target.value, setCopyTos)}
                       />
@@ -1528,7 +1797,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => addItem(setCopyTos)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1537,7 +1806,7 @@ export default function NavalLetterGenerator() {
                           type="button" 
                           onClick={() => removeItem(index, setCopyTos)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1547,203 +1816,12 @@ export default function NavalLetterGenerator() {
               )}
             </div>
           </div>
-
-          {/* Letter Body Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
-              Letter Body
-            </div>
-            
-            {paragraphs.map((paragraph, index) => (
-              <div key={paragraph.id} className={`paragraph-container ${paragraph.acronymError ? 'invalid-structure' : ''}`}>
-                <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  <span className="paragraph-level-preview">
-                    {generateCitationForUI(paragraph, index, paragraphs)}
-                  </span>
-                  <textarea
-                    className="form-control"
-                    rows={3}
-                    placeholder="Enter paragraph text..."
-                    value={paragraph.content}
-                    onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
-                    style={{ flex: 1 }}
-                  />
-                </div>
-                
-                {paragraph.acronymError && (
-                  <div className="acronym-error">
-                    <i className="fas fa-exclamation-triangle" style={{ marginRight: '4px' }}></i>
-                    <small>{paragraph.acronymError}</small>
-                  </div>
-                )}
-                
-                <div>
-                  <button 
-                    className="btn btn-smart-main btn-sm" 
-                    onClick={() => addParagraph('main', paragraph.id)}
-                  >
-                    Main Paragraph
-                  </button>
-                  {paragraph.level < 8 && (
-                    <button 
-                      className="btn btn-smart-sub btn-sm" 
-                      onClick={() => addParagraph('sub', paragraph.id)}
-                    >
-                      Sub-paragraph
-                    </button>
-                  )}
-                  
-                  {paragraph.level > 1 && (
-                    <button 
-                      className="btn btn-smart-up btn-sm" 
-                      onClick={() => addParagraph('up', paragraph.id)}
-                    >
-                      One Up
-                    </button>
-                  )}
-                  
-                  <button 
-                    className="btn btn-danger btn-sm" 
-                    onClick={() => removeParagraph(paragraph.id)}
-                    style={{ marginLeft: '10px' }}
-                  >
-                    <i className="fas fa-trash"></i>
-                  </button>
-                  
-                  <button 
-                    className="btn btn-secondary btn-sm" 
-                    onClick={() => moveParagraphUp(paragraph.id)}
-                    disabled={index === 0}
-                  >
-                    <i className="fas fa-arrow-up"></i>
-                  </button>
-                  
-                  <button 
-                    className="btn btn-secondary btn-sm" 
-                    onClick={() => moveParagraphDown(paragraph.id)}
-                    disabled={index === paragraphs.length - 1}
-                  >
-                    <i className="fas fa-arrow-down"></i>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Signature Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-signature" style={{ marginRight: '8px' }}></i>
-              Signature Block
-            </div>
-            
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
-                Delegation of Authority?
-              </label>
-              <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input 
-                    type="radio" 
-                    name="delegation" 
-                    checked={!showDelegation} 
-                    onChange={() => setShowDelegation(false)} 
-                  />
-                  No
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input 
-                    type="radio" 
-                    name="delegation" 
-                    checked={showDelegation} 
-                    onChange={() => setShowDelegation(true)} 
-                  />
-                  Yes
-                </label>
-              </div>
-              {showDelegation && (
-                <div className="dynamic-section">
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Type of Delegation:</label>
-                  <select 
-                    className="form-control" 
-                    onChange={(e) => updateDelegationType(e.target.value)}
-                    style={{ marginBottom: '1rem' }}
-                  >
-                    <option value="">Select delegation type...</option>
-                    <option value="by_direction">By direction</option>
-                    <option value="acting_commander">Acting (as commander)</option>
-                    <option value="acting_title">Acting (in title)</option>
-                    <option value="signing_for">For (signing for)</option>
-                  </select>
-                </div>
-              )}
-            </div>
-            
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-pen" style={{ marginRight: '8px' }}></i>
-                Signature:
-              </span>
-              <input 
-                className="form-control" 
-                type="text" 
-                placeholder="e.g., J. DOE"
-                value={formData.sig}
-                onChange={(e) => setFormData(prev => ({ ...prev, sig: autoUppercase(e.target.value) }))}
-              />
-            </div>
-          </div>
-
-          {/* Actions Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-cogs" style={{ marginRight: '8px' }}></i>
-              Actions
-            </div>
-            
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button 
-                className="btn btn-primary" 
-                onClick={saveLetter}
-                title="Save Current Letter"
-              >
-                <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
-                Save Letter
-              </button>
-              
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => {
-                  setFormData({
-                    line1: '', line2: '', line3: '', ssic: '', originatorCode: '', 
-                    date: '', from: '', to: '', subj: '', sig: '', delegationText: ''
-                  });
-                  setVias(['']);
-                  setReferences(['']);
-                  setEnclosures(['']);
-                  setCopyTos(['']);
-                  setParagraphs([{ id: 1, level: 1, content: '', acronymError: '' }]);
-                  setShowVia(false);
-                  setShowRef(false);
-                  setShowEncl(false);
-                  setShowCopy(false);
-                  setShowDelegation(false);
-                }}
-                title="Clear All Fields"
-              >
-                <i className="fas fa-eraser" style={{ marginRight: '8px' }}></i>
-                Clear All
-              </button>
-            </div>
-          </div>
           
           {/* Saved Letters Section */}
           {savedLetters.length > 0 && (
             <div className="form-section">
                 <div className="section-legend">
-                    <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
+                    <i className="fas fa-save mr-2"></i>
                     Saved Versions
                 </div>
                 {savedLetters.map(letter => (
@@ -1754,7 +1832,7 @@ export default function NavalLetterGenerator() {
                         </div>
                         <div className="saved-letter-actions">
                             <button className="btn btn-sm btn-success" onClick={() => loadLetter(letter.id)}>
-                              <i className="fas fa-upload" style={{ marginRight: '4px' }}></i>
+                              <i className="fas fa-upload mr-1"></i>
                               Load
                             </button>
                         </div>
@@ -1764,7 +1842,7 @@ export default function NavalLetterGenerator() {
           )}
 
           {/* Generate Button */}
-          <div style={{ textAlign: 'center' }}>
+          <div className="text-center">
             <button 
               className="generate-btn" 
               onClick={generateDocument} 
@@ -1772,19 +1850,70 @@ export default function NavalLetterGenerator() {
             >
               {isGenerating ? (
                 <>
-                  <i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>
-                  Generating...
+                  <span style={{ 
+                    display: 'inline-block', 
+                    width: '20px', 
+                    height: '20px', 
+                    border: '2px solid white', 
+                    borderTop: '2px solid transparent', 
+                    borderRadius: '50%', 
+                    animation: 'spin 1s linear infinite',
+                    marginRight: '8px'
+                  } as React.CSSProperties}></span>
+                  Generating Document...
                 </>
               ) : (
                 <>
-                  <i className="fas fa-download" style={{ marginRight: '8px' }}></i>
-                  Generate Naval Letter
+                  <i className="fas fa-file-download mr-2"></i>
+                  Generate Document
                 </>
               )}
             </button>
           </div>
+
+          {/* Footer */}
+          <div style={{ 
+            marginTop: '32px', 
+            textAlign: 'center', 
+            fontSize: '0.875rem', 
+            color: '#6c757d' 
+          } as React.CSSProperties}>
+            <p>
+              <i className="fas fa-shield-alt mr-1"></i>
+              DoD Seal automatically included • Format compliant with SECNAV M-5216.5
+            </p>
+            <p className="mt-2">
+              <a href="https://linktr.ee/semperadmin" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'none' } as React.CSSProperties}>
+                Connect with Semper Admin
+              </a>
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Spinning animation for loading */}
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
-} 
+}
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
