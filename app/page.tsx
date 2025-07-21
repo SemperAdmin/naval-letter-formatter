@@ -1131,13 +1131,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Unit Information Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-building" className="mr-2"></i>
               Unit Information
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-building" className="mr-2"></i>
                 Unit Name:
               </span>
               <input 
@@ -1151,7 +1151,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-road" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-road" className="mr-2"></i>
                 Address Line 1:
               </span>
               <input 
@@ -1165,7 +1165,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-map" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-map" className="mr-2"></i>
                 Address Line 2:
               </span>
               <input 
@@ -1181,13 +1181,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Header Information */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-info-circle" className="mr-2"></i>
               Header Information
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-hashtag" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-hashtag" className="mr-2"></i>
                 SSIC:
               </span>
               <input 
@@ -1204,14 +1204,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.ssic.message && (
               <div className={`feedback-message ${validation.ssic.isValid ? 'text-success' : 'text-danger'}`}>
-                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} className="mr-1"></i>
                 {validation.ssic.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-code" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-code" className="mr-2"></i>
                 Originator's Code:
               </span>
               <input 
@@ -1225,7 +1225,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-calendar-alt" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-calendar-alt" className="mr-2"></i>
                 Date:
               </span>
               <input 
@@ -1245,16 +1245,16 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 <i className="fas fa-calendar-day"></i>
               </button>
             </div>
-            <div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
+            <div className="text-sm text-gray-500 -mt-2.5 mb-4">
               <small>
-                <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
+                <i className="fas fa-info-circle" className="mr-1"></i>
                 Accepts: YYYYMMDD, MM/DD/YYYY, YYYY-MM-DD, DD MMM YY, or "today". Auto-formats to Naval standard.
               </small>
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-user" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-user" className="mr-2"></i>
                 From:
               </span>
               <input 
@@ -1268,14 +1268,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.from.message && (
               <div className={`feedback-message ${validation.from.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'}`} className="mr-1"></i>
                 {validation.from.message}
               </div>
             )}
 
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-users" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-users" className="mr-2"></i>
                 To:
               </span>
               <input 
@@ -1289,14 +1289,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.to.message && (
               <div className={`feedback-message ${validation.to.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'}`} className="mr-1"></i>
                 {validation.to.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-book" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-book" className="mr-2"></i>
                 Subject:
               </span>
               <input 
@@ -1313,7 +1313,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.subj.message && (
               <div className={`feedback-message ${validation.subj.isValid ? 'text-success' : 'text-warning'}`}>
-                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
+                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} className="mr-1"></i>
                 {validation.subj.message}
               </div>
             )}
@@ -1322,44 +1322,44 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Optional Items Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-plus-circle" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-plus-circle" className="mr-2"></i>
               Optional Items
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-route" className="mr-2"></i>
                 Via?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifVia" 
                     value="yes" 
                     checked={showVia}
                     onChange={() => setShowVia(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifVia" 
                     value="no" 
                     checked={!showVia}
                     onChange={() => setShowVia(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  <span className="text-lg">No</span>
                 </label>
               </div>
 
               {showVia && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-route" className="mr-2"></i>
                     Enter Via Addressee(s):
                   </label>
                   {vias.map((via, index) => (
@@ -1377,7 +1377,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setVias)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus" className="mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1386,7 +1386,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setVias)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash" className="mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1396,40 +1396,40 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               )}
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-bookmark" style={{ marginRight: '8px' }}></i>
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-bookmark" className="mr-2"></i>
                 Reference(s)?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifRef" 
                     value="yes" 
                     checked={showRef}
                     onChange={() => setShowRef(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifRef" 
                     value="no" 
                     checked={!showRef}
                     onChange={() => setShowRef(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  <span className="text-lg">No</span>
                 </label>
               </div>
 
               {showRef && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-bookmark" style={{ marginRight: '8px' }}></i>
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-bookmark" className="mr-2"></i>
                     Enter Reference(s):
                   </label>
                   {references.map((ref, index) => (
@@ -1447,7 +1447,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setReferences)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus" className="mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1456,7 +1456,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setReferences)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash" className="mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1466,40 +1466,40 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               )}
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-paperclip" style={{ marginRight: '8px' }}></i>
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-paperclip" className="mr-2"></i>
                 Enclosure(s)?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifEncl" 
                     value="yes" 
                     checked={showEncl}
                     onChange={() => setShowEncl(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifEncl" 
                     value="no" 
                     checked={!showEncl}
                     onChange={() => setShowEncl(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  <span className="text-lg">No</span>
                 </label>
               </div>
 
               {showEncl && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-paperclip" style={{ marginRight: '8px' }}></i>
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-paperclip" className="mr-2"></i>
                     Enter Enclosure(s):
                   </label>
                   {enclosures.map((encl, index) => (
@@ -1517,7 +1517,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setEnclosures)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus" className="mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1526,7 +1526,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setEnclosures)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash" className="mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1540,7 +1540,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Body Paragraphs Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-paragraph" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-paragraph" className="mr-2"></i>
               Body Paragraphs
             </div>
             
@@ -1624,7 +1624,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                         <button 
                           className="btn btn-danger btn-sm" 
                           onClick={() => removeParagraph(paragraph.id)}
-                          style={{ marginLeft: '8px' }}
+                          className="ml-2"
                         >
                           Delete
                         </button>
@@ -1640,13 +1640,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Closing Block Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-signature" style={{ marginRight: '8px' }}></i>
+              <i className="fas fa-signature" className="mr-2"></i>
               Closing Block
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-pen-fancy" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-pen-fancy" className="mr-2"></i>
                 Signature Name:
               </span>
               <input 
@@ -1658,47 +1658,47 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               />
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-user-tie" className="mr-2"></i>
                 Delegation of Signature Authority?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifDelegation" 
                     value="yes" 
                     checked={showDelegation}
                     onChange={() => setShowDelegation(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifDelegation" 
                     value="no" 
                     checked={!showDelegation}
                     onChange={() => setShowDelegation(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  <span className="text-lg">No</span>
                 </label>
               </div>
 
               {showDelegation && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-user-tie" className="mr-2"></i>
                     Delegation Authority Type:
                   </label>
                   
-                  <div style={{ marginBottom: '1rem' }}>
+                  <div className="mb-4">
                     <select 
                       className="form-control" 
-                      style={{ marginBottom: '8px' }}
+                      className="mb-2"
                       onChange={(e) => updateDelegationType(e.target.value)}
                     >
                       <option value="">Select delegation type...</option>
@@ -1712,7 +1712,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
                   <div className="input-group">
                     <span className="input-group-text">
-                      <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
+                      <i className="fas fa-edit" className="mr-2"></i>
                       Delegation Text:
                     </span>
                     <input 
@@ -1732,8 +1732,8 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                     border: '1px solid #17a2b8',
                     fontSize: '0.85rem'
                   }}>
-                    <strong style={{ color: '#17a2b8' }}>
-                      <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
+                    <strong className="text-cyan-600">
+                      <i className="fas fa-info-circle" className="mr-1"></i>
                       Examples:
                     </strong>
                     <br />
@@ -1748,40 +1748,40 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               )}
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-copy" style={{ marginRight: '8px' }}></i>
+            <div className="mb-6">
+              <label className="block text-lg font-bold mb-2">
+                <i className="fas fa-copy" className="mr-2"></i>
                 Copy To?
               </label>
               <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifCopy" 
                     value="yes" 
                     checked={showCopy}
                     onChange={() => setShowCopy(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
+                  <span className="text-lg">Yes</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
+                <label className="flex items-center">
                   <input 
                     type="radio" 
                     name="ifCopy" 
                     value="no" 
                     checked={!showCopy}
                     onChange={() => setShowCopy(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
+                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
                   />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
+                  <span className="text-lg">No</span>
                 </label>
               </div>
 
               {showCopy && (
                 <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-mail-bulk" style={{ marginRight: '8px' }}></i>
+                  <label className="block font-semibold mb-2">
+                    <i className="fas fa-mail-bulk" className="mr-2"></i>
                     Enter Addressee(s):
                   </label>
                   {copyTos.map((copy, index) => (
@@ -1799,7 +1799,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setCopyTos)}
                         >
-                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-plus" className="mr-1"></i>
                           Add
                         </button>
                       ) : (
@@ -1808,7 +1808,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setCopyTos)}
                         >
-                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                          <i className="fas fa-trash" className="mr-1"></i>
                           Remove
                         </button>
                       )}
@@ -1823,7 +1823,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {savedLetters.length > 0 && (
             <div className="form-section">
                 <div className="section-legend">
-                    <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
+                    <i className="fas fa-save" className="mr-2"></i>
                     Saved Versions
                 </div>
                 {savedLetters.map(letter => (
@@ -1834,7 +1834,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                         </div>
                         <div className="saved-letter-actions">
                             <button className="btn btn-sm btn-success" onClick={() => loadLetter(letter.id)}>
-                              <i className="fas fa-upload" style={{ marginRight: '4px' }}></i>
+                              <i className="fas fa-upload" className="mr-1"></i>
                               Load
                             </button>
                         </div>
@@ -1844,7 +1844,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           )}
 
           {/* Generate Button */}
-          <div style={{ textAlign: 'center' }}>
+          <div className="text-center">
             <button 
               className="generate-btn" 
               onClick={generateDocument} 
@@ -1866,7 +1866,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 </>
               ) : (
                 <>
-                  <i className="fas fa-file-download" style={{ marginRight: '8px' }}></i>
+                  <i className="fas fa-file-download" className="mr-2"></i>
                   Generate Document
                 </>
               )}
@@ -1881,10 +1881,10 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             color: '#6c757d' 
           }}>
             <p>
-              <i className="fas fa-shield-alt" style={{ marginRight: '4px' }}></i>
+              <i className="fas fa-shield-alt" className="mr-1"></i>
               DoD Seal automatically included • Format compliant with SECNAV M-5216.5
             </p>
-            <p style={{ marginTop: '8px' }}>
+            <p className="mt-2">
               <a href="https://linktr.ee/semperadmin" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'none' }}>
                 Connect with Semper Admin
               </a>
@@ -1905,6 +1905,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 }
 
     
+
 
 
 
