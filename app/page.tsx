@@ -1120,7 +1120,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
       <div className="naval-gradient-bg">
         <div className="main-container">
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <div className="text-center mb-5">
             <img src="https://yt3.googleusercontent.com/KxVUCCrrOygiNK4sof8n_pGMIjEu3w0M3eY7pFWPmD20xjBzHFjbXgtSBzor8UBuwg6pWsBI=s160-c-k-c0x00ffffff-no-rj" alt="Semper Admin Logo" style={{ width: '100px', height: '100px', margin: '0 auto', borderRadius: '50%' }} />
             <h1 className="main-title" style={{ marginBottom: '0', marginTop: '10px' }}>
               Naval Letter Format Generator
@@ -1905,5 +1905,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 }
 
     
+
+
 
 
