@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
   trailingSlash: true,
@@ -11,4 +11,4 @@ const nextConfig = {
   assetPrefix: '/naval-letter-generator/',
 }
 
-export default nextConfig
+module.exports = nextConfig
