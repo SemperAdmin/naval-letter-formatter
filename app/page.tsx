@@ -707,7 +707,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                   alignment: AlignmentType.CENTER,
                   children: [
                     new TextRun({
-                      children: [PageNumber.CURRENT],
+                      text: "1",
                       font: "Times New Roman",
                       size: 24,
                     })
@@ -1905,3 +1905,5 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 }
 
     
+
+
