@@ -129,13 +129,11 @@ interface StructuredReferenceInputProps {
 }
 
 function StructuredReferenceInput({ formData, setFormData }: StructuredReferenceInputProps) {
-  // Generate the full reference string from components
   const generateReferenceString = (who: string, type: string, date: string): string => {
     if (!who || !type || !date) return '';
     return `${who}'s ${type} dtd ${date}`;
   };
 
-  // Update individual reference components and regenerate full reference
   const updateReference = (field: 'who' | 'type' | 'date', value: string) => {
     const newWho = field === 'who' ? value : formData.referenceWho;
     const newType = field === 'type' ? value : formData.referenceType;
@@ -152,12 +150,8 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
     }));
   };
 
-  // Format date as user types (auto-add spaces and format)
   const formatDate = (input: string): string => {
-    // Remove all non-alphanumeric characters
     const cleaned = input.replace(/[^a-zA-Z0-9]/g, '');
-    
-    // Try to format as "DD MMM YY" (e.g., "12 Jul 25")
     if (cleaned.length >= 6) {
       const day = cleaned.substring(0, 2);
       const month = cleaned.substring(2, 5);
@@ -177,111 +171,181 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-blue-900 mb-2">
-          Basic Letter Reference Components
-        </label>
-        
-        {/* Reference Pattern Display */}
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-          <p className="text-sm text-blue-800 mb-2">
-            <strong>Format:</strong> on [who]'s [type] dtd [date]
-          </p>
-          <p className="text-xs text-blue-600">
-            <strong>Examples:</strong> on CO's ltr dtd 12 Jul 25 • on GySgt Admin's AA Form dtd 15 Aug 25
-          </p>
-        </div>
-
-        {/* Structured Input Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* WHO Field */}
+    <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{
+        background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
+        color: 'white',
+        padding: '12px 16px',
+        borderRadius: '8px 8px 0 0',
+        fontWeight: '600',
+        fontSize: '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        Basic Letter Reference Components
+      </div>
+      
+      <div style={{
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        borderTop: 'none',
+        borderRadius: '0 0 8px 8px',
+        padding: '16px'
+      }}>
+        <div style={{
+          background: '#dbeafe',
+          border: '1px solid #93c5fd',
+          borderRadius: '6px',
+          padding: '12px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ marginBottom: '8px' }}>
+            <span style={{ fontWeight: '600', color: '#1e40af' }}>Format:</span>
+            <span style={{ color: '#1e40af', marginLeft: '8px' }}>on [who]'s [type] dtd [date]</span>
+          </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Who
-            </label>
+            <span style={{ fontWeight: '600', color: '#1e40af' }}>Examples:</span>
+            <span style={{ color: '#1e40af', marginLeft: '8px' }}>on CO's ltr dtd 12 Jul 25 • on GySgt Admin's AA Form dtd 15 Aug 25</span>
+          </div>
+        </div>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '16px',
+          marginBottom: '16px'
+        }}>
+          <div>
+            <label style={{
+              display: 'block',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '4px'
+            }}>Who</label>
             <input
               type="text"
               value={formData.referenceWho}
               onChange={(e) => updateReference('who', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px',
+                outline: 'none'
+              }}
               placeholder="CO, GySgt Admin, etc."
               list="common-originators"
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#d1d5db';
+                e.target.style.boxShadow = 'none';
+              }}
             />
             <datalist id="common-originators">
               {COMMON_ORIGINATORS.map(originator => (
                 <option key={originator} value={originator} />
               ))}
             </datalist>
-            <p className="text-xs text-gray-500 mt-1">
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
               Who originated the basic letter?
-            </p>
+            </div>
           </div>
-
-          {/* TYPE Field */}
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Type
-            </label>
+            <label style={{
+              display: 'block',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '4px'
+            }}>Type</label>
             <select
               value={formData.referenceType}
               onChange={(e) => updateReference('type', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px',
+                outline: 'none',
+                background: 'white'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#d1d5db';
+                e.target.style.boxShadow = 'none';
+              }}
             >
               <option value="">Select type</option>
               {REFERENCE_TYPES.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
+                <option key={type.value} value={type.value}>{type.value}</option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
               What type of document?
-            </p>
+            </div>
           </div>
-
-          {/* DATE Field */}
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date
-            </label>
+            <label style={{
+              display: 'block',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '4px'
+            }}>Date</label>
             <input
               type="text"
               value={formData.referenceDate}
               onChange={handleDateChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px',
+                outline: 'none'
+              }}
               placeholder="12 Jul 25"
               maxLength={9}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#d1d5db';
+                e.target.style.boxShadow = 'none';
+              }}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
               Format: DD MMM YY
-            </p>
+            </div>
           </div>
         </div>
-
-        {/* Generated Reference Preview */}
-        {formData.basicLetterReference && (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-            <p className="text-sm font-medium text-green-900 mb-1">
-              Generated Reference:
-            </p>
-            <p className="text-sm text-green-800 font-mono">
-              on {formData.basicLetterReference}
-            </p>
-          </div>
-        )}
-
-        {/* Validation Messages */}
+        
         {formData.endorsementLevel && (
-          <div className="mt-3">
+          <div style={{ marginTop: '12px' }}>
             {!formData.referenceWho && (
-              <p className="text-sm text-red-600">• Please specify who originated the basic letter</p>
+              <div style={{ color: '#dc2626', fontSize: '14px', marginBottom: '4px' }}>
+                • Please specify who originated the basic letter
+              </div>
             )}
             {!formData.referenceType && (
-              <p className="text-sm text-red-600">• Please select the document type</p>
+              <div style={{ color: '#dc2626', fontSize: '14px', marginBottom: '4px' }}>
+                • Please select the document type
+              </div>
             )}
             {!formData.referenceDate && (
-              <p className="text-sm text-red-600">• Please enter the document date</p>
+              <div style={{ color: '#dc2626', fontSize: '14px', marginBottom: '4px' }}>
+                • Please enter the document date
+              </div>
             )}
           </div>
         )}
@@ -1015,7 +1079,16 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
 
 
   const updateParagraphContent = (id: number, content: string) => {
-    const newParagraphs = paragraphs.map(p => p.id === id ? { ...p, content } : p)
+    // Remove hard spaces (non-breaking spaces), line breaks, and other unwanted characters
+    const cleanedContent = content
+      .replace(/\u00A0/g, ' ')  // Replace non-breaking spaces with regular spaces
+      .replace(/\u2007/g, ' ')  // Replace figure spaces with regular spaces
+      .replace(/\u202F/g, ' ')  // Replace narrow non-breaking spaces with regular spaces
+      .replace(/[\r\n]/g, ' ')  // Replace line breaks with spaces
+      .replace(/\s+/g, ' ')     // Replace multiple consecutive spaces with single space
+      .trim();                  // Remove leading/trailing spaces
+      
+    const newParagraphs = paragraphs.map(p => p.id === id ? { ...p, content: cleanedContent } : p)
     setParagraphs(newParagraphs);
     validateAcronyms(newParagraphs);
   };
@@ -2109,14 +2182,33 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
                 {formData.endorsementLevel && (
                   <StructuredReferenceInput formData={formData} setFormData={setFormData} />
                 )}
+                
+
                  
                 {formData.endorsementLevel && (
-                    <div className="space-y-4">
+                    <div style={{ marginTop: '1rem' }}>
                          {/* Page Numbering Section */}
-                        <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                          <h4 className="font-medium text-yellow-900 mb-2">Page Numbering</h4>
+                        <div style={{ 
+                          backgroundColor: '#fef3c7', 
+                          border: '1px solid #fbbf24', 
+                          borderRadius: '8px', 
+                          padding: '0.75rem',
+                          marginBottom: '1rem'
+                        }}>
+                          <h4 style={{ 
+                            fontWeight: '500', 
+                            color: '#92400e', 
+                            marginBottom: '0.5rem',
+                            fontSize: '1rem'
+                          }}>Page Numbering</h4>
                           <div>
-                            <label className="block text-sm font-medium text-yellow-900 mb-1">
+                            <label style={{ 
+                              display: 'block', 
+                              fontSize: '0.875rem', 
+                              fontWeight: '500', 
+                              color: '#92400e', 
+                              marginBottom: '0.25rem'
+                            }}>
                               Last Page # of Previous Document
                             </label>
                             <input
@@ -2126,32 +2218,54 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
                               value={formData.previousPackagePageCount}
                               onChange={(e) => {
                                 const newPrevCount = parseInt(e.target.value) || 0;
-                                setFormData(prev => ({ 
-                                  ...prev, 
+                                setFormData(prev => ({
+                                  ...prev,
                                   previousPackagePageCount: newPrevCount,
                                   startingPageNumber: newPrevCount + 1
                                 }))
                               }}
-                              className="w-full px-3 py-2 border border-yellow-300 rounded-md"
+                              style={{
+                                width: '100%',
+                                padding: '0.5rem 0.75rem',
+                                border: '1px solid #fbbf24',
+                                borderRadius: '0.375rem',
+                                fontSize: '1rem'
+                              }}
                             />
-                            <p className="text-xs text-yellow-700 mt-1">
+                            <p style={{ 
+                              fontSize: '0.75rem', 
+                              color: '#92400e', 
+                              marginTop: '0.25rem'
+                            }}>
                               Enter the last page number of the document you are endorsing.
                             </p>
                           </div>
-                           <div className="mt-3 p-2 bg-yellow-100 rounded">
-                            <strong className="text-yellow-900">
+                           <div style={{
+                             marginTop: '0.75rem',
+                             padding: '0.5rem',
+                             backgroundColor: '#fde68a',
+                             borderRadius: '4px'
+                           }}>
+                            <strong style={{ color: '#92400e' }}>
                               Your {formData.endorsementLevel} endorsement will start on page {formData.startingPageNumber}.
                             </strong>
                           </div>
                         </div>
                     </div>
                 )}
-                 <div className="mt-4 p-3 bg-blue-100 border-l-4 border-blue-500 text-blue-700 rounded-r-lg">
-                    <div className="flex">
-                    <div className="py-1"><i className="fas fa-info-circle fa-lg mr-2"></i></div>
+                 <div style={{
+                   marginTop: '1rem',
+                   padding: '0.75rem',
+                   backgroundColor: '#dbeafe',
+                   borderLeft: '4px solid #3b82f6',
+                   color: '#1e40af',
+                   borderRadius: '0 0.5rem 0.5rem 0'
+                 }}>
+                    <div style={{ display: 'flex' }}>
+                    <div style={{ paddingTop: '0.25rem' }}><i className="fas fa-info-circle" style={{ fontSize: '1.125rem', marginRight: '0.5rem' }}></i></div>
                     <div>
-                        <p className="font-bold">Endorsement Mode</p>
-                        <p className="text-sm">Endorsements forward the original letter. The "From" field becomes the endorsing command, and the "To" field is the next destination.</p>
+                        <p style={{ fontWeight: 'bold', margin: 0 }}>Endorsement Mode</p>
+                        <p style={{ fontSize: '0.875rem', margin: 0 }}>Endorsements forward the original letter. The "From" field becomes the endorsing command, and the "To" field is the next destination.</p>
                     </div>
                     </div>
                 </div>
@@ -2846,7 +2960,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
                   >
                     <div className="paragraph-header">
                       <div>
-                        <span className="paragraph-level-badge">Level {paragraph.level}&nbsp;&nbsp;{citation}</span>
+                        <span className="paragraph-level-badge">Level {paragraph.level} {citation}</span>
                       </div>
                       <div>
                         {index > 0 && (

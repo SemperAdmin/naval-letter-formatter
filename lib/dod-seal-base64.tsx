@@ -256,7 +256,16 @@ export default function NavalLetterGenerator() {
   };
 
   const updateParagraphContent = (id: number, content: string) => {
-    setParagraphs(prev => prev.map(p => p.id === id ? { ...p, content } : p));
+    // Remove hard spaces (non-breaking spaces), line breaks, and other unwanted characters
+    const cleanedContent = content
+      .replace(/\u00A0/g, ' ')  // Replace non-breaking spaces with regular spaces
+      .replace(/\u2007/g, ' ')  // Replace figure spaces with regular spaces
+      .replace(/\u202F/g, ' ')  // Replace narrow non-breaking spaces with regular spaces
+      .replace(/[\r\n]/g, ' ')  // Replace line breaks with spaces
+      .replace(/\s+/g, ' ')     // Replace multiple consecutive spaces with single space
+      .trim();                  // Remove leading/trailing spaces
+      
+    setParagraphs(prev => prev.map(p => p.id === id ? { ...p, content: cleanedContent } : p));
     setTimeout(() => validateParagraphStructure(), 100);
   };
 
