@@ -13,7 +13,7 @@ export const DOC_SETTINGS = {
   spacing: {
     after: 120      // 6pt spacing after paragraphs
   },
-  pageSize: PageSize.LETTER
+  pageSize: new PageSize("8.5in", "11in", "portrait")
 };
 
 // Tab stop positions in TWIPs
