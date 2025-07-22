@@ -150,23 +150,54 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
     }));
   };
 
-  const formatDate = (input: string): string => {
-    const cleaned = input.replace(/[^a-zA-Z0-9]/g, '');
-    if (cleaned.length >= 6) {
-      const day = cleaned.substring(0, 2);
-      const month = cleaned.substring(2, 5);
-      const year = cleaned.substring(5, 7);
-      return `${day} ${month} ${year}`;
-    } else if (cleaned.length >= 3) {
-      const day = cleaned.substring(0, 2);
-      const month = cleaned.substring(2);
-      return `${day} ${month}`;
+  const parseAndFormatDate = (dateString: string) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // If already in Naval format, return as-is
+    const navalPattern = /^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{2}$/i;
+    if (navalPattern.test(dateString)) {
+      return dateString;
     }
-    return cleaned;
+
+    let date: Date | null = null;
+
+    // Handle various date formats
+    if (dateString.toLowerCase() === 'today' || dateString.toLowerCase() === 'now') {
+      date = new Date();
+    } else if (/^\d{8}$/.test(dateString)) {
+      const year = dateString.substring(0, 4);
+      const month = dateString.substring(4, 6);
+      const day = dateString.substring(6, 8);
+      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(dateString)) {
+      date = new Date(dateString);
+    } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
+      const parts = dateString.split('/');
+      date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+    } else {
+      try {
+        const parsedDate = new Date(dateString);
+        if (!isNaN(parsedDate.getTime())) {
+          date = parsedDate;
+        }
+      } catch (e) {
+        // ignore invalid date strings
+      }
+    }
+
+    if (!date || isNaN(date.getTime())) {
+      return dateString; // Return original if can't parse
+    }
+
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear().toString().slice(-2);
+    
+    return `${day} ${month} ${year}`;
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatDate(e.target.value);
+    const formatted = parseAndFormatDate(e.target.value);
     updateReference('date', formatted);
   };
 
@@ -213,10 +244,12 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
-          gap: '16px',
-          marginBottom: '16px'
+          gap: '20px',
+          marginBottom: '16px',
+          width: '100%',
+          minWidth: 0
         }}>
-          <div>
+          <div style={{minWidth: 0, width: '100%'}}>
             <label style={{
               display: 'block',
               fontWeight: '500',
@@ -233,7 +266,9 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
                 fontSize: '14px',
-                outline: 'none'
+                outline: 'none',
+                boxSizing: 'border-box',
+                minWidth: 0
               }}
               placeholder="CO, GySgt Admin, etc."
               list="common-originators"
@@ -246,17 +281,11 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
                 e.target.style.boxShadow = 'none';
               }}
             />
-            <datalist id="common-originators">
-              {COMMON_ORIGINATORS.map(originator => (
-                <option key={originator} value={originator} />
-              ))}
-            </datalist>
-            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-              Who originated the basic letter?
-            </div>
+            <datalist id="common-originators">{COMMON_ORIGINATORS.map(originator => (<option key={originator} value={originator} />))}</datalist>
+            <div style={{fontSize: '12px', color: '#6b7280', marginTop: '4px', wordWrap: 'break-word'}}>Who originated the basic letter?</div>
           </div>
           
-          <div>
+          <div style={{minWidth: 0, width: '100%'}}>
             <label style={{
               display: 'block',
               fontWeight: '500',
@@ -273,7 +302,9 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
                 borderRadius: '6px',
                 fontSize: '14px',
                 outline: 'none',
-                background: 'white'
+                background: 'white',
+                boxSizing: 'border-box',
+                minWidth: 0
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#3b82f6';
@@ -284,17 +315,12 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
                 e.target.style.boxShadow = 'none';
               }}
             >
-              <option value="">Select type</option>
-              {REFERENCE_TYPES.map(type => (
-                <option key={type.value} value={type.value}>{type.value}</option>
-              ))}
+              <option value="">Select type</option>{REFERENCE_TYPES.map(type => (<option key={type.value} value={type.value}>{type.value}</option>))}
             </select>
-            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-              What type of document?
-            </div>
+            <div style={{fontSize: '12px', color: '#6b7280', marginTop: '4px', wordWrap: 'break-word'}}>What type of document?</div>
           </div>
           
-          <div>
+          <div style={{minWidth: 0, width: '100%'}}>
             <label style={{
               display: 'block',
               fontWeight: '500',
@@ -311,10 +337,11 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
                 fontSize: '14px',
-                outline: 'none'
+                outline: 'none',
+                boxSizing: 'border-box',
+                minWidth: 0
               }}
-              placeholder="12 Jul 25"
-              maxLength={9}
+              placeholder="8 Jul 25"
               onFocus={(e) => {
                 e.target.style.borderColor = '#3b82f6';
                 e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
@@ -324,9 +351,7 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
                 e.target.style.boxShadow = 'none';
               }}
             />
-            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-              Format: DD MMM YY
-            </div>
+            <div style={{fontSize: '12px', color: '#6b7280', marginTop: '4px', wordWrap: 'break-word', lineHeight: '1.3'}}>Accepts: YYYYMMDD, MM/DD/YYYY, YYYY-MM-DD, DD MMM YY, or "today". Auto-formats to Naval standard.</div>
           </div>
         </div>
         
@@ -1026,6 +1051,14 @@ export default function NavalLetterGenerator() {
     const currentIndex = paragraphs.findIndex(p => p.id === afterId);
     const newParagraphs = [...paragraphs];
     newParagraphs.splice(currentIndex + 1, 0, { id: newId, level: newLevel, content: '' });
+    
+    // Validate numbering after adding
+    const numberingErrors = validateParagraphNumbering(newParagraphs);
+    if (numberingErrors.length > 0) {
+      // Show validation warnings but still allow the addition
+      console.warn('Paragraph numbering warnings:', numberingErrors);
+    }
+    
     setParagraphs(newParagraphs);
   };
 
@@ -1036,7 +1069,20 @@ export default function NavalLetterGenerator() {
            return;
        }
     }
-    setParagraphs(prev => prev.filter(p => p.id !== id));
+    
+    const newParagraphs = paragraphs.filter(p => p.id !== id);
+    
+    // Validate numbering after removal
+    const numberingErrors = validateParagraphNumbering(newParagraphs);
+    if (numberingErrors.length > 0) {
+      // Show confirmation dialog for potentially problematic removals
+      const proceed = window.confirm(
+        `Removing this paragraph may create numbering issues:\n\n${numberingErrors.join('\n')}\n\nDo you want to proceed?`
+      );
+      if (!proceed) return;
+    }
+    
+    setParagraphs(newParagraphs);
   };
   
 const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
@@ -1079,15 +1125,19 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
 
 
   const updateParagraphContent = (id: number, content: string) => {
-    // Remove hard spaces (non-breaking spaces), line breaks, and other unwanted characters
+    // Debug: Log the input to see what we're receiving
+    console.log('Input content:', JSON.stringify(content));
+    console.log('Character codes:', [...content].map(char => char.charCodeAt(0)));
+    
+    // Only replace non-breaking spaces and line breaks, preserve regular spaces (ASCII 32)
     const cleanedContent = content
       .replace(/\u00A0/g, ' ')  // Replace non-breaking spaces with regular spaces
       .replace(/\u2007/g, ' ')  // Replace figure spaces with regular spaces
       .replace(/\u202F/g, ' ')  // Replace narrow non-breaking spaces with regular spaces
-      .replace(/[\r\n]/g, ' ')  // Replace line breaks with spaces
-      .replace(/\s+/g, ' ')     // Replace multiple consecutive spaces with single space
-      .trim();                  // Remove leading/trailing spaces
+      .replace(/[\r\n]/g, ' '); // Replace line breaks with spaces
       
+    console.log('Cleaned content:', JSON.stringify(cleanedContent));
+    
     const newParagraphs = paragraphs.map(p => p.id === id ? { ...p, content: cleanedContent } : p)
     setParagraphs(newParagraphs);
     validateAcronyms(newParagraphs);
@@ -1201,6 +1251,58 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
     
     return citationPath.join('');
   }
+
+  /**
+   * Validates paragraph numbering rules:
+   * - If there's a paragraph 1a, there must be a paragraph 1b
+   * - If there's a paragraph 1a(1), there must be a paragraph 1a(2), etc.
+   */
+  const validateParagraphNumbering = useCallback((allParagraphs: ParagraphData[]): string[] => {
+    const errors: string[] = [];
+    const levelGroups: { [key: string]: number[] } = {};
+    
+    // Group paragraphs by their parent hierarchy
+    allParagraphs.forEach((paragraph, index) => {
+      const { level } = paragraph;
+      
+      // Build the parent path for this paragraph
+      let parentPath = '';
+      let currentLevel = level - 1;
+      
+      // Find all parent levels
+      for (let i = index - 1; i >= 0 && currentLevel > 0; i--) {
+        if (allParagraphs[i].level === currentLevel) {
+          const citation = getUiCitation(allParagraphs[i], i, allParagraphs);
+          parentPath = citation.replace(/[.()]/g, '') + parentPath;
+          currentLevel--;
+        }
+      }
+      
+      // Create a key for this level group
+      const groupKey = `${parentPath}_level${level}`;
+      
+      if (!levelGroups[groupKey]) {
+        levelGroups[groupKey] = [];
+      }
+      levelGroups[groupKey].push(index);
+    });
+    
+    // Check each group for proper numbering
+    Object.entries(levelGroups).forEach(([groupKey, indices]) => {
+      if (indices.length === 1) {
+        const index = indices[0];
+        const paragraph = allParagraphs[index];
+        const citation = getUiCitation(paragraph, index, allParagraphs);
+        
+        // Skip level 1 paragraphs as they can be standalone
+        if (paragraph.level > 1) {
+          errors.push(`Paragraph ${citation} requires at least one sibling paragraph at the same level.`);
+        }
+      }
+    });
+    
+    return errors;
+  }, []);
 
     const generateBasicLetter = async () => {
         const sealBuffer = await fetchImageAsBase64("https://www.lrsm.upenn.edu/wp-content/uploads/1960/05/dod-logo.png")
@@ -2950,6 +3052,34 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
             </div>
             
             <div>
+              {(() => {
+                const numberingErrors = validateParagraphNumbering(paragraphs);
+                if (numberingErrors.length > 0) {
+                  return (
+                    <div style={{
+                      backgroundColor: '#fff3cd',
+                      border: '1px solid #ffeaa7',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '16px'
+                    }}>
+                      <div style={{ fontWeight: 'bold', color: '#856404', marginBottom: '8px' }}>
+                        <i className="fas fa-exclamation-triangle" style={{ marginRight: '8px' }}></i>
+                        Paragraph Numbering Issues:
+                      </div>
+                      {numberingErrors.map((error, index) => (
+                        <div key={index} style={{ color: '#856404', fontSize: '0.9rem' }}>
+                          • {error}
+                        </div>
+                      ))}
+                      <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#6c757d' }}>
+                        <strong>Rule:</strong> If there's a paragraph 1a, there must be a paragraph 1b; if there's a paragraph 1a(1), there must be a paragraph 1a(2), etc.
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               {paragraphs.map((paragraph, index) => {
                 const citation = getUiCitation(paragraph, index, paragraphs);
                 return (
@@ -3018,7 +3148,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
                         </button>
                       )}
                       
-                      {paragraph.level > 1 && paragraph.level !== 2 && (
+                      {paragraph.level > 1 && (
                         <button 
                           className="btn btn-smart-same btn-sm" 
                           onClick={() => addParagraph('same', paragraph.id)}
@@ -3036,7 +3166,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
                         </button>
                       )}
                       
-                      {paragraph.level > 1 && (
+                      {paragraphs.length > 1 && (
                         <button 
                           className="btn btn-danger btn-sm" 
                           onClick={() => removeParagraph(paragraph.id)}

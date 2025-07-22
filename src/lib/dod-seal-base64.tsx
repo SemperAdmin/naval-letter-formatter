@@ -256,14 +256,13 @@ export default function NavalLetterGenerator() {
   };
 
   const updateParagraphContent = (id: number, content: string) => {
-    // Remove hard spaces (non-breaking spaces), line breaks, and other unwanted characters
+    // Only remove non-breaking spaces and line breaks, but preserve regular spaces
     const cleanedContent = content
       .replace(/\u00A0/g, ' ')  // Replace non-breaking spaces with regular spaces
       .replace(/\u2007/g, ' ')  // Replace figure spaces with regular spaces
       .replace(/\u202F/g, ' ')  // Replace narrow non-breaking spaces with regular spaces
-      .replace(/[\r\n]/g, ' ')  // Replace line breaks with spaces
-      .replace(/\s+/g, ' ')     // Replace multiple consecutive spaces with single space
-      .trim();                  // Remove leading/trailing spaces
+      .replace(/[\r\n]/g, ' '); // Replace line breaks with spaces
+      // Removed: .replace(/\s+/g, ' ') and .trim() to allow regular spaces
       
     setParagraphs(prev => prev.map(p => p.id === id ? { ...p, content: cleanedContent } : p));
     setTimeout(() => validateParagraphStructure(), 100);
