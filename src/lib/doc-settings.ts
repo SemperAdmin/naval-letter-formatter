@@ -14,8 +14,8 @@ export const DOC_SETTINGS = {
     after: 120      // 6pt spacing after paragraphs
   },
   pageSize: {
-    width: "8.5in",
-    height: "11in",
+    width: "8.5in" as `${number}in`,
+    height: "11in" as `${number}in`,
     orientation: "portrait" as const
   }
 };
