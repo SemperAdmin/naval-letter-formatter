@@ -1,11 +1,11 @@
-import { Paragraph, TextRun, AlignmentType, TabStopType } from "docx";
+import { Paragraph, TextRun, AlignmentType, TabStopType, PageSize, IPageSize } from "docx";
 
 // Constants for SECNAV M-5216.5 compliance
 export const DOC_SETTINGS = {
   font: "Times New Roman",
   fontSize: 24, // 12pt
   pageMargins: {
-    top: 0,         // No top margin
+    top: 0,      // 1" top
     bottom: 1440,   // 1" bottom
     left: 1440,     // 1" left
     right: 1440,    // 1" right
@@ -13,10 +13,7 @@ export const DOC_SETTINGS = {
   spacing: {
     after: 120      // 6pt spacing after paragraphs
   },
-  pageSize: {
-      width: 12240,   // 8.5 inches in TWIPs (8.5 * 1440)
-      height: 15840,  // 11 inches in TWIPs (11 * 1440)
-  }
+  pageSize: PageSize.LETTER as IPageSize
 };
 
 // Tab stop positions in TWIPs

@@ -1,12 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, IParagraphOptions } from 'docx';
+import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, convertInchesToTwip, VerticalPositionAlign, HorizontalPositionAlign } from 'docx';
 import { saveAs } from 'file-saver';
-import { fetchImageAsBase64 } from '@/lib/fetch-image';
-import { DOC_SETTINGS } from '@/lib/doc-settings';
-import { createFormattedParagraph } from '@/lib/paragraph-formatter';
-
 
 interface ParagraphData {
   id: number;
@@ -28,47 +24,12 @@ interface FormData {
   delegationText: string;
 }
 
-interface SavedLetter extends FormData {
-  id: string;
-  savedAt: string;
-  vias: string[];
-  references: string[];
-  enclosures: string[];
-  copyTos: string[];
-  paragraphs: ParagraphData[];
-}
-
-
 interface ValidationState {
   ssic: { isValid: boolean; message: string; };
   subj: { isValid: boolean; message: string; };
   from: { isValid: boolean; message: string; };
   to: { isValid: boolean; message: string; };
 }
-
-// Helper to split string into chunks without breaking words
-const splitSubject = (str: string, chunkSize: number): string[] => {
-    const chunks: string[] = [];
-    if (!str) return chunks;
-    let i = 0;
-    while (i < str.length) {
-        let chunk = str.substring(i, i + chunkSize);
-        if (i + chunkSize < str.length && str[i + chunkSize] !== ' ' && chunk.includes(' ')) {
-            const lastSpaceIndex = chunk.lastIndexOf(' ');
-            if (lastSpaceIndex > -1) {
-                chunk = chunk.substring(0, lastSpaceIndex);
-                i += chunk.length + 1;
-            } else {
-                i += chunkSize;
-            }
-        } else {
-            i += chunkSize;
-        }
-        chunks.push(chunk.trim());
-    }
-    return chunks;
-};
-
 
 export default function NavalLetterGenerator() {
   const [formData, setFormData] = useState<FormData>({
@@ -94,81 +55,14 @@ export default function NavalLetterGenerator() {
   const [copyTos, setCopyTos] = useState<string[]>(['']);
   
   const [paragraphs, setParagraphs] = useState<ParagraphData[]>([{ id: 1, level: 1, content: '' }]);
+  const [paragraphCounter, setParagraphCounter] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [savedLetters, setSavedLetters] = useState<SavedLetter[]>([]);
-
-  // Load saved letters from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('navalLetters');
-      if (saved) {
-        setSavedLetters(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error("Failed to load saved letters from localStorage", error);
-    }
-  }, []);
-
+  const [structureErrors, setStructureErrors] = useState<string[]>([]);
 
   // Set today's date on component mount
   useEffect(() => {
     setTodaysDate();
   }, []);
-
-  const saveLetter = () => {
-    const newLetter: SavedLetter = {
-      ...formData,
-      id: new Date().toISOString(), // Unique ID
-      savedAt: new Date().toLocaleString(),
-      vias,
-      references,
-      enclosures,
-      copyTos,
-      paragraphs,
-    };
-
-    const updatedLetters = [newLetter, ...savedLetters].slice(0, 10); // Keep max 10 saves
-    setSavedLetters(updatedLetters);
-    localStorage.setItem('navalLetters', JSON.stringify(updatedLetters));
-  };
-  
-  const loadLetter = (letterId: string) => {
-    const letterToLoad = savedLetters.find(l => l.id === letterId);
-    if (letterToLoad) {
-      setFormData({
-        line1: letterToLoad.line1,
-        line2: letterToLoad.line2,
-        line3: letterToLoad.line3,
-        ssic: letterToLoad.ssic,
-        originatorCode: letterToLoad.originatorCode,
-        date: letterToLoad.date,
-        from: letterToLoad.from,
-        to: letterToLoad.to,
-        subj: letterToLoad.subj,
-        sig: letterToLoad.sig,
-        delegationText: letterToLoad.delegationText,
-      });
-      setVias(letterToLoad.vias);
-      setReferences(letterToLoad.references);
-      setEnclosures(letterToLoad.enclosures);
-      setCopyTos(letterToLoad.copyTos);
-      setParagraphs(letterToLoad.paragraphs);
-      
-      // Also update the UI toggles
-      setShowVia(letterToLoad.vias.some(v => v.trim() !== ''));
-      setShowRef(letterToLoad.references.some(r => r.trim() !== ''));
-      setShowEncl(letterToLoad.enclosures.some(e => e.trim() !== ''));
-      setShowCopy(letterToLoad.copyTos.some(c => c.trim() !== ''));
-      setShowDelegation(!!letterToLoad.delegationText);
-
-      // Re-validate fields after loading
-      validateSSIC(letterToLoad.ssic);
-      validateSubject(letterToLoad.subj);
-      validateFromTo(letterToLoad.from, 'from');
-      validateFromTo(letterToLoad.to, 'to');
-    }
-  };
-
 
   // Validation Functions
   const validateSSIC = (value: string) => {
@@ -214,7 +108,7 @@ export default function NavalLetterGenerator() {
     
     const validPatterns = [
       /^(Commanding Officer|Chief of|Commander|Private|Corporal|Sergeant|Lieutenant|Captain|Major|Colonel|General)/i,
-       /^(Private|Corporal|Sergeant|Lieutenant|Captain|Major|Colonel|General)\s[A-Za-z\s\.]+\s\d{10}\/\d{4}\s(USMC|USN)$/i,
+       /^[A-Za-z\s]+ [A-Za-z\s\.]+ \d{10}\/\d{4} (USMC|USN)$/i,
       /^(Secretary|Under Secretary|Assistant Secretary)/i
     ];
     
@@ -305,6 +199,33 @@ export default function NavalLetterGenerator() {
     setter((prev: string[]) => prev.map((item: string, i: number) => i === index ? value : item));
   };
 
+  const validateParagraphStructure = () => {
+    const errors: string[] = [];
+    const structure: { [key: number]: ParagraphData[] } = {};
+    
+    // Build structure map
+    paragraphs.forEach((paragraph) => {
+      if (paragraph.content.trim()) {
+        if (!structure[paragraph.level]) {
+          structure[paragraph.level] = [];
+        }
+        structure[paragraph.level].push(paragraph);
+      }
+    });
+
+    // Validate naval correspondence rules
+    Object.keys(structure).forEach(level => {
+      const levelNum = parseInt(level);
+      const levelParagraphs = structure[levelNum];
+      
+      if (levelParagraphs.length === 1 && levelNum > 1) {
+        errors.push(`Level ${levelNum} has only one paragraph - naval format requires at least two subparagraphs`);
+      }
+    });
+
+    setStructureErrors(errors);
+    return errors.length === 0;
+  };
 
   const addParagraph = (type: 'main' | 'sub' | 'same' | 'up', afterId: number) => {
     const currentParagraph = paragraphs.find(p => p.id === afterId);
@@ -318,25 +239,25 @@ export default function NavalLetterGenerator() {
       case 'up': newLevel = Math.max(currentParagraph.level - 1, 1); break;
     }
     
-    const newId = (paragraphs.length > 0 ? Math.max(...paragraphs.map(p => p.id)) : 0) + 1;
+    const newCounter = paragraphCounter + 1;
+    setParagraphCounter(newCounter);
     const currentIndex = paragraphs.findIndex(p => p.id === afterId);
     const newParagraphs = [...paragraphs];
-    newParagraphs.splice(currentIndex + 1, 0, { id: newId, level: newLevel, content: '' });
+    newParagraphs.splice(currentIndex + 1, 0, { id: newCounter, level: newLevel, content: '' });
     setParagraphs(newParagraphs);
+    
+    setTimeout(() => validateParagraphStructure(), 100);
   };
 
   const removeParagraph = (id: number) => {
-    if (paragraphs.length <= 1) {
-       if (paragraphs[0].id === id) {
-           updateParagraphContent(id, '');
-           return;
-       }
-    }
+    if (id === 1) return;
     setParagraphs(prev => prev.filter(p => p.id !== id));
+    setTimeout(() => validateParagraphStructure(), 100);
   };
 
   const updateParagraphContent = (id: number, content: string) => {
     setParagraphs(prev => prev.map(p => p.id === id ? { ...p, content } : p));
+    setTimeout(() => validateParagraphStructure(), 100);
   };
 
   const moveParagraphUp = (id: number) => {
@@ -357,6 +278,20 @@ export default function NavalLetterGenerator() {
     }
   };
 
+  const getLevelInfo = (level: number): { description: string; preview: string } => {
+    const levelDescriptions: { [key: number]: { description: string; preview: string } } = {
+      1: { description: "Main paragraphs", preview: "1., 2., 3." },
+      2: { description: "Sub-paragraphs", preview: "a., b., c." },
+      3: { description: "Sub-sub paragraphs", preview: "(1), (2), (3)" },
+      4: { description: "Sub-sub-sub paragraphs", preview: "(a), (b), (c)" },
+      5: { description: "Fourth level (underlined)", preview: "1̲., 2̲., 3̲." },
+      6: { description: "Fifth level (underlined)", preview: "a̲., b̲., c̲." },
+      7: { description: "Sixth level (underlined)", preview: "(1̲), (2̲), (3̲)" },
+      8: { description: "Seventh level (underlined)", preview: "(a̲), (b̲), (c̲)" }
+    };
+    return levelDescriptions[level] || { description: "Unknown level", preview: "?" };
+  };
+
   const updateDelegationType = (value: string) => {
     let delegationText = '';
     switch(value) {
@@ -371,48 +306,76 @@ export default function NavalLetterGenerator() {
   const generateDocument = async () => {
     setIsGenerating(true);
     try {
-      saveLetter(); // Save the current state before generating
-      
-      const sealBuffer = await fetchImageAsBase64("https://www.lrsm.upenn.edu/wp-content/uploads/1960/05/dod-logo.png")
-        .catch(error => {
-            console.error("Could not fetch seal, proceeding without it.", error);
-            return null; // Return null if fetch fails
-        });
+      const sealResponse = await fetch("https://placehold.co/150x150.png");
+      const sealBuffer = await sealResponse.arrayBuffer();
+
+
+      // Validate structure before generating
+      const isValidStructure = validateParagraphStructure();
+      if (!isValidStructure) {
+        const proceed = window.confirm(
+          'Your document has naval correspondence format violations. ' +
+          'Naval regulations require that subparagraphs appear in pairs (if there is a paragraph 1a, there must be a paragraph 1b). ' +
+          '\n\nDo you want to generate the document anyway? ' +
+          '\n\nClick Cancel to fix the formatting first, or OK to proceed with violations.'
+        );
+        if (!proceed) {
+          setIsGenerating(false);
+          return;
+        }
+      }
 
       const content = [];
       
+      // Header - CENTERED
       content.push(new Paragraph({
+        children: [new TextRun({
+          text: "UNITED STATES MARINE CORPS",
+          bold: true,
+          font: "Times New Roman",
+          size: 20,
+        })],
+        alignment: AlignmentType.CENTER
+      }));
+      
+      // Unit lines - CENTERED
+      if (formData.line1) {
+        content.push(new Paragraph({
           children: [new TextRun({
-              text: "UNITED STATES MARINE CORPS",
-              bold: true,
-              font: "Times New Roman",
-              size: 20
+            text: formData.line1,
+            font: "Times New Roman",
+            size: 16,
           })],
           alignment: AlignmentType.CENTER
-      }));
-
-      if (formData.line1) {
-          content.push(new Paragraph({
-              children: [new TextRun({ text: formData.line1, font: "Times New Roman", size: 16 })],
-              alignment: AlignmentType.CENTER
-          }));
+        }));
       }
+      
       if (formData.line2) {
-          content.push(new Paragraph({
-              children: [new TextRun({ text: formData.line2, font: "Times New Roman", size: 16 })],
-              alignment: AlignmentType.CENTER
-          }));
+        content.push(new Paragraph({
+          children: [new TextRun({
+            text: formData.line2,
+            font: "Times New Roman",
+            size: 16,
+          })],
+          alignment: AlignmentType.CENTER
+        }));
       }
+      
       if (formData.line3) {
-          content.push(new Paragraph({
-              children: [new TextRun({ text: formData.line3, font: "Times New Roman", size: 16 })],
-              alignment: AlignmentType.CENTER
-          }));
+        content.push(new Paragraph({
+          children: [new TextRun({
+            text: formData.line3,
+            font: "Times New Roman",
+            size: 16,
+          })],
+          alignment: AlignmentType.CENTER
+        }));
       }
       
+      // Single empty line after address lines, before SSIC
       content.push(new Paragraph({ text: "" }));
-      
-      // Sender symbols at 5.5 inches
+
+      // Sender symbols at 5.75 inches
       content.push(new Paragraph({
         children: [new TextRun({
           text: formData.ssic || "",
@@ -420,7 +383,7 @@ export default function NavalLetterGenerator() {
           size: 24
         })],
         alignment: AlignmentType.LEFT,
-        indent: { left: 7920 }
+        indent: { left: 8280 }
       }));
 
       content.push(new Paragraph({
@@ -430,7 +393,7 @@ export default function NavalLetterGenerator() {
           size: 24
         })],
         alignment: AlignmentType.LEFT,
-        indent: { left: 7920 }
+        indent: { left: 8280 }
       }));
 
       content.push(new Paragraph({
@@ -440,7 +403,7 @@ export default function NavalLetterGenerator() {
           size: 24
         })],
         alignment: AlignmentType.LEFT,
-        indent: { left: 7920 }
+        indent: { left: 8280 }
       }));
 
       content.push(new Paragraph({ text: "" }));
@@ -464,114 +427,236 @@ export default function NavalLetterGenerator() {
         tabStops: [{ type: TabStopType.LEFT, position: 720 }],
       }));
 
+      // Via section
       const viasWithContent = vias.filter(via => via.trim());
-      if (viasWithContent.length > 0) {
-        for (let i = 0; i < viasWithContent.length; i++) {
-          const viaText = i === 0 
-            ? `Via:\t(${i + 1})\t${viasWithContent[i]}` 
-            : `\t(${i + 1})\t${viasWithContent[i]}`;
-          content.push(new Paragraph({
-            children: [new TextRun({
-              text: viaText,
-              font: "Times New Roman",
-              size: 24
-            })],
-            tabStops: [
-              { type: TabStopType.LEFT, position: 720 },
-              { type: TabStopType.LEFT, position: 1046 }
-            ],
-          }));
+      for (let i = 0; i < viasWithContent.length; i++) {
+        let viaText;
+        if (viasWithContent.length === 1) {
+          viaText = "Via:\t" + viasWithContent[i];
+        } else {
+          viaText = i === 0 ? "Via:\t(" + (i+1) + ")\t" + viasWithContent[i] : "\t(" + (i+1) + ")\t" + viasWithContent[i];
         }
-      }
-       if (viasWithContent.length > 0) {
-        content.push(new Paragraph({ text: "" }));
+        
+        content.push(new Paragraph({
+          children: [new TextRun({
+            text: viaText,
+            font: "Times New Roman",
+            size: 24
+          })],
+          tabStops: [
+            { type: TabStopType.LEFT, position: 720 }, 
+            { type: TabStopType.LEFT, position: 1046 }
+          ],
+        }));
       }
 
-      // Subject line
-      const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
-      if (formattedSubjLines.length === 0) {
-          content.push(new Paragraph({
-              children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
-              tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-          }));
-      } else {
-          const firstLineOptions: IParagraphOptions = {
-              children: [
-                  new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
-                  new TextRun({ text: formattedSubjLines[0], font: "Times New Roman", size: 24 }),
-              ],
-              tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-          };
-          content.push(new Paragraph(firstLineOptions));
-
-          for (let i = 1; i < formattedSubjLines.length; i++) {
-              content.push(new Paragraph({
-                  children: [ new TextRun({ text: "\t" + formattedSubjLines[i], font: "Times New Roman", size: 24 }) ],
-                  tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-              }));
-          }
-      }
       content.push(new Paragraph({ text: "" }));
-      
+
+      // Subject
+      content.push(new Paragraph({
+        children: [new TextRun({
+          text: "Subj:\t" + formData.subj.toUpperCase(),
+          font: "Times New Roman",
+          size: 24
+        })],
+        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
+      }));
+
+      content.push(new Paragraph({ text: "" }));
 
       // References
       const refsWithContent = references.filter(ref => ref.trim());
-      if (refsWithContent.length > 0) {
-        for (let i = 0; i < refsWithContent.length; i++) {
-          const refLetter = String.fromCharCode(97 + i);
-          const refText = i === 0 ? "Ref:\t(" + refLetter + ")\t" + refsWithContent[i] : "\t(" + refLetter + ")\t" + refsWithContent[i];
-          content.push(new Paragraph({
-            children: [new TextRun({
-              text: refText,
-              font: "Times New Roman",
-              size: 24
-            })],
-            tabStops: [
-              { type: TabStopType.LEFT, position: 720 },
-              { type: TabStopType.LEFT, position: 1046 }
-            ],
-          }));
-        }
+      for (let i = 0; i < refsWithContent.length; i++) {
+        const refLetter = String.fromCharCode(97 + i);
+        const refText = i === 0 ? "Ref:\t(" + refLetter + ")\t" + refsWithContent[i] : "\t(" + refLetter + ")\t" + refsWithContent[i];
+        content.push(new Paragraph({
+          children: [new TextRun({
+            text: refText,
+            font: "Times New Roman",
+            size: 24
+          })],
+          tabStops: [
+            { type: TabStopType.LEFT, position: 720 },
+            { type: TabStopType.LEFT, position: 1046 }
+          ],
+        }));
       }
-      
+
       // Enclosures
       const enclsWithContent = enclosures.filter(encl => encl.trim());
-      if (enclsWithContent.length > 0) {
-          if (refsWithContent.length > 0) {
-              content.push(new Paragraph({ text: "" }));
+      if (refsWithContent.length > 0 && enclsWithContent.length > 0) {
+        content.push(new Paragraph({ text: "" }));
+      }
+
+      for (let i = 0; i < enclsWithContent.length; i++) {
+        const enclText = i === 0 ? "Encl:\t(" + (i+1) + ")\t" + enclsWithContent[i] : "\t(" + (i+1) + ")\t" + enclsWithContent[i];
+        content.push(new Paragraph({
+          children: [new TextRun({
+            text: enclText,
+            font: "Times New Roman",
+            size: 24
+          })],
+          tabStops: [
+            { type: TabStopType.LEFT, position: 720 },
+            { type: TabStopType.LEFT, position: 1046 }
+          ],
+        }));
+      }
+
+      content.push(new Paragraph({ text: "" }));
+
+      // Body paragraphs
+      let counters: { [key: string]: number } = { 
+        level1: 0, level2: 0, level3: 0, level4: 0,
+        level5: 0, level6: 0, level7: 0, level8: 0 
+      };
+
+      for (const paragraph of paragraphs) {
+        if (paragraph.content.trim()) {
+          const level = paragraph.level;
+          let prefix = "";
+          let indent = 0;
+          let hanging = 0;
+
+          // Reset counters for deeper levels
+          for (let j = level + 1; j <= 8; j++) {
+            counters[`level${j}`] = 0;
           }
-          for (let i = 0; i < enclsWithContent.length; i++) {
-            const enclText = i === 0 ? "Encl:\t(" + (i+1) + ")\t" + enclsWithContent[i] : "\t(" + (i+1) + ")\t" + enclsWithContent[i];
-            content.push(new Paragraph({
+
+          switch (level) {
+            case 1: // 1.
+                counters.level1++;
+                prefix = `${counters.level1}.`;
+                indent = 0; 
+                hanging = 0;
+                break;
+            case 2: // a.
+                counters.level2++;
+                prefix = `${String.fromCharCode(96 + counters.level2)}.`;
+                indent = 360; 
+                hanging = 360;
+                break;
+            case 3: // (1)
+                counters.level3++;
+                prefix = `(${counters.level3})`;
+                indent = 720;
+                hanging = 360;
+                break;
+            case 4: // (a)
+                counters.level4++;
+                prefix = `(${String.fromCharCode(96 + counters.level4)})`;
+                indent = 1080;
+                hanging = 360;
+                break;
+            case 5: // 1)
+                counters.level5++;
+                prefix = `${counters.level5})`;
+                indent = 1440; 
+                hanging = 360;
+                break;
+            case 6: // a)
+                counters.level6++;
+                prefix = `${String.fromCharCode(96 + counters.level6)})`;
+                indent = 1800;
+                hanging = 360;
+                break;
+            case 7: // (a)
+                counters.level7++;
+                prefix = `(${String.fromCharCode(96 + counters.level7)})`;
+                indent = 2160; 
+                hanging = 360;
+                break;
+            case 8: // i.
+                counters.level8++;
+                const toRoman = (num: number) => {
+                    const roman: { [key: string]: number } = {M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1};
+                    let str = '';
+                    for (let i of Object.keys(roman)) {
+                        let q = Math.floor(num / roman[i]);
+                        num -= q * roman[i];
+                        str += i.repeat(q);
+                    }
+                    return str.toLowerCase();
+                };
+                prefix = `${toRoman(counters.level8)}.`;
+                indent = 2520;
+                hanging = 360;
+                break;
+          }
+
+          // Create paragraph with proper formatting
+          if (level >= 5 && level <= 8) { // Assuming old levels 5-8 logic is no longer needed with new spec
+             content.push(new Paragraph({
               children: [new TextRun({
-                text: enclText,
+                text: prefix + "\t" + paragraph.content,
                 font: "Times New Roman",
                 size: 24
               })],
-              tabStops: [
-                { type: TabStopType.LEFT, position: 720 },
-                { type: TabStopType.LEFT, position: 1046 }
-              ],
+              tabStops: [{ type: TabStopType.LEFT, position: indent }],
+              indent: { left: indent, hanging: hanging },
+              spacing: { after: 120 }
+            }));
+          } else if (level >= 5) {
+            // For levels 5-8, underline only the number/letter
+            let textRuns = [];
+            
+            if (level === 5 || level === 6) {
+              const numberOrLetter = level === 5 ? counters.level5.toString() : String.fromCharCode(96 + counters.level6);
+              textRuns.push(
+                new TextRun({
+                  text: numberOrLetter,
+                  font: "Times New Roman",
+                  size: 24,
+                  underline: {},
+                }),
+                new TextRun({
+                  text: ". " + paragraph.content,
+                  font: "Times New Roman",
+                  size: 24
+                })
+              );
+            } else {
+              const numberOrLetter = level === 7 ? counters.level7.toString() : String.fromCharCode(96 + counters.level8);
+              textRuns.push(
+                new TextRun({
+                  text: "(",
+                  font: "Times New Roman",
+                  size: 24
+                }),
+                new TextRun({
+                  text: numberOrLetter,
+                  font: "Times New Roman",
+                  size: 24,
+                  underline: {}
+                }),
+                new TextRun({
+                  text: ") " + paragraph.content,
+                  font: "Times New Roman",
+                  size: 24
+                })
+              );
+            }
+            
+            content.push(new Paragraph({
+              children: textRuns,
+              alignment: AlignmentType.LEFT,
+              indent: { left: indent, hanging: hanging },
+              spacing: { after: 120 }
+            }));
+          } else {
+            content.push(new Paragraph({
+              children: [new TextRun({
+                text: prefix + "\t" + paragraph.content,
+                font: "Times New Roman",
+                size: 24
+              })],
+              tabStops: [{ type: TabStopType.LEFT, position: indent }],
+              indent: { left: indent, hanging: hanging },
+              spacing: { after: 120 }
             }));
           }
+        }
       }
-      
-      // Add a blank line after the last Ref/Encl and before the first body paragraph
-      if (refsWithContent.length > 0 || enclsWithContent.length > 0) {
-          content.push(new Paragraph({ text: "" }));
-      }
-
-
-      // Body paragraphs
-      paragraphs
-        .filter(p => p.content.trim())
-        .forEach((p, i, all) => {
-            const formattedParagraph = createFormattedParagraph(p, i, all);
-            content.push(formattedParagraph);
-            // Add a hard space after each paragraph
-            content.push(new Paragraph({ text: "" }));
-        });
-
 
       // Signature
       if (formData.sig) {
@@ -580,7 +665,7 @@ export default function NavalLetterGenerator() {
         
         content.push(new Paragraph({
           children: [new TextRun({
-            text: formData.sig.toUpperCase(),
+            text: formData.sig,
             font: "Times New Roman",
             size: 24
           })],
@@ -626,95 +711,52 @@ export default function NavalLetterGenerator() {
         }
       }
 
-// Create default header content - CORRECTED TO MATCH MAIN PAGE EXACTLY
-const headerParagraphs: Paragraph[] = [];
-const headerFormattedLines = splitSubject(formData.subj.toUpperCase(), 57); // Changed back to 57 to match main page
-if (headerFormattedLines.length === 0) {
-    headerParagraphs.push(new Paragraph({
-        children: [ new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }) ],
-        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-    }));
-} else {
-    const firstLineOptions: IParagraphOptions = {
-        children: [
-            new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }),
-            new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 }),
-        ],
-        tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-    };
-    headerParagraphs.push(new Paragraph(firstLineOptions));
-
-    for (let i = 1; i < headerFormattedLines.length; i++) {
-        headerParagraphs.push(new Paragraph({
-            children: [ new TextRun({ text: "\t" + headerFormattedLines[i], font: "Times New Roman", size: 24 }) ],
-            tabStops: [{ type: TabStopType.LEFT, position: 720 }],
-        }));
-    }
-}
-// Add one hard space after the header subject line
-headerParagraphs.push(new Paragraph({ text: "" }));
-
       // Create document
       const doc = new Document({
-        creator: "by Semper Admin",
-        title: formData.subj || "Naval Letter",
+        creator: "Naval Letter Generator",
+        title: "Naval Letter",
         description: "Generated Naval Letter Format",
         sections: [{
           properties: {
             page: {
-              margin: DOC_SETTINGS.pageMargins,
-              size: DOC_SETTINGS.pageSize,
-            },
-            titlePage: true,
+              margin: {
+                top: 1440,
+                bottom: 1440,
+                right: 1440,
+                left: 1440,
+              },
+              size: {
+                width: 12240,
+                height: 15840,
+              },
+            }
           },
           headers: {
-            first: new Header({
-              children: sealBuffer ? [
+            default: new Header({
+              children: [
                 new Paragraph({
                   children: [
                     new ImageRun({
                       data: sealBuffer,
                       transformation: {
-                        width: 96,
-                        height: 96,
+                        width: convertInchesToTwip(0.5),
+                        height: convertInchesToTwip(0.5),
                       },
                       floating: {
                         horizontalPosition: {
-                            relative: HorizontalPositionRelativeFrom.PAGE,
-                            offset: 457200, // 0.5 inches
+                          align: HorizontalPositionAlign.LEFT,
+                          offset: convertInchesToTwip(0.5),
                         },
                         verticalPosition: {
-                            relative: VerticalPositionRelativeFrom.PAGE,
-                            offset: 457200, // 0.5 inches
+                          align: VerticalPositionAlign.TOP,
+                          offset: convertInchesToTwip(0.5),
                         },
                       },
                     }),
                   ],
                 }),
-              ] : [],
+              ],
             }),
-            default: new Header({
-              children: headerParagraphs,
-            }),
-          },
-          footers: {
-            first: new Footer({
-              children: [], // No footer on first page
-            }),
-            default: new Footer({
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [
-                    new TextRun({
-                      text: "1",
-                      font: "Times New Roman",
-                      size: 24,
-                    })
-                  ]
-                })
-              ]
-            })
           },
           children: content
         }]
@@ -722,8 +764,8 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
       // Generate and save
       const filename = (formData.subj || "NavalLetter") + ".docx";
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, filename);
+      const buffer = await Packer.toBlob(doc);
+      saveAs(buffer, filename);
       
     } catch (error) {
       console.error("Error generating document:", error);
@@ -792,7 +834,6 @@ headerParagraphs.push(new Paragraph({ text: "" }));
         }
         
         .input-group {
-          display: flex;
           margin-bottom: 1rem;
         }
         
@@ -803,13 +844,9 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           font-weight: 600;
           white-space: nowrap;
           border-radius: 8px 0 0 8px;
-          padding: 0 12px;
-          display: flex;
-          align-items: center;
         }
         
         .form-control {
-          flex: 1;
           border: 2px solid #e9ecef;
           border-radius: 0 8px 8px 0;
           padding: 12px;
@@ -938,8 +975,6 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           border-radius: 8px;
           position: relative;
           transition: all 0.3s ease;
-          display: flex;
-          flex-direction: column;
         }
         
         .paragraph-container[data-level="1"] {
@@ -1010,7 +1045,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
         .paragraph-number-preview {
           font-family: monospace;
           color: #666;
-          font-size: 1.1rem;
+          font-size: 0.9rem;
           font-weight: bold;
         }
         
@@ -1070,41 +1105,6 @@ headerParagraphs.push(new Paragraph({ text: "" }));
         .validation-summary ul {
           padding-left: 20px;
         }
-
-        .saved-letter-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: background-color 0.2s ease;
-        }
-
-        .saved-letter-item:hover {
-            background-color: #e9ecef;
-        }
-        
-        .saved-letter-info {
-            flex-grow: 1;
-        }
-
-        .saved-letter-info strong {
-            display: block;
-            font-size: 1rem;
-            color: #495057;
-        }
-
-        .saved-letter-info small {
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-
-        .saved-letter-actions button {
-            margin-left: 10px;
-        }
         
         @media (max-width: 768px) {
           .main-container {
@@ -1120,60 +1120,57 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
       <div className="naval-gradient-bg">
         <div className="main-container">
-          <div className="text-center mb-5">
-            <img src="https://yt3.googleusercontent.com/KxVUCCrrOygiNK4sof8n_pGMIjEu3w0M3eY7pFWPmD20xjBzHFjbXgtSBzor8UBuwg6pWsBI=s160-c-k-c0x00ffffff-no-rj" alt="Semper Admin Logo" className="w-24 h-24 mx-auto rounded-full" />
-            <h1 className="main-title mb-0 mt-2.5">
-              Naval Letter Format Generator
-            </h1>
-            <p className="mt-0 text-xl text-gray-500">by Semper Admin</p>
-          </div>
+          <h1 className="main-title">
+            <i className="fas fa-file-alt" style={{ marginRight: '12px' }}></i>
+            Naval Letter Format Generator
+          </h1>
 
           {/* Unit Information Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-building mr-2"></i>
+              <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
               Unit Information
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-building mr-2"></i>
+                <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
                 Unit Name:
               </span>
               <input 
                 className="form-control" 
                 type="text" 
-                placeholder="e.g., HEADQUARTERS, 1ST MARINE DIVISION"
+                placeholder="Enter your unit name (e.g., 1st Marine Division)"
                 value={formData.line1}
-                onChange={(e) => setFormData(prev => ({ ...prev, line1: autoUppercase(e.target.value) }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, line1: e.target.value }))}
               />
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-road mr-2"></i>
+                <i className="fas fa-road" style={{ marginRight: '8px' }}></i>
                 Address Line 1:
               </span>
               <input 
                 className="form-control" 
                 type="text" 
-                placeholder="e.g., BOX 5555"
+                placeholder="Enter street address or base name"
                 value={formData.line2}
-                onChange={(e) => setFormData(prev => ({ ...prev, line2: autoUppercase(e.target.value) }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, line2: e.target.value }))}
               />
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-map mr-2"></i>
+                <i className="fas fa-map" style={{ marginRight: '8px' }}></i>
                 Address Line 2:
               </span>
               <input 
                 className="form-control" 
                 type="text" 
-                placeholder="e.g., CAMP PENDLETON, CA 92055-5000"
+                placeholder="Enter city, state, zip code"
                 value={formData.line3}
-                onChange={(e) => setFormData(prev => ({ ...prev, line3: autoUppercase(e.target.value) }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, line3: e.target.value }))}
               />
             </div>
           </div>
@@ -1181,14 +1178,14 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Header Information */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-info-circle mr-2"></i>
+              <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
               Header Information
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-hashtag mr-2"></i>
-                SSIC:
+                <i className="fas fa-hashtag" style={{ marginRight: '8px' }}></i>
+                Enter The SSIC:
               </span>
               <input 
                 className={`form-control ${validation.ssic.isValid ? 'is-valid' : formData.ssic && !validation.ssic.isValid ? 'is-invalid' : ''}`}
@@ -1204,29 +1201,29 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.ssic.message && (
               <div className={`feedback-message ${validation.ssic.isValid ? 'text-success' : 'text-danger'}`}>
-                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
+                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
                 {validation.ssic.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-code mr-2"></i>
-                Originator's Code:
+                <i className="fas fa-code" style={{ marginRight: '8px' }}></i>
+                Enter The Originator's Code:
               </span>
               <input 
                 className="form-control" 
                 type="text" 
-                placeholder="e.g., G-1"
+                placeholder="e.g., G-1, G-3, S-1, S-4, CO, XO, CG, OPS, MRA, MMSB-20, RA, SJA, ADJ, OPSO"
                 value={formData.originatorCode}
-                onChange={(e) => setFormData(prev => ({ ...prev, originatorCode: autoUppercase(e.target.value) }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, originatorCode: e.target.value }))}
               />
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-calendar-alt mr-2"></i>
-                Date:
+                <i className="fas fa-calendar-alt" style={{ marginRight: '8px' }}></i>
+                Enter The Date:
               </span>
               <input 
                 className="form-control" 
@@ -1245,17 +1242,17 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                 <i className="fas fa-calendar-day"></i>
               </button>
             </div>
-            <div className="text-sm text-gray-500 -mt-2.5 mb-4">
+            <div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
               <small>
-                <i className="fas fa-info-circle mr-1"></i>
+                <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
                 Accepts: YYYYMMDD, MM/DD/YYYY, YYYY-MM-DD, DD MMM YY, or "today". Auto-formats to Naval standard.
               </small>
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-user mr-2"></i>
-                From:
+                <i className="fas fa-user" style={{ marginRight: '8px' }}></i>
+                Enter The From:
               </span>
               <input 
                 className={`form-control ${validation.from.isValid ? 'is-valid' : formData.from && !validation.from.isValid ? 'is-invalid' : ''}`}
@@ -1268,15 +1265,15 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.from.message && (
               <div className={`feedback-message ${validation.from.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'} mr-1`}></i>
+                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-info-circle'}`} style={{ marginRight: '4px' }}></i>
                 {validation.from.message}
               </div>
             )}
 
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-users mr-2"></i>
-                To:
+                <i className="fas fa-users" style={{ marginRight: '8px' }}></i>
+                Enter The To:
               </span>
               <input 
                 className={`form-control ${validation.to.isValid ? 'is-valid' : formData.to && !validation.to.isValid ? 'is-invalid' : ''}`}
@@ -1289,15 +1286,15 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.to.message && (
               <div className={`feedback-message ${validation.to.isValid ? 'text-success' : 'text-info'}`}>
-                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'} mr-1`}></i>
+                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-info-circle'}`} style={{ marginRight: '4px' }}></i>
                 {validation.to.message}
               </div>
             )}
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-book mr-2"></i>
-                Subject:
+                <i className="fas fa-book" style={{ marginRight: '8px' }}></i>
+                Enter The Subject (ALWAYS IN ALL CAPS):
               </span>
               <input 
                 className={`form-control ${validation.subj.isValid ? 'is-valid' : formData.subj && !validation.subj.isValid ? 'is-invalid' : ''}`}
@@ -1313,7 +1310,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             </div>
             {validation.subj.message && (
               <div className={`feedback-message ${validation.subj.isValid ? 'text-success' : 'text-warning'}`}>
-                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
+                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
                 {validation.subj.message}
               </div>
             )}
@@ -1322,45 +1319,45 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Optional Items Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-plus-circle mr-2"></i>
+              <i className="fas fa-plus-circle" style={{ marginRight: '8px' }}></i>
               Optional Items
             </div>
             
-            <div className="mb-6">
-              <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-route mr-2"></i>
-                Via?
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
+                Do you have a VIA?
               </label>
               <div className="radio-group">
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifVia" 
                     value="yes" 
                     checked={showVia}
                     onChange={() => setShowVia(true)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">Yes</span>
+                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
                 </label>
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifVia" 
                     value="no" 
                     checked={!showVia}
                     onChange={() => setShowVia(false)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">No</span>
+                  <span style={{ fontSize: '1.1rem' }}>No</span>
                 </label>
               </div>
 
               {showVia && (
                 <div className="dynamic-section">
-                  <label className="block font-semibold mb-2">
-                    <i className="fas fa-route mr-2"></i>
-                    Enter Via Addressee(s):
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
+                    Enter A Via:
                   </label>
                   {vias.map((via, index) => (
                     <div key={index} className="input-group">
@@ -1377,8 +1374,8 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setVias)}
                         >
-                          <i className="fas fa-plus mr-1"></i>
-                          Add
+                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          Add Via
                         </button>
                       ) : (
                         <button 
@@ -1386,7 +1383,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setVias)}
                         >
-                          <i className="fas fa-trash mr-1"></i>
+                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
                           Remove
                         </button>
                       )}
@@ -1396,48 +1393,48 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               )}
             </div>
             
-            <div className="mb-6">
-              <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-bookmark mr-2"></i>
-                Reference(s)?
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-bookmark" style={{ marginRight: '8px' }}></i>
+                Do you have a REFERENCE?
               </label>
               <div className="radio-group">
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifRef" 
                     value="yes" 
                     checked={showRef}
                     onChange={() => setShowRef(true)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">Yes</span>
+                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
                 </label>
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifRef" 
                     value="no" 
                     checked={!showRef}
                     onChange={() => setShowRef(false)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">No</span>
+                  <span style={{ fontSize: '1.1rem' }}>No</span>
                 </label>
               </div>
 
               {showRef && (
                 <div className="dynamic-section">
-                  <label className="block font-semibold mb-2">
-                    <i className="fas fa-bookmark mr-2"></i>
-                    Enter Reference(s):
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    <i className="fas fa-bookmark" style={{ marginRight: '8px' }}></i>
+                    Enter A Reference:
                   </label>
                   {references.map((ref, index) => (
                     <div key={index} className="input-group">
                       <input 
                         className="form-control" 
                         type="text" 
-                        placeholder="Enter reference information"
+                        placeholder="REFERENCE IN ALL CAPS"
                         value={ref}
                         onChange={(e) => updateItem(index, e.target.value, setReferences)}
                       />
@@ -1447,8 +1444,8 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setReferences)}
                         >
-                          <i className="fas fa-plus mr-1"></i>
-                          Add
+                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          Add Reference
                         </button>
                       ) : (
                         <button 
@@ -1456,7 +1453,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setReferences)}
                         >
-                          <i className="fas fa-trash mr-1"></i>
+                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
                           Remove
                         </button>
                       )}
@@ -1466,41 +1463,41 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               )}
             </div>
             
-            <div className="mb-6">
-              <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-paperclip mr-2"></i>
-                Enclosure(s)?
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-paperclip" style={{ marginRight: '8px' }}></i>
+                Do you have an ENCLOSURE?
               </label>
               <div className="radio-group">
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifEncl" 
                     value="yes" 
                     checked={showEncl}
                     onChange={() => setShowEncl(true)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">Yes</span>
+                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
                 </label>
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifEncl" 
                     value="no" 
                     checked={!showEncl}
                     onChange={() => setShowEncl(false)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">No</span>
+                  <span style={{ fontSize: '1.1rem' }}>No</span>
                 </label>
               </div>
 
               {showEncl && (
                 <div className="dynamic-section">
-                  <label className="block font-semibold mb-2">
-                    <i className="fas fa-paperclip mr-2"></i>
-                    Enter Enclosure(s):
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    <i className="fas fa-paperclip" style={{ marginRight: '8px' }}></i>
+                    Enter An Enclosure:
                   </label>
                   {enclosures.map((encl, index) => (
                     <div key={index} className="input-group">
@@ -1517,8 +1514,8 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setEnclosures)}
                         >
-                          <i className="fas fa-plus mr-1"></i>
-                          Add
+                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          Add Enclosure
                         </button>
                       ) : (
                         <button 
@@ -1526,7 +1523,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setEnclosures)}
                         >
-                          <i className="fas fa-trash mr-1"></i>
+                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
                           Remove
                         </button>
                       )}
@@ -1540,27 +1537,31 @@ headerParagraphs.push(new Paragraph({ text: "" }));
           {/* Body Paragraphs Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-paragraph mr-2"></i>
+              <i className="fas fa-paragraph" style={{ marginRight: '8px' }}></i>
               Body Paragraphs
             </div>
             
             <div>
               {paragraphs.map((paragraph, index) => {
+                const levelInfo = getLevelInfo(paragraph.level);
+                const hasStructureError = structureErrors.some(error => error.includes(`Level ${paragraph.level}`));
                 
                 return (
                   <div 
                     key={paragraph.id} 
-                    className='paragraph-container'
+                    className={`paragraph-container ${hasStructureError ? 'invalid-structure' : ''}`}
                     data-level={paragraph.level}
                   >
                     <div className="paragraph-header">
                       <div>
-                        
+                        <span className="paragraph-level-badge">Level {paragraph.level}</span>
+                        <span className="paragraph-number-preview">{levelInfo.preview.split(',')[0]}</span>
+                        <small style={{ color: '#666', marginLeft: '8px' }}>{levelInfo.description}</small>
                       </div>
                       <div>
                         <button 
                           className="btn btn-sm" 
-                          style={{ background: "#f8f9fa", border: "1px solid #dee2e6", marginRight: "4px" } as React.CSSProperties}
+                          style={{ background: '#f8f9fa', border: '1px solid #dee2e6', marginRight: '4px' }}
                           onClick={() => moveParagraphUp(paragraph.id)} 
                           disabled={index === 0}
                           title="Move Up"
@@ -1569,7 +1570,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                         </button>
                         <button 
                           className="btn btn-sm" 
-                          style={{ background: "#f8f9fa", border: "1px solid #dee2e6" } as React.CSSProperties}
+                          style={{ background: '#f8f9fa', border: '1px solid #dee2e6' }}
                           onClick={() => moveParagraphDown(paragraph.id)} 
                           disabled={index === paragraphs.length - 1}
                           title="Move Down"
@@ -1585,9 +1586,18 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                       placeholder="Enter your paragraph content here..."
                       value={paragraph.content}
                       onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
-                      style={{ marginBottom: '12px', flex: 1 } as React.CSSProperties}
+                      style={{ marginBottom: '12px' }}
                     />
                     
+                    {hasStructureError && (
+                      <div className="structure-error">
+                        <i className="fas fa-exclamation-triangle" style={{ marginRight: '4px' }}></i>
+                        <small>
+                          Naval format error: If there is a subparagraph at this level, there must be at least two. 
+                          Add another paragraph at the same level or promote this to a higher level.
+                        </small>
+                      </div>
+                    )}
                     
                     <div>
                       <button 
@@ -1604,14 +1614,12 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           Sub-paragraph
                         </button>
                       )}
-                      
-                        <button 
-                          className="btn btn-smart-same btn-sm" 
-                          onClick={() => addParagraph('same', paragraph.id)}
-                        >
-                          Same
-                        </button>
-                      
+                      <button 
+                        className="btn btn-smart-same btn-sm" 
+                        onClick={() => addParagraph('same', paragraph.id)}
+                      >
+                        Same
+                      </button>
                       {paragraph.level > 1 && (
                         <button 
                           className="btn btn-smart-up btn-sm" 
@@ -1620,83 +1628,104 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           One Up
                         </button>
                       )}
-                      
+                      {paragraph.id !== 1 && (
                         <button 
-                          className="btn btn-danger btn-sm ml-2" onClick={() => removeParagraph(paragraph.id)}
+                          className="btn btn-danger btn-sm" 
+                          onClick={() => removeParagraph(paragraph.id)}
+                          style={{ marginLeft: '8px' }}
                         >
                           Delete
                         </button>
-                      
+                      )}
                     </div>
                   </div>
                 );
               })}
             </div>
             
+            {structureErrors.length > 0 && (
+              <div className="validation-summary">
+                <h6>
+                  <i className="fas fa-exclamation-triangle" style={{ marginRight: '4px' }}></i>
+                  Naval Correspondence Format Violations
+                </h6>
+                <p>
+                  <strong>Per SECNAV M-5216.5, Section 7-12:</strong> "If there is a paragraph 1a, there must be a paragraph 1b; if there is a paragraph 1a(1), there must be a paragraph 1a(2), etc."
+                </p>
+                <ul style={{ marginBottom: '0' }}>
+                  {structureErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+                <small style={{ display: 'block', marginTop: '8px', color: '#6c757d' }}>
+                  <strong>Solution:</strong> Add another paragraph at the same level, or promote single subparagraphs to a higher level.
+                </small>
+              </div>
+            )}
           </div>
 
           {/* Closing Block Section */}
           <div className="form-section">
             <div className="section-legend">
-              <i className="fas fa-signature mr-2"></i>
+              <i className="fas fa-signature" style={{ marginRight: '8px' }}></i>
               Closing Block
             </div>
             
             <div className="input-group">
               <span className="input-group-text">
-                <i className="fas fa-pen-fancy mr-2"></i>
-                Signature Name:
+                <i className="fas fa-pen-fancy" style={{ marginRight: '8px' }}></i>
+                Enter The Signature:
               </span>
               <input 
                 className="form-control" 
                 type="text" 
                 placeholder="F. M. LASTNAME"
                 value={formData.sig}
-                onChange={(e) => setFormData(prev => ({ ...prev, sig: autoUppercase(e.target.value) }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, sig: e.target.value }))}
               />
             </div>
 
-            <div className="mb-6">
-              <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-user-tie mr-2"></i>
-                Delegation of Signature Authority?
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
+                Delegation of Signature Authority
               </label>
               <div className="radio-group">
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifDelegation" 
                     value="yes" 
                     checked={showDelegation}
                     onChange={() => setShowDelegation(true)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">Yes</span>
+                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
                 </label>
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifDelegation" 
                     value="no" 
                     checked={!showDelegation}
                     onChange={() => setShowDelegation(false)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">No</span>
+                  <span style={{ fontSize: '1.1rem' }}>No</span>
                 </label>
               </div>
 
               {showDelegation && (
                 <div className="dynamic-section">
-                  <label className="block font-semibold mb-2">
-                    <i className="fas fa-user-tie mr-2"></i>
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
                     Delegation Authority Type:
                   </label>
                   
-                  <div className="mb-4">
+                  <div style={{ marginBottom: '1rem' }}>
                     <select 
-                      className="form-control mb-2" 
-                      
+                      className="form-control" 
+                      style={{ marginBottom: '8px' }}
                       onChange={(e) => updateDelegationType(e.target.value)}
                     >
                       <option value="">Select delegation type...</option>
@@ -1710,7 +1739,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
 
                   <div className="input-group">
                     <span className="input-group-text">
-                      <i className="fas fa-edit mr-2"></i>
+                      <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
                       Delegation Text:
                     </span>
                     <input 
@@ -1729,13 +1758,13 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                     borderRadius: '8px', 
                     border: '1px solid #17a2b8',
                     fontSize: '0.85rem'
-                  } as React.CSSProperties}>
-                    <strong className="text-cyan-600">
-                      <i className="fas fa-info-circle mr-1"></i>
+                  }}>
+                    <strong style={{ color: '#17a2b8' }}>
+                      <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
                       Examples:
                     </strong>
                     <br />
-                    <div style={{ marginTop: '4px', color: '#17a2b8' } as React.CSSProperties}>
+                    <div style={{ marginTop: '4px', color: '#17a2b8' }}>
                       • <strong>By direction:</strong> For routine correspondence when specifically authorized<br />
                       • <strong>Acting:</strong> When temporarily succeeding to command or appointed to replace an official<br />
                       • <strong>Deputy Acting:</strong> For deputy positions acting in absence<br />
@@ -1746,41 +1775,41 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               )}
             </div>
 
-            <div className="mb-6">
-              <label className="block text-lg font-bold mb-2">
-                <i className="fas fa-copy mr-2"></i>
-                Copy To?
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-copy" style={{ marginRight: '8px' }}></i>
+                Do you have Copy To?
               </label>
               <div className="radio-group">
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifCopy" 
                     value="yes" 
                     checked={showCopy}
                     onChange={() => setShowCopy(true)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">Yes</span>
+                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
                 </label>
-                <label className="flex items-center">
+                <label style={{ display: 'flex', alignItems: 'center' }}>
                   <input 
                     type="radio" 
                     name="ifCopy" 
                     value="no" 
                     checked={!showCopy}
                     onChange={() => setShowCopy(false)}
-                    style={{ marginRight: "8px", transform: "scale(1.25)" } as React.CSSProperties}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
                   />
-                  <span className="text-lg">No</span>
+                  <span style={{ fontSize: '1.1rem' }}>No</span>
                 </label>
               </div>
 
               {showCopy && (
                 <div className="dynamic-section">
-                  <label className="block font-semibold mb-2">
-                    <i className="fas fa-mail-bulk mr-2"></i>
-                    Enter Addressee(s):
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    <i className="fas fa-mail-bulk" style={{ marginRight: '8px' }}></i>
+                    Enter An Addressee:
                   </label>
                   {copyTos.map((copy, index) => (
                     <div key={index} className="input-group">
@@ -1797,8 +1826,8 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => addItem(setCopyTos)}
                         >
-                          <i className="fas fa-plus mr-1"></i>
-                          Add
+                          <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                          Add Copy To
                         </button>
                       ) : (
                         <button 
@@ -1806,7 +1835,7 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                           type="button" 
                           onClick={() => removeItem(index, setCopyTos)}
                         >
-                          <i className="fas fa-trash mr-1"></i>
+                          <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
                           Remove
                         </button>
                       )}
@@ -1816,33 +1845,9 @@ headerParagraphs.push(new Paragraph({ text: "" }));
               )}
             </div>
           </div>
-          
-          {/* Saved Letters Section */}
-          {savedLetters.length > 0 && (
-            <div className="form-section">
-                <div className="section-legend">
-                    <i className="fas fa-save mr-2"></i>
-                    Saved Versions
-                </div>
-                {savedLetters.map(letter => (
-                    <div key={letter.id} className="saved-letter-item">
-                        <div className="saved-letter-info">
-                            <strong>{letter.subj || "Untitled"}</strong>
-                            <small>Saved: {letter.savedAt}</small>
-                        </div>
-                        <div className="saved-letter-actions">
-                            <button className="btn btn-sm btn-success" onClick={() => loadLetter(letter.id)}>
-                              <i className="fas fa-upload mr-1"></i>
-                              Load
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-          )}
 
           {/* Generate Button */}
-          <div className="text-center">
+          <div style={{ textAlign: 'center' }}>
             <button 
               className="generate-btn" 
               onClick={generateDocument} 
@@ -1859,12 +1864,12 @@ headerParagraphs.push(new Paragraph({ text: "" }));
                     borderRadius: '50%', 
                     animation: 'spin 1s linear infinite',
                     marginRight: '8px'
-                  } as React.CSSProperties}></span>
+                  }}></span>
                   Generating Document...
                 </>
               ) : (
                 <>
-                  <i className="fas fa-file-download mr-2"></i>
+                  <i className="fas fa-file-download" style={{ marginRight: '8px' }}></i>
                   Generate Document
                 </>
               )}
@@ -1877,15 +1882,10 @@ headerParagraphs.push(new Paragraph({ text: "" }));
             textAlign: 'center', 
             fontSize: '0.875rem', 
             color: '#6c757d' 
-          } as React.CSSProperties}>
+          }}>
             <p>
-              <i className="fas fa-shield-alt mr-1"></i>
+              <i className="fas fa-shield-alt" style={{ marginRight: '4px' }}></i>
               DoD Seal automatically included • Format compliant with SECNAV M-5216.5
-            </p>
-            <p className="mt-2">
-              <a href="https://linktr.ee/semperadmin" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'none' } as React.CSSProperties}>
-                Connect with Semper Admin
-              </a>
             </p>
           </div>
         </div>
@@ -1901,19 +1901,3 @@ headerParagraphs.push(new Paragraph({ text: "" }));
     </div>
   );
 }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-

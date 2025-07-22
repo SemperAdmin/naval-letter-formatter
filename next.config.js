@@ -1,14 +1,14 @@
 ﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Comment out these lines during development
+  // output: 'export',
+  // basePath: '/naval-letter-generator',
+  // assetPrefix: '/naval-letter-generator/',
   trailingSlash: true,
   skipTrailingSlashRedirect: true,
-  distDir: 'out',
   images: {
     unoptimized: true,
   },
-  basePath: '/naval-letter-generator',
-  assetPrefix: '/naval-letter-generator/',
 }
 
 module.exports = nextConfig

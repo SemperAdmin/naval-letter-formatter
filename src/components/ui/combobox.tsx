@@ -56,7 +56,9 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
         style={{
           // EXACT .form-control styling from your app
           flex: '1',
-          border: '2px solid #e9ecef',
+          borderWidth: '2px',
+          borderStyle: 'solid',
+          borderColor: '#e9ecef',
           borderRadius: '0 8px 8px 0',
           padding: '12px',
           minHeight: '48px',
@@ -150,7 +152,9 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
           zIndex: 1000,
           marginTop: '4px',
           background: 'white',
-          border: '1px solid rgba(184, 134, 11, 0.2)',
+          borderWidth: '1px',
+          borderStyle: 'solid',
+          borderColor: 'rgba(184, 134, 11, 0.2)',
           borderRadius: '12px',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
           maxHeight: '300px',

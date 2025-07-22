@@ -20,22 +20,16 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    
-    /* Naval-specific CSS variables to match your Bootstrap theme */
-    --naval-border: 233 236 239; /* #e9ecef */
-    --naval-input-bg: 255 255 255; /* #ffffff */
-    --naval-text: 73 80 87; /* #495057 */
-    --naval-text-muted: 108 117 125; /* #6c757d */
-    --naval-gold: 184 134 11; /* #b8860b */
-    --naval-gold-light: 255 215 0; /* #ffd700 */
-    --naval-focus-shadow: 184 134 11; /* #b8860b with opacity */
-    
-    --border: var(--naval-border);
-    --input: var(--naval-border);
-    --ring: var(--naval-gold);
+    --border: 240 10% 85%;
+    --input: 240 10% 90%;
+    --ring: 51 100% 50%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
-  
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -70,68 +64,5 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-/* Naval Form Components - Override shadcn defaults */
-@layer components {
-  /* Naval Input Styling - matches your form-control exactly */
-  .naval-input {
-    @apply flex h-[48px] w-full rounded-naval-right border-2 border-naval-gray-lighter bg-naval-white px-naval-input py-naval-input text-base text-naval-gray;
-    @apply transition-all duration-300 ease-out;
-    @apply focus:border-naval-gold focus:shadow-naval-focus focus:outline-none;
-    @apply hover:border-naval-gold hover:shadow-naval-hover;
-    font-weight: 400;
-    font-size: 16px;
-    color: rgb(73, 80, 87);
-    background-color: rgb(255, 255, 255);
-    border-color: rgb(233, 236, 239);
-  }
-  
-  /* Naval Button Base */
-  .naval-button {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-naval text-sm font-medium transition-all duration-300;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-naval-gold focus-visible:ring-offset-2;
-    @apply disabled:pointer-events-none disabled:opacity-50;
-    min-height: 48px;
-    padding: 12px;
-  }
-  
-  /* Naval Button Outline - matches your form controls */
-  .naval-button-outline {
-    @apply naval-button naval-input;
-    @apply hover:bg-white hover:text-naval-gray;
-    justify-content: space-between;
-    text-align: left;
-  }
-  
-  /* Naval Search Icon Badge */
-  .naval-search-badge {
-    @apply flex h-7 w-7 items-center justify-center rounded-md;
-    background: linear-gradient(135deg, rgb(184, 134, 11), rgb(255, 215, 0));
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-  
-  .naval-search-badge:hover {
-    transform: scale(1.05);
-  }
-  
-  /* Naval Dropdown Styling */
-  .naval-dropdown {
-    @apply rounded-xl border border-naval-gold/20 bg-white/98 p-0;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  }
-  
-  /* Naval Command Item */
-  .naval-command-item {
-    @apply flex cursor-pointer items-center justify-between rounded-lg p-3 m-1 text-sm font-medium transition-all duration-200;
-    @apply hover:bg-gradient-to-r hover:from-naval-gold/10 hover:to-naval-gold-light/5;
-    @apply hover:border-naval-gold/20 hover:scale-[1.01] hover:shadow-naval-elevation;
-    @apply focus:bg-gradient-to-r focus:from-naval-gold focus:to-naval-gold-light focus:text-white;
-    @apply data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-naval-gold data-[selected=true]:to-naval-gold-light;
-    @apply data-[selected=true]:text-white data-[selected=true]:scale-[1.02] data-[selected=true]:shadow-lg;
-    border: 1px solid transparent;
   }
 }
