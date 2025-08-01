@@ -61,6 +61,7 @@
 @layer base {
   * {
     @apply border-border;
+    margin: 0; /* Add this line to reset the 8px default */
   }
   body {
     @apply bg-background text-foreground;
