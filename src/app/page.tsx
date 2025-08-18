@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions } from 'docx';
 import { saveAs } from 'file-saver';
 import { fetchImageAsBase64 } from '@/lib/fetch-image';
@@ -753,6 +753,23 @@ export default function NavalLetterGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [savedLetters, setSavedLetters] = useState<SavedLetter[]>([]);
 
+  // Add voice recognition state
+  const [voiceRecognition, setVoiceRecognition] = useState<any>(null);
+  const [activeVoiceInput, setActiveVoiceInput] = useState<number | null>(null);
+
+  // Add useRef to track values without causing re-renders
+  const activeVoiceInputRef = useRef<number | null>(null);
+  const paragraphsRef = useRef<ParagraphData[]>(paragraphs);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    activeVoiceInputRef.current = activeVoiceInput;
+  }, [activeVoiceInput]);
+  
+  useEffect(() => {
+    paragraphsRef.current = paragraphs;
+  }, [paragraphs]);
+
   // Helper functions for references and enclosures
   const getReferenceLetter = (index: number, startingLevel: string): string => {
     const startCharCode = startingLevel.charCodeAt(0);
@@ -1142,6 +1159,67 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
     setParagraphs(newParagraphs);
     validateAcronyms(newParagraphs);
   };
+
+  // Voice Recognition Functions
+  const initializeVoiceRecognition = useCallback(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = function(event: any) {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript && activeVoiceInputRef.current !== null) {
+          const currentParagraph = paragraphsRef.current.find(p => p.id === activeVoiceInputRef.current);
+          if (currentParagraph) {
+            const newContent = currentParagraph.content + (currentParagraph.content ? ' ' : '') + finalTranscript;
+            updateParagraphContent(activeVoiceInputRef.current, newContent);
+          }
+        }
+      };
+
+      recognition.onerror = function(event: any) {
+        console.error('Voice recognition error:', event.error);
+        setActiveVoiceInput(null);
+      };
+      
+      recognition.onend = function() {
+        setActiveVoiceInput(null);
+      };
+      
+      setVoiceRecognition(recognition);
+    }
+  }, []); // Empty dependency array - only initialize once
+
+  const toggleVoiceInput = (paragraphId: number) => {
+    if (!voiceRecognition) {
+      alert('Voice recognition not supported in this browser');
+      return;
+    }
+    
+    if (activeVoiceInput === paragraphId) {
+      voiceRecognition.stop();
+      setActiveVoiceInput(null);
+    } else {
+      if (activeVoiceInput !== null) {
+        voiceRecognition.stop();
+      }
+      setActiveVoiceInput(paragraphId);
+      voiceRecognition.start();
+    }
+  };
+
+  // Initialize voice recognition on component mount
+  useEffect(() => {
+    initializeVoiceRecognition();
+  }, []); // Empty dependency array - only run once on mount
 
   const moveParagraphUp = (id: number) => {
     const currentIndex = paragraphs.findIndex(p => p.id === id);
@@ -1666,9 +1744,11 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
           backdrop-filter: blur(10px);
           border-radius: 20px;
           box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-          margin: 20px auto;
+          margin: 20px;
           padding: 30px;
           max-width: 1200px;
+          margin-left: auto;
+          margin-right: auto;
         }
         
         .main-title {
@@ -1694,6 +1774,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         .section-legend {
           background: linear-gradient(45deg, #b8860b, #ffd700);
           color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
           padding: 8px 16px;
           border-radius: 10px;
           font-weight: bold;
@@ -1714,6 +1795,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         .input-group-text {
           background: linear-gradient(45deg, #b8860b, #ffd700);
           color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
           border: none;
           font-weight: 600;
           white-space: nowrap;
@@ -1790,6 +1872,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         .btn-primary {
           background: linear-gradient(45deg, #b8860b, #ffd700);
           color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
         }
         
         .btn-primary:hover {
@@ -1800,6 +1883,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         .btn-success {
           background: linear-gradient(45deg, #28a745, #20c997);
           color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
         }
         
         .btn-success:hover {
@@ -1810,6 +1894,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         .btn-danger {
           background: linear-gradient(45deg, #dc3545, #c82333);
           color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
         }
         
         .btn-danger:hover {
@@ -1820,6 +1905,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         .generate-btn {
           background: linear-gradient(45deg, #28a745, #20c997);
           color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
           border: none;
           padding: 15px 30px;
           font-size: 1.2rem;
@@ -1828,7 +1914,6 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
           display: block;
           margin: 30px auto;
           min-width: 250px;
-          transition: all 0.3s ease;
         }
         
         .generate-btn:hover {
@@ -1925,6 +2010,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         .paragraph-level-badge {
           background: linear-gradient(45deg, #b8860b, #ffd700);
           color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
           padding: 4px 8px;
           border-radius: 12px;
           font-size: 0.8rem;
@@ -1941,7 +2027,8 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         
         .btn-smart-main { 
           background: #007bff; 
-          color: white; 
+          color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
           margin-right: 8px;
           margin-bottom: 4px;
         }
@@ -1953,13 +2040,15 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
         }
         .btn-smart-same { 
           background: #28a745; 
-          color: white; 
+          color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
           margin-right: 8px;
           margin-bottom: 4px;
         }
         .btn-smart-up { 
           background: #17a2b8; 
-          color: white; 
+          color: white;
+          text-shadow: 0 0 3px #0066cc, 0 0 6px #0066cc;
           margin-right: 8px;
           margin-bottom: 4px;
         }
@@ -2066,7 +2155,7 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
               }
             </h1>
             <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
-            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20250721</p>
+            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20250817</p>
           </div>
 
           {/* Document Type Selector */}
@@ -3115,14 +3204,37 @@ const validateAcronyms = useCallback((allParagraphs: ParagraphData[]) => {
                       </div>
                     </div>
                     
-                    <textarea 
-                      className="form-control" 
-                      rows={4}
-                      placeholder="Enter your paragraph content here..."
-                      value={paragraph.content}
-                      onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
-                      style={{ marginBottom: '12px', flex: 1 }}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>
+                      <textarea 
+                        className="form-control" 
+                        rows={4}
+                        placeholder="Enter your paragraph content here..."
+                        value={paragraph.content}
+                        onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      
+                      <button
+                        className={`btn btn-sm ${activeVoiceInput === paragraph.id ? 'btn-danger' : 'btn-outline-primary'}`}
+                        onClick={() => toggleVoiceInput(paragraph.id)}
+                        title={activeVoiceInput === paragraph.id ? 'Stop Recording' : 'Start Voice Input'}
+                        style={{ 
+                          minWidth: '100px',
+                          height: '38px',
+                          fontSize: '12px'
+                        }}
+                      >
+                        {activeVoiceInput === paragraph.id ? (
+                          <>
+                            🔴 Recording...
+                          </>
+                        ) : (
+                          <>
+                            🎤 Voice Input
+                          </>
+                        )}
+                      </button>
+                    </div>
 
                     {paragraph.acronymError && (
                         <div className="acronym-error">
