@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions } from 'docx';
 import { saveAs } from 'file-saver';
-import { fetchImageAsBase64 } from '@/lib/fetch-image';
+import { DOD_SEAL_BASE64 } from '@/lib/dod-seal-base64';
 import { DOC_SETTINGS } from '@/lib/doc-settings';
 import { createFormattedParagraph } from '@/lib/paragraph-formatter';
 import { UNITS, Unit } from '@/lib/units';
@@ -1383,11 +1383,7 @@ export default function NavalLetterGenerator() {
   }, []);
 
   const generateBasicLetter = async () => {
-    const sealBuffer = await fetchImageAsBase64("https://www.lrsm.upenn.edu/wp-content/uploads/1960/05/dod-logo.png")
-      .catch(error => {
-        console.error("Could not fetch seal, proceeding without it.", error);
-        return null;
-      });
+    const sealBuffer = DOD_SEAL_BASE64; // Use the static base64 data
 
     const content = [];
 
@@ -1511,11 +1507,7 @@ export default function NavalLetterGenerator() {
       return null;
     }
 
-    const sealBuffer = await fetchImageAsBase64("https://www.lrsm.upenn.edu/wp-content/uploads/1960/05/dod-logo.png")
-      .catch(error => {
-        console.error("Could not fetch seal, proceeding without it.", error);
-        return null;
-      });
+    const sealBuffer = DOD_SEAL_BASE64; // Use the static base64 data
 
     const content = [];
 
@@ -3203,9 +3195,7 @@ export default function NavalLetterGenerator() {
                         </button>
                       </div>
                     </div>
-<<<<<<< HEAD
-                    
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>  
                       <textarea 
                         className="form-control" 
                         rows={4}
@@ -3236,17 +3226,6 @@ export default function NavalLetterGenerator() {
                         )}
                       </button>
                     </div>
-=======
-
-                    <textarea
-                      className="form-control"
-                      rows={4}
-                      placeholder="Enter your paragraph content here..."
-                      value={paragraph.content}
-                      onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
-                      style={{ marginBottom: '12px', flex: 1 }}
-                    />
->>>>>>> 2751f197e1a8aec38b5783b814fe3d6032fc2617
 
                     {paragraph.acronymError && (
                       <div className="acronym-error">
