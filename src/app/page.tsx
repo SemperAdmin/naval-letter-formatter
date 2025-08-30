@@ -12,6 +12,7 @@ import { SSICS } from '@/lib/ssic';
 import { Combobox } from '@/components/ui/combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { configureConsole, logError, debugUserAction, debugFormChange } from '@/lib/console-utils';
+import { NLDPFileManager } from '../components/NLDPFileManager';
 
 
 interface ParagraphData {
@@ -332,7 +333,6 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
               type="text"
               value={formData.referenceDate}
               onChange={handleDateChange}
-              onBlur={handleDateChange}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -377,6 +377,8 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
             )}
           </div>
         )}
+
+        
       </div>
     </div>
   );
@@ -1521,7 +1523,7 @@ export default function NavalLetterGenerator() {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.BEHIND_TEXT } } })] })] : [] }),
+          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.SQUARE } } })] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
@@ -1684,7 +1686,7 @@ export default function NavalLetterGenerator() {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.BEHIND_TEXT } } })] })] : [] }),
+          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.SQUARE } } })] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
@@ -2210,7 +2212,7 @@ export default function NavalLetterGenerator() {
               }
             </h1>
             <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
-            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20250817</p>
+            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20250830</p>
           </div>
 
           {/* Document Type Selector */}
@@ -3552,6 +3554,43 @@ export default function NavalLetterGenerator() {
               ))}
             </div>
           )}
+
+          {/* NLDP File Manager Section */}
+          <NLDPFileManager
+            formData={formData}
+            vias={vias}
+            references={references}
+            enclosures={enclosures}
+            copyTos={copyTos}
+            paragraphs={paragraphs}
+            onDataImported={(importedFormData, importedVias, importedReferences, importedEnclosures, importedCopyTos, importedParagraphs) => {
+              debugUserAction('Import NLDP Data', {
+                subject: importedFormData.subj.substring(0, 30) + (importedFormData.subj.length > 30 ? '...' : ''),
+                paragraphCount: importedParagraphs.length
+              });
+                        
+              // Update all form data
+              setFormData(importedFormData);
+              setVias(importedVias);
+              setReferences(importedReferences);
+              setEnclosures(importedEnclosures);
+              setCopyTos(importedCopyTos);
+              setParagraphs(importedParagraphs);
+                        
+              // Update UI toggles based on imported data
+              setShowVia(importedVias.some(v => v.trim() !== ''));
+              setShowRef(importedReferences.some(r => r.trim() !== ''));
+              setShowEncl(importedEnclosures.some(e => e.trim() !== ''));
+              setShowCopy(importedCopyTos.some(c => c.trim() !== ''));
+              setShowDelegation(!!importedFormData.delegationText);
+                        
+              // Re-validate fields after loading
+              validateSSIC(importedFormData.ssic);
+              validateSubject(importedFormData.subj);
+              validateFromTo(importedFormData.from, 'from');
+              validateFromTo(importedFormData.to, 'to');
+            }}
+          />
 
           {/* Generate Button */}
           <div style={{ textAlign: 'center' }}>

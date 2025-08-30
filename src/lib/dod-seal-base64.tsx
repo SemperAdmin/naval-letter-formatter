@@ -767,7 +767,7 @@ export default function NavalLetterGenerator() {
                 new Paragraph({
                   children: [
                     new ImageRun({
-                      data: sealBuffer,
+                      data: sealBuffer || new ArrayBuffer(0),
                       transformation: {
                         width: convertInchesToTwip(0.5),
                         height: convertInchesToTwip(0.5),

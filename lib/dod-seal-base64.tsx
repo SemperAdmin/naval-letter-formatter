@@ -761,7 +761,7 @@ export default function NavalLetterGenerator() {
                           offset: convertInchesToTwip(0.5),
                         },
                         wrap: {
-                          type: TextWrappingType.BEHIND_TEXT
+                          type: TextWrappingType.TOP_AND_BOTTOM
                         },
                       },
                     }),

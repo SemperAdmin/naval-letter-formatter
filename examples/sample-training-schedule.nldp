@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "packageId": "nldp_1725020400000_abc123",
+    "formatVersion": "1.0.0",
+    "createdAt": "2024-08-30T14:30:00.000Z",
+    "author": {
+      "name": "SSgt John Smith",
+      "unit": "1st Marine Division",
+      "email": "john.smith@usmc.mil"
+    },
+    "package": {
+      "title": "Example Training Schedule Letter Data Package",
+      "description": "Contains correspondence data for September 2024 training schedule announcement with endorsement references",
+      "subject": "TRAINING SCHEDULE FOR SEPTEMBER 2024",
+      "documentType": "basic",
+      "tags": ["training", "schedule", "2024"]
+    },
+    "checksums": {
+      "dataHash": "abc123def456789012345678901234567890123456789012345678901234567890",
+      "crc32": "AB123CD4"
+    }
+  },
+  "data": {
+    "formData": {
+      "documentType": "basic",
+      "endorsementLevel": "",
+      "basicLetterReference": "",
+      "referenceWho": "",
+      "referenceType": "",
+      "referenceDate": "",
+      "startingReferenceLevel": "a",
+      "startingEnclosureNumber": "1",
+      "line1": "1ST MARINE DIVISION",
+      "line2": "CAMP PENDLETON, CA 92055-5019",
+      "line3": "",
+      "ssic": "1500",
+      "originatorCode": "",
+      "date": "30 Aug 24",
+      "from": "Commanding Officer, 1st Marine Division",
+      "to": "All Subordinate Commands",
+      "subj": "TRAINING SCHEDULE FOR SEPTEMBER 2024",
+      "sig": "J. SMITH\nSSgt, USMC\nTraining NCO",
+      "delegationText": "",
+      "startingPageNumber": 1,
+      "previousPackagePageCount": 0
+    },
+    "vias": [],
+    "references": [
+      "MCO 1500.61 dtd 15 Mar 20 (Marine Corps Training and Education Command Manual)",
+      "MARADMIN 234/24 dtd 10 Jul 24 (FY24 Training Requirements)"
+    ],
+    "enclosures": [
+      "Training Schedule Matrix",
+      "Safety Requirements Checklist"
+    ],
+    "copyTos": [
+      "G-3 Training Section",
+      "Safety Officer"
+    ],
+    "paragraphs": [
+      {
+        "id": 1,
+        "level": 1,
+        "content": "The September 2024 training schedule has been finalized and is provided in enclosure (1). All unit commanders are directed to review the schedule and ensure their Marines are properly prepared for assigned training events.",
+        "acronymError": ""
+      },
+      {
+        "id": 2,
+        "level": 1,
+        "content": "Key training events for September include:",
+        "acronymError": ""
+      },
+      {
+        "id": 3,
+        "level": 2,
+        "content": "Combat Skills Training (CST) - 5-9 September 2024 at Range Complex Alpha",
+        "acronymError": "Acronym 'CST' used without being defined first. Please define it as 'Combat Skills Training (CST)'."
+      },
+      {
+        "id": 4,
+        "level": 2,
+        "content": "Physical Fitness Test (PFT) - 12-16 September 2024 at Main PT Field",
+        "acronymError": ""
+      },
+      {
+        "id": 5,
+        "level": 2,
+        "content": "Motor Transport Operations - 19-23 September 2024 at Vehicle Maintenance Bay",
+        "acronymError": ""
+      },
+      {
+        "id": 6,
+        "level": 1,
+        "content": "All safety requirements outlined in enclosure (2) must be strictly followed. Unit commanders will ensure 100% compliance with Personal Protective Equipment (PPE) requirements during all training activities.",
+        "acronymError": ""
+      },
+      {
+        "id": 7,
+        "level": 1,
+        "content": "Training attendance will be tracked and reported weekly to the G-3 Training Section. Any schedule changes must be coordinated through this office no later than 48 hours prior to the affected training event.",
+        "acronymError": ""
+      }
+    ]
+  }
+}
