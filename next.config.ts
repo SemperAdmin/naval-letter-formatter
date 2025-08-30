@@ -1,17 +1,13 @@
 import type {NextConfig} from 'next';
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const isProd = process.env.NODE_ENV === 'production';
+
+module.exports = {
+  basePath: isProd ? '/naval-letter-formatter' : '',
+  assetPrefix: isProd ? '/naval-letter-formatter/' : '',
+  output: 'export',
+  trailingSlash: true,
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
+    unoptimized: true, // GitHub Pages does not support Next.js image optimization
   },
 };
-
-export default nextConfig;

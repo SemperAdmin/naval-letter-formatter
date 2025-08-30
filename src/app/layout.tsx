@@ -1,7 +1,8 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { Analytics } from '@vercel/analytics/next';
+// Remove Vercel Analytics since we're deploying to GitHub Pages
+// import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: 'Naval Letter Generator',
@@ -23,7 +24,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         {children}
         <Toaster />
-        <Analytics />
+        {/* Analytics removed for GitHub Pages deployment */}
       </body>
     </html>
   );
