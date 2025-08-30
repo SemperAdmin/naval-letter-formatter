@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions } from 'docx';
+import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions, convertInchesToTwip, TextWrappingType } from 'docx';
 import { saveAs } from 'file-saver';
 import { DOD_SEAL_BASE64 } from '@/lib/dod-seal-base64';
 import { DOC_SETTINGS } from '@/lib/doc-settings';
@@ -11,6 +11,7 @@ import { UNITS, Unit } from '@/lib/units';
 import { SSICS } from '@/lib/ssic';
 import { Combobox } from '@/components/ui/combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { configureConsole, logError, debugUserAction, debugFormChange } from '@/lib/console-utils';
 
 
 interface ParagraphData {
@@ -331,6 +332,7 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
               type="text"
               value={formData.referenceDate}
               onChange={handleDateChange}
+              onBlur={handleDateChange}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -349,6 +351,7 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
               onBlur={(e) => {
                 e.target.style.borderColor = '#d1d5db';
                 e.target.style.boxShadow = 'none';
+                handleDateChange(e);
               }}
             />
             <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', wordWrap: 'break-word', lineHeight: '1.3' }}>Accepts: YYYYMMDD, MM/DD/YYYY, YYYY-MM-DD, DD MMM YY, or "today". Auto-formats to Naval standard.</div>
@@ -717,6 +720,11 @@ const EnclosuresSection = ({ enclosures, setEnclosures, formData, setFormData, g
 
 
 export default function NavalLetterGenerator() {
+  // Configure console to suppress browser extension errors
+  useEffect(() => {
+    configureConsole();
+  }, []);
+
   const [formData, setFormData] = useState<FormData>({
     documentType: 'basic',
     endorsementLevel: '',
@@ -813,6 +821,11 @@ export default function NavalLetterGenerator() {
   }, []);
 
   const saveLetter = () => {
+    debugUserAction('Save Letter', {
+      subject: formData.subj.substring(0, 30) + (formData.subj.length > 30 ? '...' : ''),
+      paragraphCount: paragraphs.length
+    });
+    
     const newLetter: SavedLetter = {
       ...formData,
       id: new Date().toISOString(), // Unique ID
@@ -830,6 +843,8 @@ export default function NavalLetterGenerator() {
   };
 
   const loadLetter = (letterId: string) => {
+    debugUserAction('Load Letter', { letterId });
+    
     const letterToLoad = savedLetters.find(l => l.id === letterId);
     if (letterToLoad) {
       setFormData({
@@ -1053,6 +1068,8 @@ export default function NavalLetterGenerator() {
 
 
   const addParagraph = (type: 'main' | 'sub' | 'same' | 'up', afterId: number) => {
+    debugUserAction(`Add Paragraph (${type})`, { afterId, currentLevel: paragraphs.find(p => p.id === afterId)?.level });
+    
     const currentParagraph = paragraphs.find(p => p.id === afterId);
     if (!currentParagraph) return;
 
@@ -1071,15 +1088,14 @@ export default function NavalLetterGenerator() {
 
     // Validate numbering after adding
     const numberingErrors = validateParagraphNumbering(newParagraphs);
-    if (numberingErrors.length > 0) {
-      // Show validation warnings but still allow the addition
-      console.warn('Paragraph numbering warnings:', numberingErrors);
-    }
+    // Note: Allow addition even with numbering issues - user may be building structure
 
     setParagraphs(newParagraphs);
   };
 
   const removeParagraph = (id: number) => {
+    debugUserAction('Remove Paragraph', { id, paragraphCount: paragraphs.length });
+    
     if (paragraphs.length <= 1) {
       if (paragraphs[0].id === id) {
         updateParagraphContent(id, '');
@@ -1142,18 +1158,14 @@ export default function NavalLetterGenerator() {
 
 
   const updateParagraphContent = (id: number, content: string) => {
-    // Debug: Log the input to see what we're receiving
-    console.log('Input content:', JSON.stringify(content));
-    console.log('Character codes:', [...content].map(char => char.charCodeAt(0)));
-
+    debugFormChange(`Paragraph ${id}`, `"${content.substring(0, 50)}${content.length > 50 ? '...' : '"'}`);
+    
     // Only replace non-breaking spaces and line breaks, preserve regular spaces (ASCII 32)
     const cleanedContent = content
       .replace(/\u00A0/g, ' ')  // Replace non-breaking spaces with regular spaces
       .replace(/\u2007/g, ' ')  // Replace figure spaces with regular spaces
       .replace(/\u202F/g, ' ')  // Replace narrow non-breaking spaces with regular spaces
       .replace(/[\r\n]/g, ' '); // Replace line breaks with spaces
-
-    console.log('Cleaned content:', JSON.stringify(cleanedContent));
 
     const newParagraphs = paragraphs.map(p => p.id === id ? { ...p, content: cleanedContent } : p)
     setParagraphs(newParagraphs);
@@ -1186,7 +1198,7 @@ export default function NavalLetterGenerator() {
       };
 
       recognition.onerror = function(event: any) {
-        console.error('Voice recognition error:', event.error);
+        logError('Voice Recognition', event.error);
         setActiveVoiceInput(null);
       };
       
@@ -1383,7 +1395,27 @@ export default function NavalLetterGenerator() {
   }, []);
 
   const generateBasicLetter = async () => {
-    const sealBuffer = DOD_SEAL_BASE64; // Use the static base64 data
+    // Convert base64 to ArrayBuffer for the docx library
+    let sealBuffer = null;
+    try {
+      const base64Data = DOD_SEAL_BASE64.split(',')[1]; // Remove data:image/png;base64, prefix
+      if (!base64Data) {
+        console.error('Failed to extract base64 data from DOD_SEAL_BASE64');
+        throw new Error('Invalid base64 data');
+      }
+      
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      sealBuffer = bytes.buffer;
+      
+      console.log('Seal buffer created successfully, size:', sealBuffer.byteLength);
+    } catch (error) {
+      console.error('Error processing seal image:', error);
+      sealBuffer = null; // Fallback to no image if conversion fails
+    }
 
     const content = [];
 
@@ -1489,7 +1521,7 @@ export default function NavalLetterGenerator() {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 457200 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 457200 } } })] })] : [] }),
+          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.BEHIND_TEXT } } })] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
@@ -1507,7 +1539,27 @@ export default function NavalLetterGenerator() {
       return null;
     }
 
-    const sealBuffer = DOD_SEAL_BASE64; // Use the static base64 data
+    // Convert base64 to ArrayBuffer for the docx library
+    let sealBuffer = null;
+    try {
+      const base64Data = DOD_SEAL_BASE64.split(',')[1]; // Remove data:image/png;base64, prefix
+      if (!base64Data) {
+        console.error('Failed to extract base64 data from DOD_SEAL_BASE64');
+        throw new Error('Invalid base64 data');
+      }
+      
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      sealBuffer = bytes.buffer;
+      
+      console.log('Seal buffer created successfully, size:', sealBuffer.byteLength);
+    } catch (error) {
+      console.error('Error processing seal image:', error);
+      sealBuffer = null; // Fallback to no image if conversion fails
+    }
 
     const content = [];
 
@@ -1632,7 +1684,7 @@ export default function NavalLetterGenerator() {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 457200 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 457200 } } })] })] : [] }),
+          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.BEHIND_TEXT } } })] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
@@ -1645,6 +1697,12 @@ export default function NavalLetterGenerator() {
   }
 
   const generateDocument = async () => {
+    debugUserAction('Generate Document', {
+      documentType: formData.documentType,
+      paragraphCount: paragraphs.length,
+      subject: formData.subj.substring(0, 30) + (formData.subj.length > 30 ? '...' : '')
+    });
+    
     setIsGenerating(true);
     try {
       saveLetter(); // Save the current state before generating
@@ -1663,10 +1721,11 @@ export default function NavalLetterGenerator() {
       if (doc) {
         const blob = await Packer.toBlob(doc);
         saveAs(blob, filename);
+        debugUserAction('Document Generated Successfully', { filename });
       }
 
     } catch (error) {
-      console.error("Error generating document:", error);
+      logError("Document Generation", error);
       alert("Error generating document: " + (error as Error).message);
     } finally {
       setIsGenerating(false);
@@ -2680,6 +2739,7 @@ export default function NavalLetterGenerator() {
                 value={formData.subj}
                 onChange={(e) => {
                   const value = autoUppercase(e.target.value);
+                  debugFormChange('Subject', value);
                   setFormData(prev => ({ ...prev, subj: value }));
                   validateSubject(value);
                 }}

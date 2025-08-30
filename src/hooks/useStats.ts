@@ -23,11 +23,25 @@ export function useStats(): UseStatsReturn {
   useEffect(() => {
     const loadInitialStats = async () => {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout for initial load
+        
         const [docResponse, saveResponse, loadResponse] = await Promise.all([
-          fetch('https://api.countapi.xyz/get/naval-letter-formatter/documents'),
-          fetch('https://api.countapi.xyz/get/naval-letter-formatter/saves'),
-          fetch('https://api.countapi.xyz/get/naval-letter-formatter/loads')
+          fetch('https://api.countapi.xyz/get/naval-letter-formatter/documents', {
+            signal: controller.signal,
+            mode: 'cors'
+          }),
+          fetch('https://api.countapi.xyz/get/naval-letter-formatter/saves', {
+            signal: controller.signal,
+            mode: 'cors'
+          }),
+          fetch('https://api.countapi.xyz/get/naval-letter-formatter/loads', {
+            signal: controller.signal,
+            mode: 'cors'
+          })
         ]);
+        
+        clearTimeout(timeoutId);
 
         const [docData, saveData, loadData] = await Promise.all([
           docResponse.json(),
@@ -42,6 +56,12 @@ export function useStats(): UseStatsReturn {
         });
       } catch (error) {
         console.error('Failed to load initial stats:', error);
+        // Use default values on error
+        setStats({
+          documentsGenerated: 0,
+          lettersSaved: 0,
+          lettersLoaded: 0
+        });
       }
     };
 
@@ -50,7 +70,20 @@ export function useStats(): UseStatsReturn {
 
   const incrementDocumentCount = async () => {
     try {
-      const response = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/documents');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/documents', {
+        signal: controller.signal,
+        mode: 'cors'
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
       
       setStats(prev => ({ 
@@ -76,7 +109,20 @@ export function useStats(): UseStatsReturn {
 
   const incrementSaveCount = async () => {
     try {
-      const response = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/saves');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/saves', {
+        signal: controller.signal,
+        mode: 'cors'
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
       
       setStats(prev => ({ 
@@ -84,7 +130,7 @@ export function useStats(): UseStatsReturn {
         lettersSaved: data.value || prev.lettersSaved + 1 
       }));
       
-      console.log('Letter saved! New count:', data.value);
+      // Document count updated successfully
     } catch (error) {
       console.error('Failed to increment save count:', error);
       // Fallback: increment locally
@@ -97,7 +143,20 @@ export function useStats(): UseStatsReturn {
 
   const incrementLoadCount = async () => {
     try {
-      const response = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/loads');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/loads', {
+        signal: controller.signal,
+        mode: 'cors'
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
       
       setStats(prev => ({ 
@@ -105,7 +164,7 @@ export function useStats(): UseStatsReturn {
         lettersLoaded: data.value || prev.lettersLoaded + 1 
       }));
       
-      console.log('Letter loaded! New count:', data.value);
+      // Letter loaded count updated successfully
     } catch (error) {
       console.error('Failed to increment load count:', error);
       // Fallback: increment locally

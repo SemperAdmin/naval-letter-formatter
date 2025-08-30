@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, convertInchesToTwip, VerticalPositionAlign, HorizontalPositionAlign } from 'docx';
+import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, convertInchesToTwip, VerticalPositionAlign, HorizontalPositionAlign, TextWrappingType } from 'docx';
 import { saveAs } from 'file-saver';
 
 interface ParagraphData {
@@ -748,8 +748,8 @@ export default function NavalLetterGenerator() {
                     new ImageRun({
                       data: sealBuffer,
                       transformation: {
-                        width: convertInchesToTwip(0.5),
-                        height: convertInchesToTwip(0.5),
+                        width: convertInchesToTwip(1.0),
+                        height: convertInchesToTwip(1.0),
                       },
                       floating: {
                         horizontalPosition: {
@@ -759,6 +759,9 @@ export default function NavalLetterGenerator() {
                         verticalPosition: {
                           align: VerticalPositionAlign.TOP,
                           offset: convertInchesToTwip(0.5),
+                        },
+                        wrap: {
+                          type: TextWrappingType.BEHIND_TEXT
                         },
                       },
                     }),

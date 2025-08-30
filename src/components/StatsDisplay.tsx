@@ -26,12 +26,24 @@ export function StatsDisplay({ onDocumentGenerated }: StatsDisplayProps) {
 
   const fetchStats = async () => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
       // Increment page view
-      const viewResponse = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/views');
-      const viewData = await viewResponse.json();
+      const viewResponse = await fetch('https://api.countapi.xyz/hit/naval-letter-formatter/views', {
+        signal: controller.signal,
+        mode: 'cors'
+      });
       
       // Get document generation count
-      const docResponse = await fetch('https://api.countapi.xyz/get/naval-letter-formatter/documents');
+      const docResponse = await fetch('https://api.countapi.xyz/get/naval-letter-formatter/documents', {
+        signal: controller.signal,
+        mode: 'cors'
+      });
+      
+      clearTimeout(timeoutId);
+      
+      const viewData = await viewResponse.json();
       const docData = await docResponse.json();
       
       const totalViews = viewData.value || 0;

@@ -118,7 +118,7 @@ export function createFormattedParagraph(
             tabStops: [
                 { type: TabStopType.LEFT, position: spec.text },
             ],
-            alignment: AlignmentType.JUSTIFIED,
+            alignment: AlignmentType.LEFT,
         });
     }
 
@@ -133,6 +133,6 @@ export function createFormattedParagraph(
             { type: TabStopType.LEFT, position: spec.citation },
             { type: TabStopType.LEFT, position: spec.text },
         ],
-        alignment: AlignmentType.JUSTIFIED,
+        alignment: AlignmentType.LEFT,
     });
 }
