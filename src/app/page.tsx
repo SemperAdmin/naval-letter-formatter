@@ -1442,8 +1442,10 @@ export default function NavalLetterGenerator() {
         const viaText = i === 0 ? `Via:\t(${i + 1})\t${via}` : `\t(${i + 1})\t${via}`;
         content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
       });
-      content.push(new Paragraph({ text: "" }));
     }
+
+    // Always add the hard space after From/To/Via section, before Subject
+    content.push(new Paragraph({ text: "" }));
 
     const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
     if (formattedSubjLines.length === 0) {
