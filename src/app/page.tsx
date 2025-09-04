@@ -1433,19 +1433,24 @@ export default function NavalLetterGenerator() {
     content.push(new Paragraph({ children: [new TextRun({ text: formData.originatorCode || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ children: [new TextRun({ text: formData.date || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ text: "" }));
-    content.push(new Paragraph({ children: [new TextRun({ text: "From:\t" + formData.from, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
-    content.push(new Paragraph({ children: [new TextRun({ text: "To:\t" + formData.to, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+// From/To section
+content.push(new Paragraph({ children: [new TextRun({ text: "From:\t" + formData.from, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+content.push(new Paragraph({ children: [new TextRun({ text: "To:\t" + formData.to, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
 
-    const viasWithContent = vias.filter(via => via.trim());
-    if (viasWithContent.length > 0) {
-      viasWithContent.forEach((via, i) => {
+// Via section (only executes if there are vias)
+const viasWithContent = vias.filter(via => via.trim());
+if (viasWithContent.length > 0) {
+    viasWithContent.forEach((via, i) => {
         const viaText = i === 0 ? `Via:\t(${i + 1})\t${via}` : `\t(${i + 1})\t${via}`;
         content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
-      });
-      content.push(new Paragraph({ text: "" }));
-    }
+    });
+}
 
-    const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
+// Always add the hard space after From/To/Via section, before Subject
+content.push(new Paragraph({ text: "" }));
+
+// Subject line
+const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
     if (formattedSubjLines.length === 0) {
       content.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
     } else {
