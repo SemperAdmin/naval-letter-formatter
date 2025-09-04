@@ -1,19 +1,26 @@
 import type {NextConfig} from 'next';
 
-const isProd = process.env.NODE_ENV === 'production';
-
-module.exports = {
-  basePath: isProd ? '/naval-letter-formatter' : '',
-  assetPrefix: isProd ? '/naval-letter-formatter' : '',
+const nextConfig: NextConfig = {
+  /* config options here */
   output: 'export',
   trailingSlash: true,
-  typescript: {
-    ignoreBuildErrors: true, // This fixes the TypeScript build issues
-  },
-  eslint: {
-    ignoreDuringBuilds: true, // This skips ESLint during builds
-  },
   images: {
-    unoptimized: true, // Required for GitHub Pages
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.lrsm.upenn.edu',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
 };
+
+export default nextConfig;
