@@ -46,6 +46,8 @@ interface FormData {
   delegationText: string;
   startingPageNumber: number;
   previousPackagePageCount: number;
+  headerType: 'USMC' | 'DON';
+  bodyFont: 'times' | 'courier';
 }
 
 interface SavedLetter extends FormData {
@@ -65,6 +67,56 @@ interface ValidationState {
   from: { isValid: boolean; message: string; };
   to: { isValid: boolean; message: string; };
 }
+
+// Helper function to get the body font based on user selection
+const getBodyFont = (bodyFont: 'times' | 'courier'): string => {
+  return bodyFont === 'courier' ? 'Courier New' : 'Times New Roman';
+};
+
+
+// Helper functions for Courier New spacing
+const getFromToSpacing = (label: string, bodyFont: 'times' | 'courier'): string => {
+  if (bodyFont === 'courier') {
+    if (label === 'From') return 'From:  '; // 2 spaces
+    if (label === 'To') return 'To:    '; // 4 spaces
+  }
+  return `${label}:\t`; // Tab for Times New Roman
+};
+
+const getViaSpacing = (index: number, bodyFont: 'times' | 'courier'): string => {
+  if (bodyFont === 'courier') {
+    return index === 0 
+      ? `Via:\u00A0\u00A0\u00A0(${index + 1})\u00A0` // 3 spaces before, 1 space after
+      : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${index + 1})\u00A0`; // 7 spaces before, 1 space after
+  }
+  return index === 0 ? `Via:\t(${index + 1})\t` : `\t(${index + 1})\t`;
+};
+
+const getSubjSpacing = (bodyFont: 'times' | 'courier'): string => {
+  return bodyFont === 'courier' ? 'Subj:  ' : 'Subj:\t'; // 2 spaces or tab
+};
+
+const getRefSpacing = (letter: string, index: number, bodyFont: 'times' | 'courier'): string => {
+  if (bodyFont === 'courier') {
+    return index === 0 
+      ? `Ref:\u00A0\u00A0\u00A0(${letter})\u00A0` // 3 spaces before, 1 space after
+      : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${letter})\u00A0`; // 7 spaces before, 1 space after
+  }
+  return index === 0 ? `Ref:\t(${letter})\t` : `\t(${letter})\t`;
+};
+
+const getEnclSpacing = (number: number, index: number, bodyFont: 'times' | 'courier'): string => {
+  if (bodyFont === 'courier') {
+    return index === 0 
+      ? `Encl:\u00A0\u00A0(${number})\u00A0` // 2 spaces before, 1 space after
+      : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${number})\u00A0`; // 7 spaces before, 1 space after
+  }
+  return index === 0 ? `Encl:\t(${number})\t` : `\t(${number})\t`;
+};
+
+const getCopyToSpacing = (bodyFont: 'times' | 'courier'): string => {
+  return bodyFont === 'courier' ? 'Copy to:  ' : 'Copy to:'; // 2 spaces for Courier
+};
 
 // Helper to split string into chunks without breaking words
 const splitSubject = (str: string, chunkSize: number): string[] => {
@@ -727,7 +779,7 @@ export default function NavalLetterGenerator() {
     configureConsole();
   }, []);
 
-  const [formData, setFormData] = useState<FormData>({
+const [formData, setFormData] = useState<FormData>({
     documentType: 'basic',
     endorsementLevel: '',
     basicLetterReference: '',
@@ -739,6 +791,8 @@ export default function NavalLetterGenerator() {
     line1: '', line2: '', line3: '', ssic: '', originatorCode: '', date: '', from: '', to: '', subj: '', sig: '', delegationText: '',
     startingPageNumber: 1,
     previousPackagePageCount: 0,
+    headerType: 'USMC',
+    bodyFont: 'times',
   });
 
   const [validation, setValidation] = useState<ValidationState>({
@@ -1421,26 +1475,46 @@ export default function NavalLetterGenerator() {
 
     const content = [];
 
-    content.push(new Paragraph({
-      children: [new TextRun({ text: "UNITED STATES MARINE CORPS", bold: true, font: "Times New Roman", size: 20 })],
+content.push(new Paragraph({
+      children: [new TextRun({ 
+        text: formData.headerType === 'USMC' ? "UNITED STATES MARINE CORPS" : "DEPARTMENT OF THE NAVY", 
+        bold: true, 
+        font: "Times New Roman", 
+        size: 20,
+        color: formData.headerType === 'DON' ? "002D72" : "000000"
+      })],
       alignment: AlignmentType.CENTER
     }));
-    if (formData.line1) content.push(new Paragraph({ children: [new TextRun({ text: formData.line1, font: "Times New Roman", size: 16 })], alignment: AlignmentType.CENTER }));
-    if (formData.line2) content.push(new Paragraph({ children: [new TextRun({ text: formData.line2, font: "Times New Roman", size: 16 })], alignment: AlignmentType.CENTER }));
-    if (formData.line3) content.push(new Paragraph({ children: [new TextRun({ text: formData.line3, font: "Times New Roman", size: 16 })], alignment: AlignmentType.CENTER }));
+if (formData.line1) content.push(new Paragraph({ children: [new TextRun({ text: formData.line1, font: "Times New Roman", size: 16, color: formData.headerType === 'DON' ? "002D72" : "000000" })], alignment: AlignmentType.CENTER }));
+    if (formData.line2) content.push(new Paragraph({ children: [new TextRun({ text: formData.line2, font: "Times New Roman", size: 16, color: formData.headerType === 'DON' ? "002D72" : "000000" })], alignment: AlignmentType.CENTER }));
+    if (formData.line3) content.push(new Paragraph({ children: [new TextRun({ text: formData.line3, font: "Times New Roman", size: 16, color: formData.headerType === 'DON' ? "002D72" : "000000" })], alignment: AlignmentType.CENTER }));
     content.push(new Paragraph({ text: "" }));
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.ssic || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.originatorCode || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.date || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    const bodyFont = getBodyFont(formData.bodyFont);
+    
+    content.push(new Paragraph({ children: [new TextRun({ text: formData.ssic || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    content.push(new Paragraph({ children: [new TextRun({ text: formData.originatorCode || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    content.push(new Paragraph({ children: [new TextRun({ text: formData.date || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ text: "" }));
-    content.push(new Paragraph({ children: [new TextRun({ text: "From:\t" + formData.from, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
-    content.push(new Paragraph({ children: [new TextRun({ text: "To:\t" + formData.to, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+    const fromText = getFromToSpacing('From', formData.bodyFont) + formData.from;
+    const toText = getFromToSpacing('To', formData.bodyFont) + formData.to;
+    
+    if (formData.bodyFont === 'courier') {
+      content.push(new Paragraph({ children: [new TextRun({ text: fromText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      content.push(new Paragraph({ children: [new TextRun({ text: toText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+    } else {
+      content.push(new Paragraph({ children: [new TextRun({ text: fromText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      content.push(new Paragraph({ children: [new TextRun({ text: toText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+    }
 
     const viasWithContent = vias.filter(via => via.trim());
     if (viasWithContent.length > 0) {
       viasWithContent.forEach((via, i) => {
-        const viaText = i === 0 ? `Via:\t(${i + 1})\t${via}` : `\t(${i + 1})\t${via}`;
-        content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        const viaText = getViaSpacing(i, formData.bodyFont) + via;
+        if (formData.bodyFont === 'courier') {
+          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        } else {
+          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        }
       });
     }
 
@@ -1448,12 +1522,25 @@ export default function NavalLetterGenerator() {
     content.push(new Paragraph({ text: "" }));
 
     const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
+    const subjPrefix = getSubjSpacing(formData.bodyFont);
+    
     if (formattedSubjLines.length === 0) {
-      content.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      if (formData.bodyFont === 'courier') {
+        content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      } else {
+        content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      }
     } else {
-      content.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }), new TextRun({ text: formattedSubjLines[0], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
-      for (let i = 1; i < formattedSubjLines.length; i++) {
-        content.push(new Paragraph({ children: [new TextRun({ text: "\t" + formattedSubjLines[i], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      if (formData.bodyFont === 'courier') {
+        content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix + formattedSubjLines[0], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        for (let i = 1; i < formattedSubjLines.length; i++) {
+          content.push(new Paragraph({ children: [new TextRun({ text: '       ' + formattedSubjLines[i], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        }
+      } else {
+        content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix, font: bodyFont, size: 24 }), new TextRun({ text: formattedSubjLines[0], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+        for (let i = 1; i < formattedSubjLines.length; i++) {
+          content.push(new Paragraph({ children: [new TextRun({ text: "\t" + formattedSubjLines[i], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+        }
       }
     }
     content.push(new Paragraph({ text: "" }));
@@ -1462,8 +1549,13 @@ export default function NavalLetterGenerator() {
     if (refsWithContent.length > 0) {
       refsWithContent.forEach((ref, i) => {
         const refLetter = String.fromCharCode('a'.charCodeAt(0) + i);
-        const refText = i === 0 ? "Ref:\t(" + refLetter + ")\t" + ref : "\t(" + refLetter + ")\t" + ref;
-        content.push(new Paragraph({ children: [new TextRun({ text: refText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        const refText = getRefSpacing(refLetter, i, formData.bodyFont) + ref;
+        
+        if (formData.bodyFont === 'courier') {
+          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        } else {
+          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        }
       });
     }
 
@@ -1471,39 +1563,65 @@ export default function NavalLetterGenerator() {
     if (enclsWithContent.length > 0) {
       if (refsWithContent.length > 0) content.push(new Paragraph({ text: "" }));
       enclsWithContent.forEach((encl, i) => {
-        const enclText = i === 0 ? "Encl:\t(" + (i + 1) + ")\t" + encl : "\t(" + (i + 1) + ")\t" + encl;
-        content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        const enclText = getEnclSpacing(i + 1, i, formData.bodyFont) + encl;
+        
+        if (formData.bodyFont === 'courier') {
+          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        } else {
+          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        }
       });
     }
     if (refsWithContent.length > 0 || enclsWithContent.length > 0) content.push(new Paragraph({ text: "" }));
 
     paragraphs.filter(p => p.content.trim()).forEach((p, i, all) => {
-      content.push(createFormattedParagraph(p, i, all));
+      content.push(createFormattedParagraph(p, i, all, bodyFont));
       content.push(new Paragraph({ text: "" }));
     });
 
     if (formData.sig) {
       content.push(new Paragraph({ text: "" }), new Paragraph({ text: "" }));
-      content.push(new Paragraph({ children: [new TextRun({ text: formData.sig.toUpperCase(), font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
+      content.push(new Paragraph({ children: [new TextRun({ text: formData.sig.toUpperCase(), font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
       if (formData.delegationText) {
-        content.push(new Paragraph({ children: [new TextRun({ text: formData.delegationText, font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
+        content.push(new Paragraph({ children: [new TextRun({ text: formData.delegationText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
       }
     }
 
     const copiesWithContent = copyTos.filter(copy => copy.trim());
     if (copiesWithContent.length > 0) {
-      content.push(new Paragraph({ text: "" }), new Paragraph({ children: [new TextRun({ text: "Copy to:", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT }));
-      copiesWithContent.forEach(copy => content.push(new Paragraph({ children: [new TextRun({ text: copy, font: "Times New Roman", size: 24 })], indent: { left: 720 } })));
+      const copyToText = getCopyToSpacing(formData.bodyFont);
+      content.push(new Paragraph({ text: "" }), new Paragraph({ children: [new TextRun({ text: copyToText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      
+      copiesWithContent.forEach(copy => {
+        if (formData.bodyFont === 'courier') {
+          content.push(new Paragraph({ children: [new TextRun({ text: '       ' + copy, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        } else {
+          content.push(new Paragraph({ children: [new TextRun({ text: copy, font: bodyFont, size: 24 })], indent: { left: 720 } }));
+        }
+      });
     }
 
     const headerParagraphs: Paragraph[] = [];
     const headerFormattedLines = splitSubject(formData.subj.toUpperCase(), 57);
+    const headerSubjPrefix = getSubjSpacing(formData.bodyFont);
+    
     if (headerFormattedLines.length === 0) {
-      headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      if (formData.bodyFont === 'courier') {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      } else {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      }
     } else {
-      headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }), new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
-      for (let i = 1; i < headerFormattedLines.length; i++) {
-        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "\t" + headerFormattedLines[i], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      if (formData.bodyFont === 'courier') {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix + headerFormattedLines[0], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        for (let i = 1; i < headerFormattedLines.length; i++) {
+          headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: '       ' + headerFormattedLines[i], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        }
+      } else {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix, font: bodyFont, size: 24 }), new TextRun({ text: headerFormattedLines[0], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+        for (let i = 1; i < headerFormattedLines.length; i++) {
+          headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "\t" + headerFormattedLines[i], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+        }
       }
     }
     headerParagraphs.push(new Paragraph({ text: "" }));
@@ -1530,7 +1648,7 @@ export default function NavalLetterGenerator() {
         },
         footers: {
           first: new Footer({ children: [] }),
-          default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT], font: "Times New Roman", size: 24 })] })] })
+          default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT], font: bodyFont, size: 24 })] })] })
         },
         children: content
       }]
@@ -1565,42 +1683,55 @@ export default function NavalLetterGenerator() {
       sealBuffer = null; // Fallback to no image if conversion fails
     }
 
-    const content = [];
+const content = [];
+    const bodyFont = getBodyFont(formData.bodyFont);
 
     // Letterhead
     content.push(new Paragraph({
-      children: [new TextRun({ text: "UNITED STATES MARINE CORPS", bold: true, font: "Times New Roman", size: 20 })],
+      children: [new TextRun({ text: formData.headerType === 'USMC' ? "UNITED STATES MARINE CORPS" : "DEPARTMENT OF THE NAVY", bold: true, font: "Times New Roman", size: 20, color: formData.headerType === 'DON' ? "002D72" : "000000" })],
       alignment: AlignmentType.CENTER,
       spacing: { after: 0 },
     }));
-    if (formData.line1) content.push(new Paragraph({ children: [new TextRun({ text: formData.line1, font: "Times New Roman", size: 16 })], alignment: AlignmentType.CENTER, spacing: { after: 0 } }));
-    if (formData.line2) content.push(new Paragraph({ children: [new TextRun({ text: formData.line2, font: "Times New Roman", size: 16 })], alignment: AlignmentType.CENTER, spacing: { after: 0 } }));
-    if (formData.line3) content.push(new Paragraph({ children: [new TextRun({ text: formData.line3, font: "Times New Roman", size: 16 })], alignment: AlignmentType.CENTER, spacing: { after: 0 } }));
+    if (formData.line1) content.push(new Paragraph({ children: [new TextRun({ text: formData.line1, font: "Times New Roman", size: 16, color: formData.headerType === 'DON' ? "002D72" : "000000" })], alignment: AlignmentType.CENTER, spacing: { after: 0 } }));
+    if (formData.line2) content.push(new Paragraph({ children: [new TextRun({ text: formData.line2, font: "Times New Roman", size: 16, color: formData.headerType === 'DON' ? "002D72" : "000000" })], alignment: AlignmentType.CENTER, spacing: { after: 0 } }));
+    if (formData.line3) content.push(new Paragraph({ children: [new TextRun({ text: formData.line3, font: "Times New Roman", size: 16, color: formData.headerType === 'DON' ? "002D72" : "000000" })], alignment: AlignmentType.CENTER, spacing: { after: 0 } }));
     content.push(new Paragraph({ text: "" }));
 
     // SSIC, Code, Date block
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.ssic || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.originatorCode || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.date || "", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    content.push(new Paragraph({ children: [new TextRun({ text: formData.ssic || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    content.push(new Paragraph({ children: [new TextRun({ text: formData.originatorCode || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    content.push(new Paragraph({ children: [new TextRun({ text: formData.date || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ text: "" }));
 
     // Endorsement Identification Line
     content.push(new Paragraph({
       children: [
-        new TextRun({ text: `${formData.endorsementLevel} ENDORSEMENT on ${formData.basicLetterReference}`, font: "Times New Roman", size: 24 })
+        new TextRun({ text: `${formData.endorsementLevel} ENDORSEMENT on ${formData.basicLetterReference}`, font: bodyFont, size: 24 })
       ],
       alignment: AlignmentType.LEFT,
     }));
     content.push(new Paragraph({ text: "" }));
 
     // From/To/Via section
-    content.push(new Paragraph({ children: [new TextRun({ text: "From:\t" + formData.from, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
-    content.push(new Paragraph({ children: [new TextRun({ text: "To:\t" + formData.to, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+    const fromText = getFromToSpacing('From', formData.bodyFont) + formData.from;
+    const toText = getFromToSpacing('To', formData.bodyFont) + formData.to;
+    
+    if (formData.bodyFont === 'courier') {
+      content.push(new Paragraph({ children: [new TextRun({ text: fromText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      content.push(new Paragraph({ children: [new TextRun({ text: toText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+    } else {
+      content.push(new Paragraph({ children: [new TextRun({ text: fromText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      content.push(new Paragraph({ children: [new TextRun({ text: toText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+    }
     const viasWithContent = vias.filter(via => via.trim());
     if (viasWithContent.length > 0) {
       viasWithContent.forEach((via, i) => {
-        const viaText = i === 0 ? `Via:\t(${i + 1})\t${via}` : `\t(${i + 1})\t${via}`;
-        content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        const viaText = getViaSpacing(i, formData.bodyFont) + via;
+        if (formData.bodyFont === 'courier') {
+          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        } else {
+          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        }
       });
     }
     content.push(new Paragraph({ text: "" }));
@@ -1608,9 +1739,9 @@ export default function NavalLetterGenerator() {
     // Subject line
     const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
     if (formattedSubjLines.length > 0) {
-      content.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }), new TextRun({ text: formattedSubjLines[0], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      content.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: bodyFont, size: 24 }), new TextRun({ text: formattedSubjLines[0], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
       for (let i = 1; i < formattedSubjLines.length; i++) {
-        content.push(new Paragraph({ children: [new TextRun({ text: "\t" + formattedSubjLines[i], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+        content.push(new Paragraph({ children: [new TextRun({ text: "\t" + formattedSubjLines[i], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
       }
     }
     content.push(new Paragraph({ text: "" }));
@@ -1622,7 +1753,7 @@ export default function NavalLetterGenerator() {
       refsWithContent.forEach((ref, i) => {
         const refLetter = String.fromCharCode(startCharCode + i);
         const refText = i === 0 ? "Ref:\t(" + refLetter + ")\t" + ref : "\t(" + refLetter + ")\t" + ref;
-        content.push(new Paragraph({ children: [new TextRun({ text: refText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
       });
     }
 
@@ -1634,39 +1765,60 @@ export default function NavalLetterGenerator() {
       enclsWithContent.forEach((encl, i) => {
         const enclNum = startEnclNum + i;
         const enclText = i === 0 ? "Encl:\t(" + enclNum + ")\t" + encl : "\t(" + enclNum + ")\t" + encl;
-        content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+        content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
       });
     }
     if (refsWithContent.length > 0 || enclsWithContent.length > 0) content.push(new Paragraph({ text: "" }));
 
     // Body, Signature, Copy To sections (same logic as basic letter)
     paragraphs.filter(p => p.content.trim()).forEach((p, i, all) => {
-      content.push(createFormattedParagraph(p, i, all));
+      content.push(createFormattedParagraph(p, i, all, bodyFont));
       content.push(new Paragraph({ text: "" }));
     });
 
     if (formData.sig) {
       content.push(new Paragraph({ text: "" }), new Paragraph({ text: "" }));
-      content.push(new Paragraph({ children: [new TextRun({ text: formData.sig.toUpperCase(), font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
+      content.push(new Paragraph({ children: [new TextRun({ text: formData.sig.toUpperCase(), font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
       if (formData.delegationText) {
-        content.push(new Paragraph({ children: [new TextRun({ text: formData.delegationText, font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
+        content.push(new Paragraph({ children: [new TextRun({ text: formData.delegationText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 4680 } }));
       }
     }
 
     const copiesWithContent = copyTos.filter(copy => copy.trim());
     if (copiesWithContent.length > 0) {
-      content.push(new Paragraph({ text: "" }), new Paragraph({ children: [new TextRun({ text: "Copy to:", font: "Times New Roman", size: 24 })], alignment: AlignmentType.LEFT }));
-      copiesWithContent.forEach(copy => content.push(new Paragraph({ children: [new TextRun({ text: copy, font: "Times New Roman", size: 24 })], indent: { left: 720 } })));
+      const copyToText = getCopyToSpacing(formData.bodyFont);
+      content.push(new Paragraph({ text: "" }), new Paragraph({ children: [new TextRun({ text: copyToText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      
+      copiesWithContent.forEach(copy => {
+        if (formData.bodyFont === 'courier') {
+          content.push(new Paragraph({ children: [new TextRun({ text: '       ' + copy, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        } else {
+          content.push(new Paragraph({ children: [new TextRun({ text: copy, font: bodyFont, size: 24 })], indent: { left: 720 } }));
+        }
+      });
     }
 
     const headerParagraphs: Paragraph[] = [];
     const headerFormattedLines = splitSubject(formData.subj.toUpperCase(), 57);
+    const headerSubjPrefix = getSubjSpacing(formData.bodyFont);
+    
     if (headerFormattedLines.length === 0) {
-      headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      if (formData.bodyFont === 'courier') {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      } else {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      }
     } else {
-      headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: "Times New Roman", size: 24 }), new TextRun({ text: headerFormattedLines[0], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
-      for (let i = 1; i < headerFormattedLines.length; i++) {
-        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "\t" + headerFormattedLines[i], font: "Times New Roman", size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+      if (formData.bodyFont === 'courier') {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix + headerFormattedLines[0], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        for (let i = 1; i < headerFormattedLines.length; i++) {
+          headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: '       ' + headerFormattedLines[i], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+        }
+      } else {
+        headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: headerSubjPrefix, font: bodyFont, size: 24 }), new TextRun({ text: headerFormattedLines[0], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+        for (let i = 1; i < headerFormattedLines.length; i++) {
+          headerParagraphs.push(new Paragraph({ children: [new TextRun({ text: "\t" + headerFormattedLines[i], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+        }
       }
     }
     headerParagraphs.push(new Paragraph({ text: "" }));
@@ -1692,8 +1844,8 @@ export default function NavalLetterGenerator() {
           default: new Header({ children: headerParagraphs })
         },
         footers: {
-          first: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT], font: "Times New Roman", size: 24 })] })] }),
-          default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT], font: "Times New Roman", size: 24 })] })] })
+          first: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT], font: bodyFont, size: 24 })] })] }),
+          default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT], font: bodyFont, size: 24 })] })] })
         },
         children: content
       }]
@@ -2386,11 +2538,85 @@ export default function NavalLetterGenerator() {
               </button>
             </div>
 
-            <div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
+<div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
               <small>
                 <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
                 Select the type of document you want to create. Basic letters are for routine correspondence, while endorsements forward existing documents.
               </small>
+            </div>
+
+<div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
+                Header Type
+              </label>
+              <div className="radio-group">
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="headerType"
+                    value="USMC"
+                    checked={formData.headerType === 'USMC'}
+                    onChange={(e) => {
+                      setFormData({ ...formData, headerType: 'USMC' });
+                      debugFormChange('Header Type', 'USMC');
+                    }}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '1.1rem' }}>United States Marine Corps</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="headerType"
+                    value="DON"
+                    checked={formData.headerType === 'DON'}
+                    onChange={(e) => {
+                      setFormData({ ...formData, headerType: 'DON' });
+                      debugFormChange('Header Type', 'DON');
+                    }}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '1.1rem' }}>Department of the Navy</span>
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-font" style={{ marginRight: '8px' }}></i>
+                Body Font
+              </label>
+              <div className="radio-group">
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="bodyFont"
+                    value="times"
+                    checked={formData.bodyFont === 'times'}
+                    onChange={(e) => {
+                      setFormData({ ...formData, bodyFont: 'times' });
+                      debugFormChange('Body Font', 'Times New Roman');
+                    }}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '1.1rem' }}>Times New Roman</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="bodyFont"
+                    value="courier"
+                    checked={formData.bodyFont === 'courier'}
+                    onChange={(e) => {
+                      setFormData({ ...formData, bodyFont: 'courier' });
+                      debugFormChange('Body Font', 'Courier New');
+                    }}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '1.1rem' }}>Courier New</span>
+                </label>
+              </div>
             </div>
           </div>
 

@@ -82,38 +82,61 @@ function generateCitation(
 
 
 export function createFormattedParagraph(
-    paragraph: ParagraphData,
-    index: number,
-    allParagraphs: ParagraphData[]
+  paragraph: ParagraphData,
+  index: number,
+  allParagraphs: ParagraphData[],
+  font: string = "Times New Roman"
 ): Paragraph {
-    const { level, content } = paragraph;
+    const { content, level } = paragraph;
     const { citation } = generateCitation(paragraph, index, allParagraphs);
+    const spec = NAVAL_TAB_STOPS[level as keyof typeof NAVAL_TAB_STOPS];
     
-    const spec = NAVAL_TAB_STOPS[level as keyof typeof NAVAL_TAB_STOPS] || NAVAL_TAB_STOPS[1];
-    const isUnderlined = level >= 5;
+    const isCourier = font === "Courier New";
 
-    // Build the citation run with potential underlining
+    // Build citation runs with proper formatting
     let citationRuns: TextRun[];
-    if (isUnderlined) {
-        if (level === 5 || level === 6) { // e.g. 1. or a.
-             citationRuns = [new TextRun({ text: citation, font: "Times New Roman", size: 24, underline: {} })];
+    
+    // Underline letters at levels 2 and 4 per regulation
+    if (level === 2 || level === 4) {
+        if (!citation.includes('(')) { // e.g. 1. or a.
+             citationRuns = [new TextRun({ text: citation, font: font, size: 24, underline: {} })];
         } else { // e.g. (1) or (a)
              citationRuns = [
-                new TextRun({ text: "(", font: "Times New Roman", size: 24 }),
-                new TextRun({ text: citation.replace(/[()]/g, ''), font: "Times New Roman", size: 24, underline: {} }),
-                new TextRun({ text: ")", font: "Times New Roman", size: 24 }),
+                new TextRun({ text: "(", font: font, size: 24 }),
+                new TextRun({ text: citation.replace(/[()]/g, ''), font: font, size: 24, underline: {} }),
+                new TextRun({ text: ")", font: font, size: 24 }),
             ];
         }
     } else {
-        citationRuns = [new TextRun({ text: citation, font: "Times New Roman", size: 24 })];
+        citationRuns = [new TextRun({ text: citation, font: font, size: 24 })];
     }
     
+    // For Courier New, use non-breaking spaces instead of tabs
+    if (isCourier) {
+        // Calculate leading spaces based on level using non-breaking spaces
+        // Level 1: 0, Level 2: 4, Level 3: 8, Level 4: 12, Level 5: 16, Level 6: 20, Level 7: 24, Level 8: 28
+        const indentSpaces = '\u00A0'.repeat((level - 1) * 4); // 4 non-breaking spaces per level
+        
+        // Determine spacing after citation: 2 spaces for periods, 1 space for parentheses
+        const spacesAfterCitation = citation.endsWith('.') ? '\u00A0\u00A0' : '\u00A0';
+        
+        return new Paragraph({
+            children: [
+                new TextRun({ text: indentSpaces, font: font, size: 24 }),
+                ...citationRuns,
+                new TextRun({ text: spacesAfterCitation + content, font: font, size: 24 })
+            ],
+            alignment: AlignmentType.LEFT,
+        });
+    }
+    
+    // For Times New Roman, use tabs (original behavior)
     // Handle Level 1 separately: no initial tab, citation starts at 0"
     if (level === 1) {
         return new Paragraph({
             children: [
                 ...citationRuns,
-                new TextRun({ text: `\t${content}`, font: "Times New Roman", size: 24 }),
+                new TextRun({ text: `\t${content}`, font: font, size: 24 }),
             ],
             tabStops: [
                 { type: TabStopType.LEFT, position: spec.text },
@@ -127,7 +150,7 @@ export function createFormattedParagraph(
         children: [
             new TextRun({ text: '\t' }), // First tab
             ...citationRuns,
-            new TextRun({ text: `\t${content}`, font: "Times New Roman", size: 24 }),
+            new TextRun({ text: `\t${content}`, font: font, size: 24 }),
         ],
         tabStops: [
             { type: TabStopType.LEFT, position: spec.citation },
