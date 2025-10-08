@@ -1058,11 +1058,6 @@ const [formData, setFormData] = useState<FormData>({
     return `${day} ${month} ${year}`;
   };
 
-  const handleDateChange = (value: string) => {
-    const formatted = parseAndFormatDate(value);
-    setFormData(prev => ({ ...prev, date: formatted }));
-  };
-
   const handleDocumentTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newType = e.target.value as 'basic' | 'endorsement';
     setFormData(prev => ({
@@ -1493,7 +1488,8 @@ if (formData.line1) content.push(new Paragraph({ children: [new TextRun({ text: 
     
     content.push(new Paragraph({ children: [new TextRun({ text: formData.ssic || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ children: [new TextRun({ text: formData.originatorCode || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.date || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    const formattedDate = parseAndFormatDate(formData.date || "");
+    content.push(new Paragraph({ children: [new TextRun({ text: formattedDate, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ text: "" }));
     const fromText = getFromToSpacing('From', formData.bodyFont) + formData.from;
     const toText = getFromToSpacing('To', formData.bodyFont) + formData.to;
@@ -1506,17 +1502,29 @@ if (formData.line1) content.push(new Paragraph({ children: [new TextRun({ text: 
       content.push(new Paragraph({ children: [new TextRun({ text: toText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
     }
 
-    const viasWithContent = vias.filter(via => via.trim());
-    if (viasWithContent.length > 0) {
-      viasWithContent.forEach((via, i) => {
-        const viaText = getViaSpacing(i, formData.bodyFont) + via;
-        if (formData.bodyFont === 'courier') {
-          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
-        } else {
-          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
-        }
-      });
+const viasWithContent = vias.filter(via => via.trim());
+if (viasWithContent.length > 0) {
+  viasWithContent.forEach((via, i) => {
+    let viaText;
+    if (viasWithContent.length === 1) {
+      // Single via: no number placeholder
+      if (formData.bodyFont === 'courier') {
+        viaText = 'Via:\u00A0\u00A0\u00A0' + via; // Just "Via:   " with 3 spaces
+      } else {
+        viaText = 'Via:\t' + via;
+      }
+    } else {
+      // Multiple vias: use numbered placeholders
+      viaText = getViaSpacing(i, formData.bodyFont) + via;
     }
+    
+    if (formData.bodyFont === 'courier') {
+      content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+    } else {
+      content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+    }
+  });
+}
 
     // Always add the hard space after From/To/Via section, before Subject
     content.push(new Paragraph({ text: "" }));
@@ -1700,7 +1708,8 @@ const content = [];
     // SSIC, Code, Date block
     content.push(new Paragraph({ children: [new TextRun({ text: formData.ssic || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ children: [new TextRun({ text: formData.originatorCode || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
-    content.push(new Paragraph({ children: [new TextRun({ text: formData.date || "", font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
+    const formattedDate = parseAndFormatDate(formData.date || "");
+content.push(new Paragraph({ children: [new TextRun({ text: formattedDate, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 7920 } }));
     content.push(new Paragraph({ text: "" }));
 
     // Endorsement Identification Line
@@ -1723,51 +1732,88 @@ const content = [];
       content.push(new Paragraph({ children: [new TextRun({ text: fromText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
       content.push(new Paragraph({ children: [new TextRun({ text: toText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
     }
-    const viasWithContent = vias.filter(via => via.trim());
-    if (viasWithContent.length > 0) {
-      viasWithContent.forEach((via, i) => {
-        const viaText = getViaSpacing(i, formData.bodyFont) + via;
-        if (formData.bodyFont === 'courier') {
-          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
-        } else {
-          content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
-        }
-      });
-    }
-    content.push(new Paragraph({ text: "" }));
-
-    // Subject line
-    const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
-    if (formattedSubjLines.length > 0) {
-      content.push(new Paragraph({ children: [new TextRun({ text: "Subj:\t", font: bodyFont, size: 24 }), new TextRun({ text: formattedSubjLines[0], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
-      for (let i = 1; i < formattedSubjLines.length; i++) {
-        content.push(new Paragraph({ children: [new TextRun({ text: "\t" + formattedSubjLines[i], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+const viasWithContent = vias.filter(via => via.trim());
+if (viasWithContent.length > 0) {
+  viasWithContent.forEach((via, i) => {
+    let viaText;
+    if (viasWithContent.length === 1) {
+      // Single via: no number placeholder
+      if (formData.bodyFont === 'courier') {
+        viaText = 'Via:\u00A0\u00A0\u00A0' + via; // Just "Via:   " with 3 spaces
+      } else {
+        viaText = 'Via:\t' + via;
       }
+    } else {
+      // Multiple vias: use numbered placeholders
+      viaText = getViaSpacing(i, formData.bodyFont) + via;
     }
+    
+    if (formData.bodyFont === 'courier') {
+      content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+    } else {
+      content.push(new Paragraph({ children: [new TextRun({ text: viaText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+    }
+  });
+}
     content.push(new Paragraph({ text: "" }));
 
-    // CONTINUATION References
-    const refsWithContent = references.filter(ref => ref.trim());
-    if (refsWithContent.length > 0) {
-      const startCharCode = formData.startingReferenceLevel.charCodeAt(0);
-      refsWithContent.forEach((ref, i) => {
-        const refLetter = String.fromCharCode(startCharCode + i);
-        const refText = i === 0 ? "Ref:\t(" + refLetter + ")\t" + ref : "\t(" + refLetter + ")\t" + ref;
-        content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
-      });
-    }
+// Subject line
+const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), 57);
+const subjPrefix = getSubjSpacing(formData.bodyFont);
 
-    // CONTINUATION Enclosures
-    const enclsWithContent = enclosures.filter(encl => encl.trim());
-    if (enclsWithContent.length > 0) {
-      if (refsWithContent.length > 0) content.push(new Paragraph({ text: "" }));
-      const startEnclNum = parseInt(formData.startingEnclosureNumber, 10);
-      enclsWithContent.forEach((encl, i) => {
-        const enclNum = startEnclNum + i;
-        const enclText = i === 0 ? "Encl:\t(" + enclNum + ")\t" + encl : "\t(" + enclNum + ")\t" + encl;
-        content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
-      });
+if (formattedSubjLines.length === 0) {
+  if (formData.bodyFont === 'courier') {
+    content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+  } else {
+    content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+  }
+} else {
+  if (formData.bodyFont === 'courier') {
+    content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix + formattedSubjLines[0], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+    for (let i = 1; i < formattedSubjLines.length; i++) {
+      content.push(new Paragraph({ children: [new TextRun({ text: '       ' + formattedSubjLines[i], font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
     }
+  } else {
+    content.push(new Paragraph({ children: [new TextRun({ text: subjPrefix, font: bodyFont, size: 24 }), new TextRun({ text: formattedSubjLines[0], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+    for (let i = 1; i < formattedSubjLines.length; i++) {
+      content.push(new Paragraph({ children: [new TextRun({ text: "\t" + formattedSubjLines[i], font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }] }));
+    }
+  }
+}
+content.push(new Paragraph({ text: "" }));
+
+// CONTINUATION References
+const refsWithContent = references.filter(ref => ref.trim());
+if (refsWithContent.length > 0) {
+  const startCharCode = formData.startingReferenceLevel.charCodeAt(0);
+  refsWithContent.forEach((ref, i) => {
+    const refLetter = String.fromCharCode(startCharCode + i);
+    const refText = getRefSpacing(refLetter, i, formData.bodyFont) + ref;
+    
+    if (formData.bodyFont === 'courier') {
+      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+    } else {
+      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+    }
+  });
+}
+
+// CONTINUATION Enclosures
+const enclsWithContent = enclosures.filter(encl => encl.trim());
+if (enclsWithContent.length > 0) {
+  if (refsWithContent.length > 0) content.push(new Paragraph({ text: "" }));
+  const startEnclNum = parseInt(formData.startingEnclosureNumber, 10);
+  enclsWithContent.forEach((encl, i) => {
+    const enclNum = startEnclNum + i;
+    const enclText = getEnclSpacing(enclNum, i, formData.bodyFont) + encl;
+    
+    if (formData.bodyFont === 'courier') {
+      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+    } else {
+      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+    }
+  });
+}
     if (refsWithContent.length > 0 || enclsWithContent.length > 0) content.push(new Paragraph({ text: "" }));
 
     // Body, Signature, Copy To sections (same logic as basic letter)
@@ -2887,27 +2933,26 @@ const content = [];
             </div>
 
             <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-calendar-alt" style={{ marginRight: '8px' }}></i>
-                Date:
-              </span>
+            <span className="input-group-text">
+              <i className="fas fa-calendar-alt" style={{ marginRight: '8px' }}></i>
+              Date:
+            </span>
               <input
                 className="form-control"
                 type="text"
-                placeholder="e.g., 8 Jul 25, 2025-07-08, 07/08/2025, 20250708"
+                placeholder="e.g., 8 Jul 25, 2025-07-08, 07/08/2025, 20250708, or today"
                 value={formData.date}
                 onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                onBlur={(e) => handleDateChange(e.target.value)}
               />
-              <button
-                className="btn btn-primary"
-                type="button"
-                onClick={setTodaysDate}
-                title="Use Today's Date"
-              >
-                <i className="fas fa-calendar-day"></i>
-              </button>
-            </div>
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={setTodaysDate}
+              title="Use Today's Date"
+            >
+              <i className="fas fa-calendar-day"></i>
+            </button>
+          </div>
             <div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
               <small>
                 <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
