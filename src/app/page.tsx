@@ -2388,14 +2388,30 @@ if (enclsWithContent.length > 0) {
         }
         
         @media (max-width: 768px) {
-          .main-container {
-            margin: 10px;
-            padding: 20px;
-          }
-          .radio-group {
-            flex-direction: column;
-            gap: 10px;
-          }
+          .main-container { margin: 10px !important; padding: 15px !important; }
+          .main-title { font-size: 1.75rem !important; }
+          .form-section { padding: 15px !important; margin-bottom: 20px !important; }
+          .section-legend { font-size: 0.95rem !important; padding: 10px 15px !important; }
+          .input-group { flex-direction: column !important; align-items: stretch !important; }
+          .input-group-text { min-width: 100% !important; width: 100% !important; border-radius: 8px 8px 0 0 !important; padding: 10px 12px !important; font-size: 0.9rem !important; text-align: left !important; }
+          .form-control { border-radius: 0 0 8px 8px !important; min-height: 44px !important; font-size: 16px !important; }
+          .radio-group { flex-direction: column !important; gap: 10px !important; }
+          .btn { font-size: 0.85rem !important; padding: 10px 16px !important; min-height: 44px !important; }
+          .generate-btn { font-size: 1rem !important; padding: 12px 20px !important; width: 100% !important; }
+          .btn-smart-main, .btn-smart-sub, .btn-smart-same, .btn-smart-up { font-size: 0.75rem !important; padding: 6px 10px !important; margin-right: 4px !important; margin-bottom: 6px !important; min-width: 80px !important; }
+          .paragraph-container { padding: 12px !important; }
+          .paragraph-container[data-level="2"] { margin-left: 15px !important; }
+          .paragraph-container[data-level="3"] { margin-left: 30px !important; }
+          .paragraph-container[data-level="4"] { margin-left: 45px !important; }
+          body { overflow-x: hidden !important; }
+          .main-container, .form-section, .input-group { max-width: 100% !important; overflow-x: hidden !important; }
+          button, input, select, textarea { min-height: 44px !important; }
+        }
+
+        @media (max-width: 576px) {
+          .main-container { margin: 5px !important; padding: 10px !important; }
+          .main-title { font-size: 1.5rem !important; }
+          .btn-smart-main, .btn-smart-sub, .btn-smart-same, .btn-smart-up { width: 100% !important; margin-right: 0 !important; }
         }
       `}</style>
 
