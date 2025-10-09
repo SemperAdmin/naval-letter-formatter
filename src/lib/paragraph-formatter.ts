@@ -69,7 +69,7 @@ function generateCitation(
         case 2: citation = `${String.fromCharCode(96 + count)}.`; break;
         case 3: citation = `(${count})`; break;
         case 4: citation = `(${String.fromCharCode(96 + count)})`; break;
-        // Per SECNAV M-5216.5, levels 5-8 citations are underlined
+        // Per SECNAV M-5216.5, levels 5-8 have underlined numbers/letters (not punctuation)
         case 5: citation = `${count}.`; break; 
         case 6: citation = `${String.fromCharCode(96 + count)}.`; break;
         case 7: citation = `(${count})`; break;
@@ -96,18 +96,26 @@ export function createFormattedParagraph(
     // Build citation runs with proper formatting
     let citationRuns: TextRun[];
     
-    // Underline letters at levels 2 and 4 per regulation
-    if (level === 2 || level === 4) {
-        if (!citation.includes('(')) { // e.g. 1. or a.
-             citationRuns = [new TextRun({ text: citation, font: font, size: 24, underline: {} })];
-        } else { // e.g. (1) or (a)
-             citationRuns = [
+    // Per SECNAV M-5216.5: Only levels 5-8 have underlined numbers/letters (not punctuation)
+    if (level >= 5 && level <= 8) {
+        if (citation.includes('(')) {
+            // Levels 7 and 8: "(1)" or "(a)" - only underline the number/letter
+            const innerText = citation.replace(/[()]/g, '');
+            citationRuns = [
                 new TextRun({ text: "(", font: font, size: 24 }),
-                new TextRun({ text: citation.replace(/[()]/g, ''), font: font, size: 24, underline: {} }),
+                new TextRun({ text: innerText, font: font, size: 24, underline: {} }),
                 new TextRun({ text: ")", font: font, size: 24 }),
+            ];
+        } else {
+            // Levels 5 and 6: "1." or "a." - only underline the number/letter, not the period
+            const numberOrLetter = citation.slice(0, -1); // Remove the period
+            citationRuns = [
+                new TextRun({ text: numberOrLetter, font: font, size: 24, underline: {} }),
+                new TextRun({ text: ".", font: font, size: 24 }),
             ];
         }
     } else {
+        // Levels 1-4: No underline
         citationRuns = [new TextRun({ text: citation, font: font, size: 24 })];
     }
     
