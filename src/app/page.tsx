@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions, convertInchesToTwip, TextWrappingType } from 'docx';
 import { saveAs } from 'file-saver';
-import { DOD_SEAL_BASE64 } from '@/lib/dod-seal-base64';
+import { getDoDSealBufferSync } from '@/lib/dod-seal';
 import { DOC_SETTINGS } from '@/lib/doc-settings';
 import { createFormattedParagraph } from '@/lib/paragraph-formatter';
 import { UNITS, Unit } from '@/lib/units';
@@ -1446,23 +1446,11 @@ const [formData, setFormData] = useState<FormData>({
   }, []);
 
   const generateBasicLetter = async () => {
-    // Convert base64 to ArrayBuffer for the docx library
+    // Get the appropriate seal based on header type (DON = blue, USMC = black)
     let sealBuffer = null;
     try {
-      const base64Data = DOD_SEAL_BASE64.split(',')[1]; // Remove data:image/png;base64, prefix
-      if (!base64Data) {
-        console.error('Failed to extract base64 data from DOD_SEAL_BASE64');
-        throw new Error('Invalid base64 data');
-      }
-      
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      sealBuffer = bytes.buffer;
-      
-      console.log('Seal buffer created successfully, size:', sealBuffer.byteLength);
+      sealBuffer = getDoDSealBufferSync(formData.headerType as 'USMC' | 'DON');
+      console.log('Seal buffer created successfully for', formData.headerType, ', size:', sealBuffer.byteLength);
     } catch (error) {
       console.error('Error processing seal image:', error);
       sealBuffer = null; // Fallback to no image if conversion fails
@@ -1669,23 +1657,11 @@ if (viasWithContent.length > 0) {
       return null;
     }
 
-    // Convert base64 to ArrayBuffer for the docx library
+    // Get the appropriate seal based on header type (DON = blue, USMC = black)
     let sealBuffer = null;
     try {
-      const base64Data = DOD_SEAL_BASE64.split(',')[1]; // Remove data:image/png;base64, prefix
-      if (!base64Data) {
-        console.error('Failed to extract base64 data from DOD_SEAL_BASE64');
-        throw new Error('Invalid base64 data');
-      }
-      
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      sealBuffer = bytes.buffer;
-      
-      console.log('Seal buffer created successfully, size:', sealBuffer.byteLength);
+      sealBuffer = getDoDSealBufferSync(formData.headerType as 'USMC' | 'DON');
+      console.log('Seal buffer created successfully for', formData.headerType, ', size:', sealBuffer.byteLength);
     } catch (error) {
       console.error('Error processing seal image:', error);
       sealBuffer = null; // Fallback to no image if conversion fails
