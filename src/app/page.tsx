@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions, convertInchesToTwip, TextWrappingType } from 'docx';
 import { saveAs } from 'file-saver';
 import { DOD_SEAL_BASE64 } from '@/lib/dod-seal-base64';
+import { createSeal } from '@/lib/seal';
 import { DOC_SETTINGS } from '@/lib/doc-settings';
 import { createFormattedParagraph } from '@/lib/paragraph-formatter';
 import { UNITS, Unit } from '@/lib/units';
@@ -47,6 +48,7 @@ interface FormData {
   startingPageNumber: number;
   previousPackagePageCount: number;
   headerType: 'USMC' | 'DON';
+  letterheadType: 'dow' | 'navy';
   bodyFont: 'times' | 'courier';
 }
 
@@ -792,6 +794,7 @@ const [formData, setFormData] = useState<FormData>({
     startingPageNumber: 1,
     previousPackagePageCount: 0,
     headerType: 'USMC',
+    letterheadType: 'dow',
     bodyFont: 'times',
   });
 
@@ -1446,26 +1449,14 @@ const [formData, setFormData] = useState<FormData>({
   }, []);
 
   const generateBasicLetter = async () => {
-    // Convert base64 to ArrayBuffer for the docx library
-    let sealBuffer = null;
+    // Create the seal using the selected letterhead type
+    let sealImageRun = null;
     try {
-      const base64Data = DOD_SEAL_BASE64.split(',')[1]; // Remove data:image/png;base64, prefix
-      if (!base64Data) {
-        console.error('Failed to extract base64 data from DOD_SEAL_BASE64');
-        throw new Error('Invalid base64 data');
-      }
-      
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      sealBuffer = bytes.buffer;
-      
-      console.log('Seal buffer created successfully, size:', sealBuffer.byteLength);
+      sealImageRun = await createSeal(formData.letterheadType);
+      console.log('Seal created successfully for letterhead type:', formData.letterheadType);
     } catch (error) {
-      console.error('Error processing seal image:', error);
-      sealBuffer = null; // Fallback to no image if conversion fails
+      console.error('Error creating seal:', error);
+      sealImageRun = null; // Fallback to no image if creation fails
     }
 
     const content = [];
@@ -1651,7 +1642,7 @@ if (viasWithContent.length > 0) {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.SQUARE } } })] })] : [] }),
+          first: new Header({ children: sealImageRun ? [new Paragraph({ children: [sealImageRun] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
@@ -1669,26 +1660,14 @@ if (viasWithContent.length > 0) {
       return null;
     }
 
-    // Convert base64 to ArrayBuffer for the docx library
-    let sealBuffer = null;
+    // Create the seal using the selected letterhead type
+    let sealImageRun = null;
     try {
-      const base64Data = DOD_SEAL_BASE64.split(',')[1]; // Remove data:image/png;base64, prefix
-      if (!base64Data) {
-        console.error('Failed to extract base64 data from DOD_SEAL_BASE64');
-        throw new Error('Invalid base64 data');
-      }
-      
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      sealBuffer = bytes.buffer;
-      
-      console.log('Seal buffer created successfully, size:', sealBuffer.byteLength);
+      sealImageRun = await createSeal(formData.letterheadType);
+      console.log('Seal created successfully for letterhead type:', formData.letterheadType);
     } catch (error) {
-      console.error('Error processing seal image:', error);
-      sealBuffer = null; // Fallback to no image if conversion fails
+      console.error('Error creating seal:', error);
+      sealImageRun = null; // Fallback to no image if creation fails
     }
 
 const content = [];
@@ -1886,7 +1865,7 @@ if (enclsWithContent.length > 0) {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.SQUARE } } })] })] : [] }),
+          first: new Header({ children: sealImageRun ? [new Paragraph({ children: [sealImageRun] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
@@ -2640,6 +2619,43 @@ if (enclsWithContent.length > 0) {
                     style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
                   />
                   <span style={{ fontSize: '1.1rem' }}>Department of the Navy</span>
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
+              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <i className="fas fa-certificate" style={{ marginRight: '8px' }}></i>
+                Letterhead Seal Type
+              </label>
+              <div className="radio-group">
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="letterheadType"
+                    value="dow"
+                    checked={formData.letterheadType === 'dow'}
+                    onChange={(e) => {
+                      setFormData({ ...formData, letterheadType: 'dow' });
+                      debugFormChange('Letterhead Type', 'DoW (Black)');
+                    }}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '1.1rem' }}>Department of War (Black Seal)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="letterheadType"
+                    value="navy"
+                    checked={formData.letterheadType === 'navy'}
+                    onChange={(e) => {
+                      setFormData({ ...formData, letterheadType: 'navy' });
+                      debugFormChange('Letterhead Type', 'Navy (Blue)');
+                    }}
+                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '1.1rem' }}>Navy (Blue Seal)</span>
                 </label>
               </div>
             </div>
