@@ -2428,7 +2428,7 @@ if (enclsWithContent.length > 0) {
               }
             </h1>
             <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
-            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20251009</p>
+            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20251020</p>
           </div>
 
           {/* Document Type Selector */}
@@ -3920,7 +3920,7 @@ if (enclsWithContent.length > 0) {
           }}>
             <p>
               <i className="fas fa-shield-alt" style={{ marginRight: '4px' }}></i>
-              DoD Seal automatically included • Format compliant with SECNAV M-5216.5
+              DoW Seal automatically included • Format compliant with SECNAV M-5216.5
             </p>
             <p style={{ marginTop: '8px' }}>
               <a href="https://linktr.ee/semperadmin" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'none' }}>
