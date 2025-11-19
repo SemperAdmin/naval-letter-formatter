@@ -25,6 +25,9 @@ import { EnclosuresSection } from '@/components/letter/EnclosuresSection';
 import { CopyToSection } from '@/components/letter/CopyToSection';
 import { ViaSection } from '@/components/letter/ViaSection';
 import { ParagraphSection } from '@/components/letter/ParagraphSection';
+import { HeaderFieldsSection } from '@/components/letter/HeaderFieldsSection';
+import { ClosingBlockSection } from '@/components/letter/ClosingBlockSection';
+import { DocumentTypeSection } from '@/components/letter/DocumentTypeSection';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 
@@ -60,7 +63,6 @@ const [formData, setFormData] = useState<FormData>({
 
   const [showRef, setShowRef] = useState(false);
   const [showEncl, setShowEncl] = useState(false);
-  const [showDelegation, setShowDelegation] = useState(false);
 
   const [vias, setVias] = useState<string[]>(['']);
   const [references, setReferences] = useState<string[]>(['']);
@@ -183,7 +185,6 @@ const [formData, setFormData] = useState<FormData>({
       // Also update the UI toggles
       setShowRef(letterToLoad.references.some(r => r.trim() !== ''));
       setShowEncl(letterToLoad.enclosures.some(e => e.trim() !== ''));
-      setShowDelegation(!!letterToLoad.delegationText);
 
       // Re-validate fields after loading
       handleValidateSSIC(letterToLoad.ssic);
@@ -210,11 +211,6 @@ const [formData, setFormData] = useState<FormData>({
     setValidation(prev => ({ ...prev, [field]: result }));
   };
 
-  const setTodaysDate = () => {
-    const navyDate = getTodaysDate();
-    setFormData(prev => ({ ...prev, date: navyDate }));
-  };
-
   const handleDocumentTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newType = e.target.value as 'basic' | 'endorsement';
     setFormData(prev => ({
@@ -230,27 +226,6 @@ const [formData, setFormData] = useState<FormData>({
       startingEnclosureNumber: '1',
       startingPageNumber: 1,
       previousPackagePageCount: 0,
-    }));
-  };
-
-  const handleEndorsementLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const level = e.target.value as EndorsementLevel;
-
-    const levelMap: Record<string, number> = {
-      'FIRST': 1, 'SECOND': 2, 'THIRD': 3, 'FOURTH': 4, 'FIFTH': 5, 'SIXTH': 6, 'RECEIVING': 1
-    };
-
-    const prevPages = levelMap[level] ? levelMap[level] - 1 : 0;
-    const refStart = String.fromCharCode('a'.charCodeAt(0) + (levelMap[level] || 1) - 1);
-    const enclStart = (levelMap[level] || 1).toString();
-
-    setFormData(prev => ({
-      ...prev,
-      endorsementLevel: level,
-      startingReferenceLevel: refStart,
-      startingEnclosureNumber: enclStart,
-      previousPackagePageCount: prevPages,
-      startingPageNumber: (prev.previousPackagePageCount || 0) + 1
     }));
   };
 
@@ -457,17 +432,6 @@ const [formData, setFormData] = useState<FormData>({
       [newParagraphs[currentIndex], newParagraphs[currentIndex + 1]] = [newParagraphs[currentIndex + 1], newParagraphs[currentIndex]];
       setParagraphs(newParagraphs);
     }
-  };
-
-  const updateDelegationType = (value: string) => {
-    let delegationText = '';
-    switch (value) {
-      case 'by_direction': delegationText = 'By direction'; break;
-      case 'acting_commander': delegationText = 'Acting'; break;
-      case 'acting_title': delegationText = 'Acting'; break;
-      case 'signing_for': delegationText = 'For'; break;
-    }
-    setFormData(prev => ({ ...prev, delegationText }));
   };
 
   /**
@@ -1081,29 +1045,6 @@ if (enclsWithContent.length > 0) {
     setFormData(prev => ({ ...prev, line1: '', line2: '', line3: '' }));
   };
 
-  const ssicComboboxData = SSICS.map((ssic, index) => ({
-    value: `${ssic.code}-${index}`, // Make value unique by appending index
-    label: `${ssic.code} - ${ssic.nomenclature}`,
-    originalCode: ssic.code, // Keep the original code for populating the form
-  }));
-
-  const handleSsicSelect = (value: string) => {
-    const selectedSsic = ssicComboboxData.find(ssic => ssic.value === value);
-    if (selectedSsic) {
-      setFormData(prev => ({
-        ...prev,
-        ssic: selectedSsic.originalCode,
-      }));
-      handleValidateSSIC(selectedSsic.originalCode);
-    }
-  };
-
-  const clearSsicInfo = () => {
-    setFormData(prev => ({ ...prev, ssic: '' }));
-    handleValidateSSIC('');
-  };
-
-
   return (
     <div>
       {/* Font Awesome CSS */}
@@ -1125,380 +1066,7 @@ if (enclsWithContent.length > 0) {
             <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20251020</p>
           </div>
 
-          {/* Document Type Selector */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-file-alt" style={{ marginRight: '8px' }}></i>
-              Choose Document Type
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '1rem' }}>
-              {/* Basic Letter Card */}
-              <button
-                type="button"
-                className={`btn ${formData.documentType === 'basic'
-                  ? 'btn-primary'
-                  : 'btn-outline-secondary'
-                  }`}
-                onClick={() => setFormData(prev => ({ ...prev, documentType: 'basic' }))}
-                style={{
-                  padding: '20px',
-                  height: 'auto',
-                  textAlign: 'left',
-                  border: formData.documentType === 'basic' ? '3px solid #007bff' : '2px solid #dee2e6',
-                  borderRadius: '12px',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  background: formData.documentType === 'basic'
-                    ? 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)'
-                    : 'white',
-                  color: formData.documentType === 'basic' ? 'white' : '#495057',
-                  boxShadow: formData.documentType === 'basic'
-                    ? '0 8px 25px rgba(0, 123, 255, 0.3)'
-                    : '0 2px 10px rgba(0, 0, 0, 0.1)'
-                }}
-                onMouseEnter={(e) => {
-                  if (formData.documentType !== 'basic') {
-                    e.currentTarget.style.borderColor = '#007bff';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 123, 255, 0.2)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (formData.documentType !== 'basic') {
-                    e.currentTarget.style.borderColor = '#dee2e6';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                  <div style={{
-                    fontSize: '2.5rem',
-                    opacity: 0.9,
-                    minWidth: '60px'
-                  }}>
-                    📄
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontSize: '1.25rem',
-                      fontWeight: 'bold',
-                      marginBottom: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}>
-                      Basic Letter
-                      {formData.documentType === 'basic' && (
-                        <i className="fas fa-check-circle" style={{ color: 'white', marginLeft: 'auto' }}></i>
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '0.95rem',
-                      opacity: 0.9,
-                      marginBottom: '10px',
-                      lineHeight: '1.4'
-                    }}>
-                      The standard format for routine correspondence and official communications.
-                    </div>
-                    <div style={{
-                      fontSize: '0.85rem',
-                      opacity: 0.8,
-                      fontStyle: 'italic'
-                    }}>
-                      ✓ Most common format
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              {/* New-Page Endorsement Card */}
-              <button
-                type="button"
-                className={`btn ${formData.documentType === 'endorsement'
-                  ? 'btn-success'
-                  : 'btn-outline-secondary'
-                  }`}
-                onClick={() => setFormData(prev => ({ ...prev, documentType: 'endorsement' }))}
-                style={{
-                  padding: '20px',
-                  height: 'auto',
-                  textAlign: 'left',
-                  border: formData.documentType === 'endorsement' ? '3px solid #28a745' : '2px solid #dee2e6',
-                  borderRadius: '12px',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  background: formData.documentType === 'endorsement'
-                    ? 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)'
-                    : 'white',
-                  color: formData.documentType === 'endorsement' ? 'white' : '#495057',
-                  boxShadow: formData.documentType === 'endorsement'
-                    ? '0 8px 25px rgba(40, 167, 69, 0.3)'
-                    : '0 2px 10px rgba(0, 0, 0, 0.1)'
-                }}
-                onMouseEnter={(e) => {
-                  if (formData.documentType !== 'endorsement') {
-                    e.currentTarget.style.borderColor = '#28a745';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.2)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (formData.documentType !== 'endorsement') {
-                    e.currentTarget.style.borderColor = '#dee2e6';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                  <div style={{
-                    fontSize: '2.5rem',
-                    opacity: 0.9,
-                    minWidth: '60px'
-                  }}>
-                    📝
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontSize: '1.25rem',
-                      fontWeight: 'bold',
-                      marginBottom: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}>
-                      New-Page Endorsement
-                      {formData.documentType === 'endorsement' && (
-                        <i className="fas fa-check-circle" style={{ color: 'white', marginLeft: 'auto' }}></i>
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '0.95rem',
-                      opacity: 0.9,
-                      marginBottom: '10px',
-                      lineHeight: '1.4'
-                    }}>
-                      Forwards correspondence on a new page. Use for longer comments and formal endorsements.
-                    </div>
-                    <div style={{
-                      fontSize: '0.85rem',
-                      opacity: 0.8,
-                      fontStyle: 'italic'
-                    }}>
-                      → For forwarding documents
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </div>
-
-<div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
-              <small>
-                <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
-                Select the type of document you want to create. Basic letters are for routine correspondence, while endorsements forward existing documents.
-              </small>
-            </div>
-
-<div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-building" style={{ marginRight: '8px' }}></i>
-                Header Type
-              </label>
-              <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="headerType"
-                    value="USMC"
-                    checked={formData.headerType === 'USMC'}
-                    onChange={(e) => {
-                      setFormData({ ...formData, headerType: 'USMC' });
-                      debugFormChange('Header Type', 'USMC');
-                    }}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>United States Marine Corps</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="headerType"
-                    value="DON"
-                    checked={formData.headerType === 'DON'}
-                    onChange={(e) => {
-                      setFormData({ ...formData, headerType: 'DON' });
-                      debugFormChange('Header Type', 'DON');
-                    }}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>Department of the Navy</span>
-                </label>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-font" style={{ marginRight: '8px' }}></i>
-                Body Font
-              </label>
-              <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="bodyFont"
-                    value="times"
-                    checked={formData.bodyFont === 'times'}
-                    onChange={(e) => {
-                      setFormData({ ...formData, bodyFont: 'times' });
-                      debugFormChange('Body Font', 'Times New Roman');
-                    }}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>Times New Roman</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="bodyFont"
-                    value="courier"
-                    checked={formData.bodyFont === 'courier'}
-                    onChange={(e) => {
-                      setFormData({ ...formData, bodyFont: 'courier' });
-                      debugFormChange('Body Font', 'Courier New');
-                    }}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)', cursor: 'pointer' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>Courier New</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Endorsement-Specific Fields */}
-          {(formData.documentType === 'endorsement') && (
-            <div className="form-section">
-              <div className="section-legend" style={{ background: 'linear-gradient(45deg, #0d47a1, #1976d2)', border: '2px solid rgba(25, 118, 210, 0.3)' }}>
-                <i className="fas fa-file-signature" style={{ marginRight: '8px' }}></i>
-                Endorsement Details
-              </div>
-
-              <div className="input-group">
-                <span className="input-group-text" style={{ background: 'linear-gradient(45deg, #0d47a1, #1976d2)' }}>
-                  <i className="fas fa-sort-numeric-up" style={{ marginRight: '8px' }}></i>
-                  Endorsement Level:
-                </span>
-                <select
-                  className="form-control"
-                  value={formData.endorsementLevel}
-                  onChange={handleEndorsementLevelChange}
-                  required
-                >
-                  <option value="" disabled>Select endorsement level...</option>
-                  <>
-                    <option value="FIRST">FIRST ENDORSEMENT</option>
-                    <option value="SECOND">SECOND ENDORSEMENT</option>
-                    <option value="THIRD">THIRD ENDORSEMENT</option>
-                    <option value="FOURTH">FOURTH ENDORSEMENT</option>
-                    <option value="FIFTH">FIFTH ENDORSEMENT</option>
-                    <option value="SIXTH">SIXTH ENDORSEMENT</option>
-                  </>
-                </select>
-              </div>
-
-              {formData.endorsementLevel && (
-                <StructuredReferenceInput formData={formData} setFormData={setFormData} />
-              )}
-
-
-
-              {formData.endorsementLevel && (
-                <div style={{ marginTop: '1rem' }}>
-                  {/* Page Numbering Section */}
-                  <div style={{
-                    backgroundColor: '#fef3c7',
-                    border: '1px solid #fbbf24',
-                    borderRadius: '8px',
-                    padding: '0.75rem',
-                    marginBottom: '1rem'
-                  }}>
-                    <h4 style={{
-                      fontWeight: '500',
-                      color: '#92400e',
-                      marginBottom: '0.5rem',
-                      fontSize: '1rem'
-                    }}>Page Numbering</h4>
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        color: '#92400e',
-                        marginBottom: '0.25rem'
-                      }}>
-                        Last Page # of Previous Document
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.previousPackagePageCount}
-                        onChange={(e) => {
-                          const newPrevCount = parseInt(e.target.value) || 0;
-                          setFormData(prev => ({
-                            ...prev,
-                            previousPackagePageCount: newPrevCount,
-                            startingPageNumber: newPrevCount + 1
-                          }))
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem 0.75rem',
-                          border: '1px solid #fbbf24',
-                          borderRadius: '0.375rem',
-                          fontSize: '1rem'
-                        }}
-                      />
-                      <p style={{
-                        fontSize: '0.75rem',
-                        color: '#92400e',
-                        marginTop: '0.25rem'
-                      }}>
-                        Enter the last page number of the document you are endorsing.
-                      </p>
-                    </div>
-                    <div style={{
-                      marginTop: '0.75rem',
-                      padding: '0.5rem',
-                      backgroundColor: '#fde68a',
-                      borderRadius: '4px'
-                    }}>
-                      <strong style={{ color: '#92400e' }}>
-                        Your {formData.endorsementLevel} endorsement will start on page {formData.startingPageNumber}.
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div style={{
-                marginTop: '1rem',
-                padding: '0.75rem',
-                backgroundColor: '#dbeafe',
-                borderLeft: '4px solid #3b82f6',
-                color: '#1e40af',
-                borderRadius: '0 0.5rem 0.5rem 0'
-              }}>
-                <div style={{ display: 'flex' }}>
-                  <div style={{ paddingTop: '0.25rem' }}><i className="fas fa-info-circle" style={{ fontSize: '1.125rem', marginRight: '0.5rem' }}></i></div>
-                  <div>
-                    <p style={{ fontWeight: 'bold', margin: 0 }}>Endorsement Mode</p>
-                    <p style={{ fontSize: '0.875rem', margin: 0 }}>Endorsements forward the original letter. The "From" field becomes the endorsing command, and the "To" field is the next destination.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <DocumentTypeSection formData={formData} setFormData={setFormData} />
 
 
           {/* Unit Information Section */}
@@ -1575,168 +1143,14 @@ if (enclsWithContent.length > 0) {
           </div>
 
           {/* Header Information */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
-              Header Information
-            </div>
-
-            <div className="input-group">
-              <span className="input-group-text" style={{ minWidth: '150px' }}>
-                <i className="fas fa-search" style={{ marginRight: '8px' }}></i>
-                Find SSIC:
-              </span>
-              <Combobox
-                items={ssicComboboxData}
-                onSelect={handleSsicSelect}
-                placeholder="Search SSIC by subject..."
-                searchMessage="No SSIC found."
-                inputPlaceholder="Search nomenclatures..."
-              />
-              <button
-                className="btn btn-danger"
-                type="button"
-                onClick={clearSsicInfo}
-                title="Clear SSIC"
-                style={{ borderRadius: '0 8px 8px 0' }}
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-hashtag" style={{ marginRight: '8px' }}></i>
-                SSIC:
-              </span>
-              <input
-                className={`form-control ${validation.ssic.isValid ? 'is-valid' : formData.ssic && !validation.ssic.isValid ? 'is-invalid' : ''}`}
-                type="text"
-                placeholder="e.g., 1650"
-                value={formData.ssic}
-                onChange={(e) => {
-                  const value = numbersOnly(e.target.value);
-                  setFormData(prev => ({ ...prev, ssic: value }));
-                  handleValidateSSIC(value);
-                }}
-              />
-            </div>
-            {validation.ssic.message && (
-              <div className={`feedback-message ${validation.ssic.isValid ? 'text-success' : 'text-danger'}`}>
-                <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
-                {validation.ssic.message}
-              </div>
-            )}
-
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-code" style={{ marginRight: '8px' }}></i>
-                Originator's Code:
-              </span>
-              <input
-                className="form-control"
-                type="text"
-                placeholder="e.g., G-1"
-                value={formData.originatorCode}
-                onChange={(e) => setFormData(prev => ({ ...prev, originatorCode: autoUppercase(e.target.value) }))}
-              />
-            </div>
-
-            <div className="input-group">
-            <span className="input-group-text">
-              <i className="fas fa-calendar-alt" style={{ marginRight: '8px' }}></i>
-              Date:
-            </span>
-              <input
-                className="form-control"
-                type="text"
-                placeholder="e.g., 8 Jul 25, 2025-07-08, 07/08/2025, 20250708, or today"
-                value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              />
-            <button
-              className="btn btn-primary"
-              type="button"
-              onClick={setTodaysDate}
-              title="Use Today's Date"
-            >
-              <i className="fas fa-calendar-day"></i>
-            </button>
-          </div>
-            <div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '-10px', marginBottom: '1rem' }}>
-              <small>
-                <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
-                Accepts: YYYYMMDD, MM/DD/YYYY, YYYY-MM-DD, DD MMM YY, or "today". Auto-formats to Naval standard.
-              </small>
-            </div>
-
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-user" style={{ marginRight: '8px' }}></i>
-                From:
-              </span>
-              <input
-                className={`form-control ${validation.from.isValid ? 'is-valid' : formData.from && !validation.from.isValid ? 'is-invalid' : ''}`}
-                type="text"
-                placeholder="Commanding Officer, Marine Corps Base or Private Devil D. Dog 12345678790/0111 USMC"
-                value={formData.from}
-                onChange={(e) => setFormData(prev => ({ ...prev, from: e.target.value }))}
-                onBlur={(e) => handleValidateFromTo(e.target.value, 'from')}
-              />
-            </div>
-            {validation.from.message && (
-              <div className={`feedback-message ${validation.from.isValid ? 'text-success' : 'text-warning'}`}>
-                <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
-                {validation.from.message}
-              </div>
-            )}
-
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-users" style={{ marginRight: '8px' }}></i>
-                To:
-              </span>
-              <input
-                className={`form-control ${validation.to.isValid ? 'is-valid' : formData.to && !validation.to.isValid ? 'is-invalid' : ''}`}
-                type="text"
-                placeholder="Platoon Commander, 1st Platoon or Private Devil D. Dog 12345678790/0111 USMC"
-                value={formData.to}
-                onChange={(e) => setFormData(prev => ({ ...prev, to: e.target.value }))}
-                onBlur={(e) => handleValidateFromTo(e.target.value, 'to')}
-              />
-            </div>
-            {validation.to.message && (
-              <div className={`feedback-message ${validation.to.isValid ? 'text-success' : 'text-warning'}`}>
-                <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
-                {validation.to.message}
-              </div>
-            )}
-
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-book" style={{ marginRight: '8px' }}></i>
-                Subject:
-              </span>
-              <input
-                className={`form-control ${validation.subj.isValid ? 'is-valid' : formData.subj && !validation.subj.isValid ? 'is-invalid' : ''}`}
-                type="text"
-                placeholder="SUBJECT LINE IN ALL CAPS"
-                value={formData.subj}
-                onChange={(e) => {
-                  const value = autoUppercase(e.target.value);
-                  debugFormChange('Subject', value);
-                  setFormData(prev => ({ ...prev, subj: value }));
-                  handleValidateSubject(value);
-                }}
-              />
-            </div>
-            {validation.subj.message && (
-              <div className={`feedback-message ${validation.subj.isValid ? 'text-success' : 'text-warning'}`}>
-                <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'}`} style={{ marginRight: '4px' }}></i>
-                {validation.subj.message}
-              </div>
-            )}
-          </div>
+          <HeaderFieldsSection
+            formData={formData}
+            setFormData={setFormData}
+            validation={validation}
+            handleValidateSSIC={handleValidateSSIC}
+            handleValidateSubject={handleValidateSubject}
+            handleValidateFromTo={handleValidateFromTo}
+          />
 
           {/* Optional Items Section */}
           <div className="form-section">
@@ -2055,118 +1469,12 @@ if (enclsWithContent.length > 0) {
           />
 
           {/* Closing Block Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-signature" style={{ marginRight: '8px' }}></i>
-              Closing Block
-            </div>
-
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-pen-fancy" style={{ marginRight: '8px' }}></i>
-                Signature Name:
-              </span>
-              <input
-                className="form-control"
-                type="text"
-                placeholder="F. M. LASTNAME"
-                value={formData.sig}
-                onChange={(e) => setFormData(prev => ({ ...prev, sig: autoUppercase(e.target.value) }))}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
-                Delegation of Signature Authority?
-              </label>
-              <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="radio"
-                    name="ifDelegation"
-                    value="yes"
-                    checked={showDelegation}
-                    onChange={() => setShowDelegation(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="radio"
-                    name="ifDelegation"
-                    value="no"
-                    checked={!showDelegation}
-                    onChange={() => setShowDelegation(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
-                </label>
-              </div>
-
-              {showDelegation && (
-                <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
-                    Delegation Authority Type:
-                  </label>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <select
-                      className="form-control"
-                      style={{ marginBottom: '8px' }}
-                      onChange={(e) => updateDelegationType(e.target.value)}
-                    >
-                      <option value="">Select delegation type...</option>
-                      <option value="by_direction">By direction</option>
-                      <option value="acting_commander">Acting for Commander/CO/OIC</option>
-                      <option value="acting_title">Acting for Official by Title</option>
-                      <option value="signing_for">Signing "For" an Absent Official</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                  </div>
-
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
-                      Delegation Text:
-                    </span>
-                    <input
-                      className="form-control"
-                      type="text"
-                      placeholder="Enter delegation authority text (e.g., By direction, Acting, etc.)"
-                      value={formData.delegationText}
-                      onChange={(e) => setFormData(prev => ({ ...prev, delegationText: e.target.value }))}
-                    />
-                  </div>
-
-                  <div style={{
-                    marginTop: '12px',
-                    padding: '12px',
-                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                    borderRadius: '8px',
-                    border: '1px solid #17a2b8',
-                    fontSize: '0.85rem'
-                  }}>
-                    <strong style={{ color: '#17a2b8' }}>
-                      <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
-                      Examples:
-                    </strong>
-                    <br />
-                    <div style={{ marginTop: '4px', color: '#17a2b8' }}>
-                      • <strong>By direction:</strong> For routine correspondence when specifically authorized<br />
-                      • <strong>Acting:</strong> When temporarily succeeding to command or appointed to replace an official<br />
-                      • <strong>Deputy Acting:</strong> For deputy positions acting in absence<br />
-                      • <strong>For:</strong> When signing for an absent official (hand-written "for" before typed name)
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <CopyToSection copyTos={copyTos} setCopyTos={setCopyTos} />
-          </div>
+          <ClosingBlockSection
+            formData={formData}
+            setFormData={setFormData}
+            copyTos={copyTos}
+            setCopyTos={setCopyTos}
+          />
 
           {/* Saved Letters Section */}
           {savedLetters.length > 0 && (
@@ -2217,7 +1525,6 @@ if (enclsWithContent.length > 0) {
               // Update UI toggles based on imported data
               setShowRef(importedReferences.some(r => r.trim() !== ''));
               setShowEncl(importedEnclosures.some(e => e.trim() !== ''));
-              setShowDelegation(!!importedFormData.delegationText);
                         
               // Re-validate fields after loading
               handleValidateSSIC(importedFormData.ssic);
