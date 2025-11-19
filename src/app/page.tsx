@@ -26,6 +26,7 @@ import { CopyToSection } from '@/components/letter/CopyToSection';
 import { ViaSection } from '@/components/letter/ViaSection';
 import { ParagraphSection } from '@/components/letter/ParagraphSection';
 import { HeaderFieldsSection } from '@/components/letter/HeaderFieldsSection';
+import { ClosingBlockSection } from '@/components/letter/ClosingBlockSection';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 
@@ -61,7 +62,6 @@ const [formData, setFormData] = useState<FormData>({
 
   const [showRef, setShowRef] = useState(false);
   const [showEncl, setShowEncl] = useState(false);
-  const [showDelegation, setShowDelegation] = useState(false);
 
   const [vias, setVias] = useState<string[]>(['']);
   const [references, setReferences] = useState<string[]>(['']);
@@ -184,7 +184,6 @@ const [formData, setFormData] = useState<FormData>({
       // Also update the UI toggles
       setShowRef(letterToLoad.references.some(r => r.trim() !== ''));
       setShowEncl(letterToLoad.enclosures.some(e => e.trim() !== ''));
-      setShowDelegation(!!letterToLoad.delegationText);
 
       // Re-validate fields after loading
       handleValidateSSIC(letterToLoad.ssic);
@@ -453,17 +452,6 @@ const [formData, setFormData] = useState<FormData>({
       [newParagraphs[currentIndex], newParagraphs[currentIndex + 1]] = [newParagraphs[currentIndex + 1], newParagraphs[currentIndex]];
       setParagraphs(newParagraphs);
     }
-  };
-
-  const updateDelegationType = (value: string) => {
-    let delegationText = '';
-    switch (value) {
-      case 'by_direction': delegationText = 'By direction'; break;
-      case 'acting_commander': delegationText = 'Acting'; break;
-      case 'acting_title': delegationText = 'Acting'; break;
-      case 'signing_for': delegationText = 'For'; break;
-    }
-    setFormData(prev => ({ ...prev, delegationText }));
   };
 
   /**
@@ -1874,118 +1862,12 @@ if (enclsWithContent.length > 0) {
           />
 
           {/* Closing Block Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-signature" style={{ marginRight: '8px' }}></i>
-              Closing Block
-            </div>
-
-            <div className="input-group">
-              <span className="input-group-text">
-                <i className="fas fa-pen-fancy" style={{ marginRight: '8px' }}></i>
-                Signature Name:
-              </span>
-              <input
-                className="form-control"
-                type="text"
-                placeholder="F. M. LASTNAME"
-                value={formData.sig}
-                onChange={(e) => setFormData(prev => ({ ...prev, sig: autoUppercase(e.target.value) }))}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
-                Delegation of Signature Authority?
-              </label>
-              <div className="radio-group">
-                <label style={{ display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="radio"
-                    name="ifDelegation"
-                    value="yes"
-                    checked={showDelegation}
-                    onChange={() => setShowDelegation(true)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>Yes</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="radio"
-                    name="ifDelegation"
-                    value="no"
-                    checked={!showDelegation}
-                    onChange={() => setShowDelegation(false)}
-                    style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                  />
-                  <span style={{ fontSize: '1.1rem' }}>No</span>
-                </label>
-              </div>
-
-              {showDelegation && (
-                <div className="dynamic-section">
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                    <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
-                    Delegation Authority Type:
-                  </label>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <select
-                      className="form-control"
-                      style={{ marginBottom: '8px' }}
-                      onChange={(e) => updateDelegationType(e.target.value)}
-                    >
-                      <option value="">Select delegation type...</option>
-                      <option value="by_direction">By direction</option>
-                      <option value="acting_commander">Acting for Commander/CO/OIC</option>
-                      <option value="acting_title">Acting for Official by Title</option>
-                      <option value="signing_for">Signing "For" an Absent Official</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                  </div>
-
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
-                      Delegation Text:
-                    </span>
-                    <input
-                      className="form-control"
-                      type="text"
-                      placeholder="Enter delegation authority text (e.g., By direction, Acting, etc.)"
-                      value={formData.delegationText}
-                      onChange={(e) => setFormData(prev => ({ ...prev, delegationText: e.target.value }))}
-                    />
-                  </div>
-
-                  <div style={{
-                    marginTop: '12px',
-                    padding: '12px',
-                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                    borderRadius: '8px',
-                    border: '1px solid #17a2b8',
-                    fontSize: '0.85rem'
-                  }}>
-                    <strong style={{ color: '#17a2b8' }}>
-                      <i className="fas fa-info-circle" style={{ marginRight: '4px' }}></i>
-                      Examples:
-                    </strong>
-                    <br />
-                    <div style={{ marginTop: '4px', color: '#17a2b8' }}>
-                      • <strong>By direction:</strong> For routine correspondence when specifically authorized<br />
-                      • <strong>Acting:</strong> When temporarily succeeding to command or appointed to replace an official<br />
-                      • <strong>Deputy Acting:</strong> For deputy positions acting in absence<br />
-                      • <strong>For:</strong> When signing for an absent official (hand-written "for" before typed name)
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <CopyToSection copyTos={copyTos} setCopyTos={setCopyTos} />
-          </div>
+          <ClosingBlockSection
+            formData={formData}
+            setFormData={setFormData}
+            copyTos={copyTos}
+            setCopyTos={setCopyTos}
+          />
 
           {/* Saved Letters Section */}
           {savedLetters.length > 0 && (
@@ -2036,7 +1918,6 @@ if (enclsWithContent.length > 0) {
               // Update UI toggles based on imported data
               setShowRef(importedReferences.some(r => r.trim() !== ''));
               setShowEncl(importedEnclosures.some(e => e.trim() !== ''));
-              setShowDelegation(!!importedFormData.delegationText);
                         
               // Re-validate fields after loading
               handleValidateSSIC(importedFormData.ssic);
