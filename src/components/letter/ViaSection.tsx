@@ -3,7 +3,7 @@
  * Manages the list of via addressees with dynamic add/remove functionality
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ViaSectionProps {
@@ -18,9 +18,9 @@ export function ViaSection({ vias, setVias }: ViaSectionProps) {
     setShowVia(vias.some(v => v.trim() !== ''));
   }, [vias]);
 
-  const addItem = () => setVias([...vias, '']);
-  const removeItem = (index: number) => setVias(vias.filter((_, i) => i !== index));
-  const updateItem = (index: number, value: string) => setVias(vias.map((item, i) => i === index ? value : item));
+  const addItem = useCallback(() => setVias(v => [...v, '']), [setVias]);
+  const removeItem = useCallback((index: number) => setVias(v => v.filter((_, i) => i !== index)), [setVias]);
+  const updateItem = useCallback((index: number, value: string) => setVias(v => v.map((item, i) => i === index ? value : item)), [setVias]);
 
   return (
     <Card className="mb-6">
@@ -63,7 +63,7 @@ export function ViaSection({ vias, setVias }: ViaSectionProps) {
               Enter Via Addressee(s):
             </label>
             {vias.map((via, index) => (
-              <div key={index} className="flex w-full">
+              <div key={`via-${index}-${via.substring(0, 20)}`} className="flex w-full">
                 <span className="flex min-w-[60px] items-center justify-center flex-shrink-0 rounded-l-lg border-2 border-[#b8860b] bg-gradient-to-br from-[#b8860b] to-[#ffd700] text-center font-semibold text-white">
                   ({index + 1})
                 </span>
