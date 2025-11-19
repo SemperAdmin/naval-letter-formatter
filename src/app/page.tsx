@@ -13,6 +13,9 @@ import { Combobox } from '@/components/ui/combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { configureConsole, logError, debugUserAction, debugFormChange } from '@/lib/console-utils';
 import { NLDPFileManager } from '../components/NLDPFileManager';
+import { parseAndFormatDate, getTodaysDate } from '@/lib/date-utils';
+import { getBodyFont, getFromToSpacing, getViaSpacing, getSubjSpacing, getRefSpacing, getEnclSpacing, getCopyToSpacing, splitSubject } from '@/lib/naval-format-utils';
+import { numbersOnly, autoUppercase } from '@/lib/string-utils';
 import '../styles/letter-form.css';
 
 
@@ -68,80 +71,6 @@ interface ValidationState {
   from: { isValid: boolean; message: string; };
   to: { isValid: boolean; message: string; };
 }
-
-// Helper function to get the body font based on user selection
-const getBodyFont = (bodyFont: 'times' | 'courier'): string => {
-  return bodyFont === 'courier' ? 'Courier New' : 'Times New Roman';
-};
-
-
-// Helper functions for Courier New spacing
-const getFromToSpacing = (label: string, bodyFont: 'times' | 'courier'): string => {
-  if (bodyFont === 'courier') {
-    if (label === 'From') return 'From:  '; // 2 spaces
-    if (label === 'To') return 'To:    '; // 4 spaces
-  }
-  return `${label}:\t`; // Tab for Times New Roman
-};
-
-const getViaSpacing = (index: number, bodyFont: 'times' | 'courier'): string => {
-  if (bodyFont === 'courier') {
-    return index === 0 
-      ? `Via:\u00A0\u00A0\u00A0(${index + 1})\u00A0` // 3 spaces before, 1 space after
-      : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${index + 1})\u00A0`; // 7 spaces before, 1 space after
-  }
-  return index === 0 ? `Via:\t(${index + 1})\t` : `\t(${index + 1})\t`;
-};
-
-const getSubjSpacing = (bodyFont: 'times' | 'courier'): string => {
-  return bodyFont === 'courier' ? 'Subj:  ' : 'Subj:\t'; // 2 spaces or tab
-};
-
-const getRefSpacing = (letter: string, index: number, bodyFont: 'times' | 'courier'): string => {
-  if (bodyFont === 'courier') {
-    return index === 0 
-      ? `Ref:\u00A0\u00A0\u00A0(${letter})\u00A0` // 3 spaces before, 1 space after
-      : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${letter})\u00A0`; // 7 spaces before, 1 space after
-  }
-  return index === 0 ? `Ref:\t(${letter})\t` : `\t(${letter})\t`;
-};
-
-const getEnclSpacing = (number: number, index: number, bodyFont: 'times' | 'courier'): string => {
-  if (bodyFont === 'courier') {
-    return index === 0 
-      ? `Encl:\u00A0\u00A0(${number})\u00A0` // 2 spaces before, 1 space after
-      : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${number})\u00A0`; // 7 spaces before, 1 space after
-  }
-  return index === 0 ? `Encl:\t(${number})\t` : `\t(${number})\t`;
-};
-
-const getCopyToSpacing = (bodyFont: 'times' | 'courier'): string => {
-  return bodyFont === 'courier' ? 'Copy to:  ' : 'Copy to:'; // 2 spaces for Courier
-};
-
-// Helper to split string into chunks without breaking words
-const splitSubject = (str: string, chunkSize: number): string[] => {
-  const chunks: string[] = [];
-  if (!str) return chunks;
-  let i = 0;
-  while (i < str.length) {
-    let chunk = str.substring(i, i + chunkSize);
-    if (i + chunkSize < str.length && str[i + chunkSize] !== ' ' && chunk.includes(' ')) {
-      const lastSpaceIndex = chunk.lastIndexOf(' ');
-      if (lastSpaceIndex > -1) {
-        chunk = chunk.substring(0, lastSpaceIndex);
-        i += chunk.length + 1;
-      } else {
-        i += chunkSize;
-      }
-    } else {
-      i += chunkSize;
-    }
-    chunks.push(chunk.trim());
-  }
-  return chunks;
-};
-
 
 // ===============================
 // REFERENCE TYPE OPTIONS
@@ -203,52 +132,6 @@ function StructuredReferenceInput({ formData, setFormData }: StructuredReference
       referenceDate: newDate,
       basicLetterReference: fullReference
     }));
-  };
-
-  const parseAndFormatDate = (dateString: string) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    // If already in Naval format, return as-is
-    const navalPattern = /^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{2}$/i;
-    if (navalPattern.test(dateString)) {
-      return dateString;
-    }
-
-    let date: Date | null = null;
-
-    // Handle various date formats
-    if (dateString.toLowerCase() === 'today' || dateString.toLowerCase() === 'now') {
-      date = new Date();
-    } else if (/^\d{8}$/.test(dateString)) {
-      const year = dateString.substring(0, 4);
-      const month = dateString.substring(4, 6);
-      const day = dateString.substring(6, 8);
-      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(dateString)) {
-      date = new Date(dateString);
-    } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
-      const parts = dateString.split('/');
-      date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
-    } else {
-      try {
-        const parsedDate = new Date(dateString);
-        if (!isNaN(parsedDate.getTime())) {
-          date = parsedDate;
-        }
-      } catch (e) {
-        // ignore invalid date strings
-      }
-    }
-
-    if (!date || isNaN(date.getTime())) {
-      return dateString; // Return original if can't parse
-    }
-
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear().toString().slice(-2);
-
-    return `${day} ${month} ${year}`;
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1007,56 +890,8 @@ const [formData, setFormData] = useState<FormData>({
   };
 
   const setTodaysDate = () => {
-    const today = new Date();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const navyDate = today.getDate() + ' ' + months[today.getMonth()] + ' ' + today.getFullYear().toString().slice(-2);
+    const navyDate = getTodaysDate();
     setFormData(prev => ({ ...prev, date: navyDate }));
-  };
-
-  const parseAndFormatDate = (dateString: string) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    // If already in Naval format, return as-is
-    const navalPattern = /^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{2}$/i;
-    if (navalPattern.test(dateString)) {
-      return dateString;
-    }
-
-    let date: Date | null = null;
-
-    // Handle various date formats
-    if (dateString.toLowerCase() === 'today' || dateString.toLowerCase() === 'now') {
-      date = new Date();
-    } else if (/^\d{8}$/.test(dateString)) {
-      const year = dateString.substring(0, 4);
-      const month = dateString.substring(4, 6);
-      const day = dateString.substring(6, 8);
-      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(dateString)) {
-      date = new Date(dateString);
-    } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
-      const parts = dateString.split('/');
-      date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
-    } else {
-      try {
-        const parsedDate = new Date(dateString);
-        if (!isNaN(parsedDate.getTime())) {
-          date = parsedDate;
-        }
-      } catch (e) {
-        // ignore invalid date strings
-      }
-    }
-
-    if (!date || isNaN(date.getTime())) {
-      return dateString; // Return original if can't parse
-    }
-
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear().toString().slice(-2);
-
-    return `${day} ${month} ${year}`;
   };
 
   const handleDocumentTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1096,14 +931,6 @@ const [formData, setFormData] = useState<FormData>({
       previousPackagePageCount: prevPages,
       startingPageNumber: (prev.previousPackagePageCount || 0) + 1
     }));
-  };
-
-  const numbersOnly = (value: string) => {
-    return value.replace(/\D/g, '');
-  };
-
-  const autoUppercase = (value: string) => {
-    return value.toUpperCase();
   };
 
   const addItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
