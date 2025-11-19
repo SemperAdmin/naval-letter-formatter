@@ -17,6 +17,8 @@ import { parseAndFormatDate, getTodaysDate } from '@/lib/date-utils';
 import { getBodyFont, getFromToSpacing, getViaSpacing, getSubjSpacing, getRefSpacing, getEnclSpacing, getCopyToSpacing, splitSubject } from '@/lib/naval-format-utils';
 import { numbersOnly, autoUppercase } from '@/lib/string-utils';
 import { REFERENCE_TYPES, COMMON_ORIGINATORS } from '@/lib/constants';
+import { validateSSIC, validateSubject, validateFromTo, ValidationResult } from '@/lib/validation-utils';
+import { loadSavedLetters, saveLetterToStorage, findLetterById, createLetterId, formatSaveTimestamp } from '@/lib/storage-utils';
 import { StructuredReferenceInput } from '@/components/letter/StructuredReferenceInput';
 import { ReferencesSection } from '@/components/letter/ReferencesSection';
 import { EnclosuresSection } from '@/components/letter/EnclosuresSection';
@@ -111,14 +113,8 @@ const [formData, setFormData] = useState<FormData>({
 
   // Load saved letters from localStorage on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('navalLetters');
-      if (saved) {
-        setSavedLetters(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error("Failed to load saved letters from localStorage", error);
-    }
+    const letters = loadSavedLetters();
+    setSavedLetters(letters);
   }, []);
 
 
@@ -132,11 +128,11 @@ const [formData, setFormData] = useState<FormData>({
       subject: formData.subj.substring(0, 30) + (formData.subj.length > 30 ? '...' : ''),
       paragraphCount: paragraphs.length
     });
-    
+
     const newLetter: SavedLetter = {
       ...formData,
-      id: new Date().toISOString(), // Unique ID
-      savedAt: new Date().toLocaleString(),
+      id: createLetterId(),
+      savedAt: formatSaveTimestamp(),
       vias,
       references,
       enclosures,
@@ -144,15 +140,14 @@ const [formData, setFormData] = useState<FormData>({
       paragraphs,
     };
 
-    const updatedLetters = [newLetter, ...savedLetters].slice(0, 10); // Keep max 10 saves
+    const updatedLetters = saveLetterToStorage(newLetter, savedLetters);
     setSavedLetters(updatedLetters);
-    localStorage.setItem('navalLetters', JSON.stringify(updatedLetters));
   };
 
   const loadLetter = (letterId: string) => {
     debugUserAction('Load Letter', { letterId });
-    
-    const letterToLoad = savedLetters.find(l => l.id === letterId);
+
+    const letterToLoad = findLetterById(letterId, savedLetters);
     if (letterToLoad) {
       setFormData({
         documentType: letterToLoad.documentType || 'basic',
@@ -190,69 +185,28 @@ const [formData, setFormData] = useState<FormData>({
       setShowDelegation(!!letterToLoad.delegationText);
 
       // Re-validate fields after loading
-      validateSSIC(letterToLoad.ssic);
-      validateSubject(letterToLoad.subj);
-      validateFromTo(letterToLoad.from, 'from');
-      validateFromTo(letterToLoad.to, 'to');
+      handleValidateSSIC(letterToLoad.ssic);
+      handleValidateSubject(letterToLoad.subj);
+      handleValidateFromTo(letterToLoad.from, 'from');
+      handleValidateFromTo(letterToLoad.to, 'to');
     }
   };
 
 
-  // Validation Functions
-  const validateSSIC = (value: string) => {
-    const ssicPattern = /^\d{4,5}$/;
-    if (!value) {
-      setValidation(prev => ({ ...prev, ssic: { isValid: false, message: '' } }));
-      return;
-    }
-
-    if (ssicPattern.test(value)) {
-      setValidation(prev => ({ ...prev, ssic: { isValid: true, message: 'Valid SSIC format' } }));
-    } else {
-      let message = 'SSIC must be 4-5 digits';
-      if (value.length < 4) {
-        message = `SSIC must be 4-5 digits (currently ${value.length})`;
-      } else if (value.length > 5) {
-        message = 'SSIC too long (max 5 digits)';
-      } else {
-        message = 'SSIC must contain only numbers';
-      }
-      setValidation(prev => ({ ...prev, ssic: { isValid: false, message } }));
-    }
+  // Validation wrapper functions that update state
+  const handleValidateSSIC = (value: string) => {
+    const result = handleValidateSSIC(value);
+    setValidation(prev => ({ ...prev, ssic: result }));
   };
 
-  const validateSubject = (value: string) => {
-    if (!value) {
-      setValidation(prev => ({ ...prev, subj: { isValid: false, message: '' } }));
-      return;
-    }
-
-    if (value === value.toUpperCase()) {
-      setValidation(prev => ({ ...prev, subj: { isValid: true, message: 'Perfect! Subject is in ALL CAPS' } }));
-    } else {
-      setValidation(prev => ({ ...prev, subj: { isValid: false, message: 'Subject must be in ALL CAPS' } }));
-    }
+  const handleValidateSubject = (value: string) => {
+    const result = handleValidateSubject(value);
+    setValidation(prev => ({ ...prev, subj: result }));
   };
 
-  const validateFromTo = (value: string, field: 'from' | 'to') => {
-    if (value.length <= 5) {
-      setValidation(prev => ({ ...prev, [field]: { isValid: false, message: '' } }));
-      return;
-    }
-
-    const validPatterns = [
-      /^(Commanding Officer|Chief of|Commander|Private|Corporal|Sergeant|Lieutenant|Captain|Major|Colonel|General)/i,
-      /^(Private|Corporal|Sergeant|Lieutenant|Captain|Major|Colonel|General)\s[A-Za-z\s\.]+\s\d{10}\/\d{4}\s(USMC|USN)$/i,
-      /^(Secretary|Under Secretary|Assistant Secretary)/i
-    ];
-
-    const isValid = validPatterns.some(pattern => pattern.test(value));
-
-    if (isValid) {
-      setValidation(prev => ({ ...prev, [field]: { isValid: true, message: 'Valid naval format' } }));
-    } else {
-      setValidation(prev => ({ ...prev, [field]: { isValid: false, message: 'Use proper naval format: "Commanding Officer, Unit Name" or "Rank First M. Last 1234567890/MOS USMC"' } }));
-    }
+  const handleValidateFromTo = (value: string, field: 'from' | 'to') => {
+    const result = handleValidateFromTo(value, field);
+    setValidation(prev => ({ ...prev, [field]: result }));
   };
 
   const setTodaysDate = () => {
@@ -1139,13 +1093,13 @@ if (enclsWithContent.length > 0) {
         ...prev,
         ssic: selectedSsic.originalCode,
       }));
-      validateSSIC(selectedSsic.originalCode);
+      handleValidateSSIC(selectedSsic.originalCode);
     }
   };
 
   const clearSsicInfo = () => {
     setFormData(prev => ({ ...prev, ssic: '' }));
-    validateSSIC('');
+    handleValidateSSIC('');
   };
 
 
@@ -1662,7 +1616,7 @@ if (enclsWithContent.length > 0) {
                 onChange={(e) => {
                   const value = numbersOnly(e.target.value);
                   setFormData(prev => ({ ...prev, ssic: value }));
-                  validateSSIC(value);
+                  handleValidateSSIC(value);
                 }}
               />
             </div>
@@ -1726,7 +1680,7 @@ if (enclsWithContent.length > 0) {
                 placeholder="Commanding Officer, Marine Corps Base or Private Devil D. Dog 12345678790/0111 USMC"
                 value={formData.from}
                 onChange={(e) => setFormData(prev => ({ ...prev, from: e.target.value }))}
-                onBlur={(e) => validateFromTo(e.target.value, 'from')}
+                onBlur={(e) => handleValidateFromTo(e.target.value, 'from')}
               />
             </div>
             {validation.from.message && (
@@ -1747,7 +1701,7 @@ if (enclsWithContent.length > 0) {
                 placeholder="Platoon Commander, 1st Platoon or Private Devil D. Dog 12345678790/0111 USMC"
                 value={formData.to}
                 onChange={(e) => setFormData(prev => ({ ...prev, to: e.target.value }))}
-                onBlur={(e) => validateFromTo(e.target.value, 'to')}
+                onBlur={(e) => handleValidateFromTo(e.target.value, 'to')}
               />
             </div>
             {validation.to.message && (
@@ -1771,7 +1725,7 @@ if (enclsWithContent.length > 0) {
                   const value = autoUppercase(e.target.value);
                   debugFormChange('Subject', value);
                   setFormData(prev => ({ ...prev, subj: value }));
-                  validateSubject(value);
+                  handleValidateSubject(value);
                 }}
               />
             </div>
@@ -2544,10 +2498,10 @@ if (enclsWithContent.length > 0) {
               setShowDelegation(!!importedFormData.delegationText);
                         
               // Re-validate fields after loading
-              validateSSIC(importedFormData.ssic);
-              validateSubject(importedFormData.subj);
-              validateFromTo(importedFormData.from, 'from');
-              validateFromTo(importedFormData.to, 'to');
+              handleValidateSSIC(importedFormData.ssic);
+              handleValidateSubject(importedFormData.subj);
+              handleValidateFromTo(importedFormData.from, 'from');
+              handleValidateFromTo(importedFormData.to, 'to');
             }}
           />
 
