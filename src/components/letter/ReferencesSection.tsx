@@ -101,88 +101,33 @@ export function ReferencesSection({ references, setReferences, formData, setForm
               Enter Reference(s):
             </label>
             {references.map((ref, index) => (
-              <div key={index} className="input-group" style={{ width: '100%', display: 'flex' }}>
-                <span className="input-group-text" style={{
-                  minWidth: '60px',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  display: 'flex',
-                  background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-                  color: 'white',
-                  fontWeight: '600',
-                  borderRadius: '8px 0 0 8px',
-                  border: '2px solid #b8860b',
-                  flexShrink: 0,
-                  textAlign: 'center'
-                }}>
+              <div key={index} className="flex w-full">
+                <span className="flex min-w-[60px] items-center justify-center flex-shrink-0 rounded-l-lg border-2 border-[#b8860b] bg-gradient-to-br from-[#b8860b] to-[#ffd700] text-center font-semibold text-white">
                   ({getReferenceLetter(index, formData.startingReferenceLevel)})
                 </span>
                 <input
-                  className="form-control"
+                  className="flex-1 min-w-0 px-4 py-3 text-base border-2 border-l-0 border-gray-300 bg-gray-50 transition-all focus:border-[#b8860b] focus:bg-white focus:ring-2 focus:ring-[#b8860b]/10 focus:outline-none"
                   type="text"
                   placeholder="📚 Enter reference information (e.g., NAVADMIN 123/24, OPNAVINST 5000.1)"
                   value={ref}
                   onChange={(e) => updateItem(index, e.target.value)}
-                  style={{
-                    fontSize: '1rem',
-                    padding: '12px 16px',
-                    border: '2px solid #e0e0e0',
-                    borderLeft: 'none',
-                    borderRadius: '0',
-                    transition: 'all 0.3s ease',
-                    backgroundColor: '#fafafa',
-                    flex: '1',
-                    minWidth: '0'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#b8860b';
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(184, 134, 11, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#e0e0e0';
-                    e.target.style.backgroundColor = '#fafafa';
-                    e.target.style.boxShadow = 'none';
-                  }}
                 />
                 {index === references.length - 1 ? (
                   <button
-                    className="btn btn-primary"
+                    className="flex-shrink-0 rounded-r-lg border-2 border-[#b8860b] bg-gradient-to-br from-[#b8860b] to-[#ffd700] px-4 py-2 font-semibold text-white transition-all hover:from-[#ffd700] hover:to-[#b8860b] hover:-translate-y-px"
                     type="button"
                     onClick={addItem}
-                    style={{
-                      borderRadius: '0 8px 8px 0',
-                      flexShrink: 0,
-                      background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-                      border: '2px solid #b8860b',
-                      color: 'white',
-                      fontWeight: '600',
-                      padding: '8px 16px',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #ffd700, #b8860b)';
-                      (e.target as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #b8860b, #ffd700)';
-                      (e.target as HTMLButtonElement).style.transform = 'translateY(0)';
-                    }}
                   >
-                    <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
+                    <i className="fas fa-plus mr-1"></i>
                     Add
                   </button>
                 ) : (
                   <button
-                    className="btn btn-danger"
+                    className="flex-shrink-0 rounded-r-lg bg-gradient-to-r from-red-600 to-red-500 px-4 py-2 font-semibold text-white transition-all hover:from-red-700 hover:to-red-600"
                     type="button"
                     onClick={() => removeItem(index)}
-                    style={{
-                      borderRadius: '0 8px 8px 0',
-                      flexShrink: 0
-                    }}
                   >
-                    <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
+                    <i className="fas fa-trash mr-1"></i>
                     Remove
                   </button>
                 )}

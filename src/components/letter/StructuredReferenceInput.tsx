@@ -41,6 +41,11 @@ export function StructuredReferenceInput({ formData, setFormData }: StructuredRe
     updateReference('date', formatted);
   };
 
+  const handleDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const formatted = parseAndFormatDate(e.target.value);
+    updateReference('date', formatted);
+  };
+
   return (
     <div className="sri-container">
       <div className="sri-header">
@@ -100,7 +105,7 @@ export function StructuredReferenceInput({ formData, setFormData }: StructuredRe
               className="sri-input"
               value={formData.referenceDate}
               onChange={handleDateChange}
-              onBlur={handleDateChange}
+              onBlur={handleDateBlur}
               placeholder="8 Jul 25"
             />
             <div className="sri-hint sri-hint-long">
