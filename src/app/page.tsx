@@ -18,11 +18,13 @@ import { getBodyFont, getFromToSpacing, getViaSpacing, getSubjSpacing, getRefSpa
 import { numbersOnly, autoUppercase } from '@/lib/string-utils';
 import { REFERENCE_TYPES, COMMON_ORIGINATORS } from '@/lib/constants';
 import { validateSSIC, validateSubject, validateFromTo, ValidationResult } from '@/lib/validation-utils';
-import { loadSavedLetters, saveLetterToStorage, findLetterById, createLetterId, formatSaveTimestamp } from '@/lib/storage-utils';
+import { loadSavedLetters, saveLetterToStorage, findLetterById } from '@/lib/storage-utils';
 import { StructuredReferenceInput } from '@/components/letter/StructuredReferenceInput';
 import { ReferencesSection } from '@/components/letter/ReferencesSection';
 import { EnclosuresSection } from '@/components/letter/EnclosuresSection';
 import { CopyToSection } from '@/components/letter/CopyToSection';
+import { ViaSection } from '@/components/letter/ViaSection';
+import { ParagraphSection } from '@/components/letter/ParagraphSection';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 
@@ -56,7 +58,6 @@ const [formData, setFormData] = useState<FormData>({
     to: { isValid: false, message: '' }
   });
 
-  const [showVia, setShowVia] = useState(false);
   const [showRef, setShowRef] = useState(false);
   const [showEncl, setShowEncl] = useState(false);
   const [showDelegation, setShowDelegation] = useState(false);
@@ -129,10 +130,11 @@ const [formData, setFormData] = useState<FormData>({
       paragraphCount: paragraphs.length
     });
 
+    const now = new Date();
     const newLetter: SavedLetter = {
       ...formData,
-      id: createLetterId(),
-      savedAt: formatSaveTimestamp(),
+      id: now.toISOString(),
+      savedAt: now.toLocaleString(),
       vias,
       references,
       enclosures,
@@ -179,7 +181,6 @@ const [formData, setFormData] = useState<FormData>({
       setParagraphs(letterToLoad.paragraphs);
 
       // Also update the UI toggles
-      setShowVia(letterToLoad.vias.some(v => v.trim() !== ''));
       setShowRef(letterToLoad.references.some(r => r.trim() !== ''));
       setShowEncl(letterToLoad.enclosures.some(e => e.trim() !== ''));
       setShowDelegation(!!letterToLoad.delegationText);
@@ -195,17 +196,17 @@ const [formData, setFormData] = useState<FormData>({
 
   // Validation wrapper functions that update state
   const handleValidateSSIC = (value: string) => {
-    const result = handleValidateSSIC(value);
+    const result = validateSSIC(value);
     setValidation(prev => ({ ...prev, ssic: result }));
   };
 
   const handleValidateSubject = (value: string) => {
-    const result = handleValidateSubject(value);
+    const result = validateSubject(value);
     setValidation(prev => ({ ...prev, subj: result }));
   };
 
   const handleValidateFromTo = (value: string, field: 'from' | 'to') => {
-    const result = handleValidateFromTo(value, field);
+    const result = validateFromTo(value);
     setValidation(prev => ({ ...prev, [field]: result }));
   };
 
@@ -1744,137 +1745,7 @@ if (enclsWithContent.length > 0) {
               Optional Items
             </div>
 
-            <Card style={{ marginBottom: '1.5rem' }}>
-              <CardHeader>
-                <CardTitle style={{ fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                  <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
-                  Via
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="radio-group">
-                  <label style={{ display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type="radio"
-                      name="ifVia"
-                      value="yes"
-                      checked={showVia}
-                      onChange={() => setShowVia(true)}
-                      style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                    />
-                    <span style={{ fontSize: '1.1rem' }}>Yes</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type="radio"
-                      name="ifVia"
-                      value="no"
-                      checked={!showVia}
-                      onChange={() => setShowVia(false)}
-                      style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                    />
-                    <span style={{ fontSize: '1.1rem' }}>No</span>
-                  </label>
-                </div>
-
-                {showVia && (
-                  <div className="dynamic-section">
-                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                      <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
-                      Enter Via Addressee(s):
-                    </label>
-                    {vias.map((via, index) => (
-                      <div key={index} className="input-group" style={{ width: '100%', display: 'flex' }}>
-                        <span className="input-group-text" style={{
-                          minWidth: '60px',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          display: 'flex',
-                          background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-                          color: 'white',
-                          fontWeight: '600',
-                          borderRadius: '8px 0 0 8px',
-                          border: '2px solid #b8860b',
-                          flexShrink: 0,
-                          textAlign: 'center'
-                        }}>
-                          ({index + 1})
-                        </span>
-                        <input
-                          className="form-control"
-                          type="text"
-                          placeholder="🚀 Enter via information (e.g., Commanding Officer, 1st Marine Division)"
-                          value={via}
-                          onChange={(e) => updateItem(index, e.target.value, setVias)}
-                          style={{
-                            fontSize: '1rem',
-                            padding: '12px 16px',
-                            border: '2px solid #e0e0e0',
-                            borderLeft: 'none',
-                            borderRadius: '0',
-                            transition: 'all 0.3s ease',
-                            backgroundColor: '#fafafa',
-                            flex: '1',
-                            minWidth: '0'
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor = '#b8860b';
-                            e.target.style.backgroundColor = '#fff';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(184, 134, 11, 0.1)';
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor = '#e0e0e0';
-                            e.target.style.backgroundColor = '#fafafa';
-                            e.target.style.boxShadow = 'none';
-                          }}
-                        />
-                        {index === vias.length - 1 ? (
-                          <button
-                            className="btn btn-primary"
-                            type="button"
-                            onClick={() => addItem(setVias)}
-                            style={{
-                              borderRadius: '0 8px 8px 0',
-                              flexShrink: 0,
-                              background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-                              border: '2px solid #b8860b',
-                              color: 'white',
-                              fontWeight: '600',
-                              padding: '8px 16px',
-                              transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #ffd700, #b8860b)';
-                              (e.target as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #b8860b, #ffd700)';
-                              (e.target as HTMLButtonElement).style.transform = 'translateY(0)';
-                            }}
-                          >
-                            <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
-                            Add
-                          </button>
-                        ) : (
-                          <button
-                            className="btn btn-danger"
-                            type="button"
-                            onClick={() => removeItem(index, setVias)}
-                            style={{
-                              borderRadius: '0 8px 8px 0',
-                              flexShrink: 0
-                            }}
-                          >
-                            <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ViaSection vias={vias} setVias={setVias} />
 
             <Card style={{ marginBottom: '1.5rem' }}>
               <CardHeader>
@@ -2170,166 +2041,18 @@ if (enclsWithContent.length > 0) {
           </div>
 
           {/* Body Paragraphs Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-paragraph" style={{ marginRight: '8px' }}></i>
-              Body Paragraphs
-            </div>
-
-            <div>
-              {(() => {
-                const numberingErrors = validateParagraphNumbering(paragraphs);
-                if (numberingErrors.length > 0) {
-                  return (
-                    <div style={{
-                      backgroundColor: '#fff3cd',
-                      border: '1px solid #ffeaa7',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      marginBottom: '16px'
-                    }}>
-                      <div style={{ fontWeight: 'bold', color: '#856404', marginBottom: '8px' }}>
-                        <i className="fas fa-exclamation-triangle" style={{ marginRight: '8px' }}></i>
-                        Paragraph Numbering Issues:
-                      </div>
-                      {numberingErrors.map((error, index) => (
-                        <div key={index} style={{ color: '#856404', fontSize: '0.9rem' }}>
-                          • {error}
-                        </div>
-                      ))}
-                      <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#6c757d' }}>
-                        <strong>Rule:</strong> If there's a paragraph 1a, there must be a paragraph 1b; if there's a paragraph 1a(1), there must be a paragraph 1a(2), etc.
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-              {paragraphs.map((paragraph, index) => {
-                const citation = getUiCitation(paragraph, index, paragraphs);
-                return (
-                  <div
-                    key={paragraph.id}
-                    className='paragraph-container'
-                    data-level={paragraph.level}
-                  >
-                    <div className="paragraph-header">
-                      <div>
-                        <span className="paragraph-level-badge">Level {paragraph.level} {citation}</span>
-                      </div>
-                      <div>
-                        {index > 0 && (
-                          <button
-                            className="btn btn-sm"
-                            style={{ background: '#f8f9fa', border: '1px solid #dee2e6', marginRight: '4px' }}
-                            onClick={() => moveParagraphUp(paragraph.id)}
-                            title="Move Up"
-                          >
-                            ↑
-                          </button>
-                        )}
-                        <button
-                          className="btn btn-sm"
-                          style={{ background: '#f8f9fa', border: '1px solid #dee2e6' }}
-                          onClick={() => moveParagraphDown(paragraph.id)}
-                          disabled={index === paragraphs.length - 1}
-                          title="Move Down"
-                        >
-                          ↓
-                        </button>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>  
-                      <textarea 
-                        className="form-control" 
-                        rows={4}
-                        placeholder="Enter your paragraph content here..."
-                        value={paragraph.content}
-                        onChange={(e) => updateParagraphContent(paragraph.id, e.target.value)}
-                        style={{ flex: 1 }}
-                      />
-                      
-                      <button
-                        className={`btn btn-sm ${activeVoiceInput === paragraph.id ? 'btn-danger' : 'btn-outline-primary'}`}
-                        onClick={() => toggleVoiceInput(paragraph.id)}
-                        title={activeVoiceInput === paragraph.id ? 'Stop Recording' : 'Start Voice Input'}
-                        style={{ 
-                          minWidth: '100px',
-                          height: '38px',
-                          fontSize: '12px'
-                        }}
-                      >
-                        {activeVoiceInput === paragraph.id ? (
-                          <>
-                            🔴 Recording...
-                          </>
-                        ) : (
-                          <>
-                            🎤 Voice Input
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {paragraph.acronymError && (
-                      <div className="acronym-error">
-                        <i className="fas fa-exclamation-triangle" style={{ marginRight: '4px' }}></i>
-                        <small>{paragraph.acronymError}</small>
-                      </div>
-                    )}
-
-
-                    <div>
-                      <button
-                        className="btn btn-smart-main btn-sm"
-                        onClick={() => addParagraph('main', paragraph.id)}
-                      >
-                        Main Paragraph
-                      </button>
-                      {paragraph.level < 8 && (
-                        <button
-                          className="btn btn-smart-sub btn-sm"
-                          onClick={() => addParagraph('sub', paragraph.id)}
-                        >
-                          Sub-paragraph
-                        </button>
-                      )}
-
-                      {paragraph.level > 1 && (
-                        <button
-                          className="btn btn-smart-same btn-sm"
-                          onClick={() => addParagraph('same', paragraph.id)}
-                        >
-                          Same
-                        </button>
-                      )}
-
-                      {paragraph.level > 2 && (
-                        <button
-                          className="btn btn-smart-up btn-sm"
-                          onClick={() => addParagraph('up', paragraph.id)}
-                        >
-                          One Up
-                        </button>
-                      )}
-
-                      {paragraphs.length > 1 && (
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => removeParagraph(paragraph.id)}
-                          style={{ marginLeft: '8px' }}
-                        >
-                          Delete
-                        </button>
-                      )}
-
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-          </div>
+          <ParagraphSection
+            paragraphs={paragraphs}
+            activeVoiceInput={activeVoiceInput}
+            validateParagraphNumbering={validateParagraphNumbering}
+            getUiCitation={getUiCitation}
+            moveParagraphUp={moveParagraphUp}
+            moveParagraphDown={moveParagraphDown}
+            updateParagraphContent={updateParagraphContent}
+            toggleVoiceInput={toggleVoiceInput}
+            addParagraph={addParagraph}
+            removeParagraph={removeParagraph}
+          />
 
           {/* Closing Block Section */}
           <div className="form-section">
@@ -2490,9 +2213,8 @@ if (enclsWithContent.length > 0) {
               setEnclosures(importedEnclosures);
               setCopyTos(importedCopyTos);
               setParagraphs(importedParagraphs);
-                        
+
               // Update UI toggles based on imported data
-              setShowVia(importedVias.some(v => v.trim() !== ''));
               setShowRef(importedReferences.some(r => r.trim() !== ''));
               setShowEncl(importedEnclosures.some(e => e.trim() !== ''));
               setShowDelegation(!!importedFormData.delegationText);

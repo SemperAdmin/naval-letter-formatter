@@ -49,17 +49,3 @@ export function saveLetterToStorage(newLetter: SavedLetter, existingSavedLetters
 export function findLetterById(letterId: string, savedLetters: SavedLetter[]): SavedLetter | undefined {
   return savedLetters.find(l => l.id === letterId);
 }
-
-/**
- * Creates a unique ID for a new letter based on current timestamp
- */
-export function createLetterId(): string {
-  return new Date().toISOString();
-}
-
-/**
- * Formats a timestamp for display
- */
-export function formatSaveTimestamp(): string {
-  return new Date().toLocaleString();
-}
