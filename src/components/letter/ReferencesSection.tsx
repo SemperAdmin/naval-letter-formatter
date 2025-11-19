@@ -3,7 +3,7 @@
  * Manages the list of document references with dynamic add/remove functionality
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormData } from '@/types';
 
@@ -21,9 +21,9 @@ export function ReferencesSection({ references, setReferences, formData, setForm
     setShowRef(references.some(r => r.trim() !== ''));
   }, [references]);
 
-  const addItem = () => setReferences([...references, '']);
-  const removeItem = (index: number) => setReferences(references.filter((_, i) => i !== index));
-  const updateItem = (index: number, value: string) => setReferences(references.map((item, i) => i === index ? value : item));
+  const addItem = useCallback(() => setReferences(r => [...r, '']), [setReferences]);
+  const removeItem = useCallback((index: number) => setReferences(r => r.filter((_, i) => i !== index)), [setReferences]);
+  const updateItem = useCallback((index: number, value: string) => setReferences(r => r.map((item, i) => i === index ? value : item)), [setReferences]);
 
   const getReferenceLetter = (index: number, startingLevel: string): string => {
     const startCharCode = startingLevel.charCodeAt(0);
@@ -101,7 +101,7 @@ export function ReferencesSection({ references, setReferences, formData, setForm
               Enter Reference(s):
             </label>
             {references.map((ref, index) => (
-              <div key={index} className="flex w-full">
+              <div key={`ref-${index}-${ref.substring(0, 20)}`} className="flex w-full">
                 <span className="flex min-w-[60px] items-center justify-center flex-shrink-0 rounded-l-lg border-2 border-[#b8860b] bg-gradient-to-br from-[#b8860b] to-[#ffd700] text-center font-semibold text-white">
                   ({getReferenceLetter(index, formData.startingReferenceLevel)})
                 </span>

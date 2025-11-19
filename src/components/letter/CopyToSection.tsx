@@ -3,7 +3,7 @@
  * Manages the list of copy-to addressees with dynamic add/remove functionality
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CopyToSectionProps {
@@ -18,9 +18,9 @@ export function CopyToSection({ copyTos, setCopyTos }: CopyToSectionProps) {
     setShowCopy(copyTos.some(c => c.trim() !== ''));
   }, [copyTos]);
 
-  const addItem = () => setCopyTos([...copyTos, '']);
-  const removeItem = (index: number) => setCopyTos(copyTos.filter((_, i) => i !== index));
-  const updateItem = (index: number, value: string) => setCopyTos(copyTos.map((item, i) => i === index ? value : item));
+  const addItem = useCallback(() => setCopyTos(c => [...c, '']), [setCopyTos]);
+  const removeItem = useCallback((index: number) => setCopyTos(c => c.filter((_, i) => i !== index)), [setCopyTos]);
+  const updateItem = useCallback((index: number, value: string) => setCopyTos(c => c.map((item, i) => i === index ? value : item)), [setCopyTos]);
 
   return (
     <Card className="mb-6">
@@ -63,7 +63,7 @@ export function CopyToSection({ copyTos, setCopyTos }: CopyToSectionProps) {
               Enter Addressee(s):
             </label>
             {copyTos.map((copy, index) => (
-              <div key={index} className="input-group">
+              <div key={`copy-${index}-${copy.substring(0, 20)}`} className="input-group">
                 <input
                   className="form-control"
                   type="text"

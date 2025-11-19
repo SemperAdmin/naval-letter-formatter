@@ -3,7 +3,7 @@
  * Manages the list of document enclosures with dynamic add/remove functionality
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormData } from '@/types';
 
@@ -21,9 +21,9 @@ export function EnclosuresSection({ enclosures, setEnclosures, formData, setForm
     setShowEncl(enclosures.some(e => e.trim() !== ''));
   }, [enclosures]);
 
-  const addItem = () => setEnclosures([...enclosures, '']);
-  const removeItem = (index: number) => setEnclosures(enclosures.filter((_, i) => i !== index));
-  const updateItem = (index: number, value: string) => setEnclosures(enclosures.map((item, i) => i === index ? value : item));
+  const addItem = useCallback(() => setEnclosures(e => [...e, '']), [setEnclosures]);
+  const removeItem = useCallback((index: number) => setEnclosures(e => e.filter((_, i) => i !== index)), [setEnclosures]);
+  const updateItem = useCallback((index: number, value: string) => setEnclosures(e => e.map((item, i) => i === index ? value : item)), [setEnclosures]);
 
   const getEnclosureNumber = (index: number, startingNumber: string): number => {
     return parseInt(startingNumber, 10) + index;
@@ -105,7 +105,7 @@ export function EnclosuresSection({ enclosures, setEnclosures, formData, setForm
                 Enter Enclosure(s):
               </h4>
               {enclosures.map((encl, index) => (
-                <div key={index} className="flex items-stretch rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all duration-200 shadow-sm hover:shadow-md">
+                <div key={`encl-${index}-${encl.substring(0, 20)}`} className="flex items-stretch rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all duration-200 shadow-sm hover:shadow-md">
                   <div className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white font-bold text-center min-w-[60px] border-r-2 border-yellow-700">
                     ({getEnclosureNumber(index, formData.startingEnclosureNumber)})
                   </div>
