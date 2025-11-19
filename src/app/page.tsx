@@ -54,6 +54,14 @@ const [formData, setFormData] = useState<FormData>({
     bodyFont: 'times',
   });
 
+  // Define the function that sets today's date using the state setter
+  const setTodaysDate = useCallback(() => {
+    // getTodaysDate is imported correctly from '@/lib/date-utils'
+    const navyDate = getTodaysDate(); 
+    setFormData(prev => ({ ...prev, date: navyDate }));
+    debugFormChange('Date', navyDate);
+  }, [setFormData]);
+  
   const [validation, setValidation] = useState<ValidationState>({
     ssic: { isValid: false, message: '' },
     subj: { isValid: false, message: '' },
@@ -121,10 +129,10 @@ const [formData, setFormData] = useState<FormData>({
   }, []);
 
 
-  // Set today's date on component mount
-  useEffect(() => {
+// Set today's date on component mount
+useEffect(() => {
     setTodaysDate();
-  }, []);
+}, [setTodaysDate]); // <-- Added dependency to satisfy the linter and React rules
 
   const saveLetter = () => {
     debugUserAction('Save Letter', {
