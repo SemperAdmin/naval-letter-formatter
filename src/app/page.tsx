@@ -23,6 +23,7 @@ import { StructuredReferenceInput } from '@/components/letter/StructuredReferenc
 import { ReferencesSection } from '@/components/letter/ReferencesSection';
 import { EnclosuresSection } from '@/components/letter/EnclosuresSection';
 import { CopyToSection } from '@/components/letter/CopyToSection';
+import { ViaSection } from '@/components/letter/ViaSection';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 
@@ -56,7 +57,6 @@ const [formData, setFormData] = useState<FormData>({
     to: { isValid: false, message: '' }
   });
 
-  const [showVia, setShowVia] = useState(false);
   const [showRef, setShowRef] = useState(false);
   const [showEncl, setShowEncl] = useState(false);
   const [showDelegation, setShowDelegation] = useState(false);
@@ -180,7 +180,6 @@ const [formData, setFormData] = useState<FormData>({
       setParagraphs(letterToLoad.paragraphs);
 
       // Also update the UI toggles
-      setShowVia(letterToLoad.vias.some(v => v.trim() !== ''));
       setShowRef(letterToLoad.references.some(r => r.trim() !== ''));
       setShowEncl(letterToLoad.enclosures.some(e => e.trim() !== ''));
       setShowDelegation(!!letterToLoad.delegationText);
@@ -1745,137 +1744,7 @@ if (enclsWithContent.length > 0) {
               Optional Items
             </div>
 
-            <Card style={{ marginBottom: '1.5rem' }}>
-              <CardHeader>
-                <CardTitle style={{ fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                  <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
-                  Via
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="radio-group">
-                  <label style={{ display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type="radio"
-                      name="ifVia"
-                      value="yes"
-                      checked={showVia}
-                      onChange={() => setShowVia(true)}
-                      style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                    />
-                    <span style={{ fontSize: '1.1rem' }}>Yes</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type="radio"
-                      name="ifVia"
-                      value="no"
-                      checked={!showVia}
-                      onChange={() => setShowVia(false)}
-                      style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-                    />
-                    <span style={{ fontSize: '1.1rem' }}>No</span>
-                  </label>
-                </div>
-
-                {showVia && (
-                  <div className="dynamic-section">
-                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                      <i className="fas fa-route" style={{ marginRight: '8px' }}></i>
-                      Enter Via Addressee(s):
-                    </label>
-                    {vias.map((via, index) => (
-                      <div key={index} className="input-group" style={{ width: '100%', display: 'flex' }}>
-                        <span className="input-group-text" style={{
-                          minWidth: '60px',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          display: 'flex',
-                          background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-                          color: 'white',
-                          fontWeight: '600',
-                          borderRadius: '8px 0 0 8px',
-                          border: '2px solid #b8860b',
-                          flexShrink: 0,
-                          textAlign: 'center'
-                        }}>
-                          ({index + 1})
-                        </span>
-                        <input
-                          className="form-control"
-                          type="text"
-                          placeholder="🚀 Enter via information (e.g., Commanding Officer, 1st Marine Division)"
-                          value={via}
-                          onChange={(e) => updateItem(index, e.target.value, setVias)}
-                          style={{
-                            fontSize: '1rem',
-                            padding: '12px 16px',
-                            border: '2px solid #e0e0e0',
-                            borderLeft: 'none',
-                            borderRadius: '0',
-                            transition: 'all 0.3s ease',
-                            backgroundColor: '#fafafa',
-                            flex: '1',
-                            minWidth: '0'
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor = '#b8860b';
-                            e.target.style.backgroundColor = '#fff';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(184, 134, 11, 0.1)';
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor = '#e0e0e0';
-                            e.target.style.backgroundColor = '#fafafa';
-                            e.target.style.boxShadow = 'none';
-                          }}
-                        />
-                        {index === vias.length - 1 ? (
-                          <button
-                            className="btn btn-primary"
-                            type="button"
-                            onClick={() => addItem(setVias)}
-                            style={{
-                              borderRadius: '0 8px 8px 0',
-                              flexShrink: 0,
-                              background: 'linear-gradient(135deg, #b8860b, #ffd700)',
-                              border: '2px solid #b8860b',
-                              color: 'white',
-                              fontWeight: '600',
-                              padding: '8px 16px',
-                              transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #ffd700, #b8860b)';
-                              (e.target as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #b8860b, #ffd700)';
-                              (e.target as HTMLButtonElement).style.transform = 'translateY(0)';
-                            }}
-                          >
-                            <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
-                            Add
-                          </button>
-                        ) : (
-                          <button
-                            className="btn btn-danger"
-                            type="button"
-                            onClick={() => removeItem(index, setVias)}
-                            style={{
-                              borderRadius: '0 8px 8px 0',
-                              flexShrink: 0
-                            }}
-                          >
-                            <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ViaSection vias={vias} setVias={setVias} />
 
             <Card style={{ marginBottom: '1.5rem' }}>
               <CardHeader>
@@ -2491,9 +2360,8 @@ if (enclsWithContent.length > 0) {
               setEnclosures(importedEnclosures);
               setCopyTos(importedCopyTos);
               setParagraphs(importedParagraphs);
-                        
+
               // Update UI toggles based on imported data
-              setShowVia(importedVias.some(v => v.trim() !== ''));
               setShowRef(importedReferences.some(r => r.trim() !== ''));
               setShowEncl(importedEnclosures.some(e => e.trim() !== ''));
               setShowDelegation(!!importedFormData.delegationText);
