@@ -55,7 +55,7 @@ export function validateSubject(value: string): ValidationResult {
  * Validates From/To field format
  * Must follow naval correspondence format
  */
-export function validateFromTo(value: string, field: 'from' | 'to'): ValidationResult {
+export function validateFromTo(value: string): ValidationResult {
   if (value.length <= 5) {
     return { isValid: false, message: '' };
   }

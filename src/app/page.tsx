@@ -18,7 +18,7 @@ import { getBodyFont, getFromToSpacing, getViaSpacing, getSubjSpacing, getRefSpa
 import { numbersOnly, autoUppercase } from '@/lib/string-utils';
 import { REFERENCE_TYPES, COMMON_ORIGINATORS } from '@/lib/constants';
 import { validateSSIC, validateSubject, validateFromTo, ValidationResult } from '@/lib/validation-utils';
-import { loadSavedLetters, saveLetterToStorage, findLetterById, createLetterId, formatSaveTimestamp } from '@/lib/storage-utils';
+import { loadSavedLetters, saveLetterToStorage, findLetterById } from '@/lib/storage-utils';
 import { StructuredReferenceInput } from '@/components/letter/StructuredReferenceInput';
 import { ReferencesSection } from '@/components/letter/ReferencesSection';
 import { EnclosuresSection } from '@/components/letter/EnclosuresSection';
@@ -129,10 +129,11 @@ const [formData, setFormData] = useState<FormData>({
       paragraphCount: paragraphs.length
     });
 
+    const now = new Date();
     const newLetter: SavedLetter = {
       ...formData,
-      id: createLetterId(),
-      savedAt: formatSaveTimestamp(),
+      id: now.toISOString(),
+      savedAt: now.toLocaleString(),
       vias,
       references,
       enclosures,
@@ -195,17 +196,17 @@ const [formData, setFormData] = useState<FormData>({
 
   // Validation wrapper functions that update state
   const handleValidateSSIC = (value: string) => {
-    const result = handleValidateSSIC(value);
+    const result = validateSSIC(value);
     setValidation(prev => ({ ...prev, ssic: result }));
   };
 
   const handleValidateSubject = (value: string) => {
-    const result = handleValidateSubject(value);
+    const result = validateSubject(value);
     setValidation(prev => ({ ...prev, subj: result }));
   };
 
   const handleValidateFromTo = (value: string, field: 'from' | 'to') => {
-    const result = handleValidateFromTo(value, field);
+    const result = validateFromTo(value);
     setValidation(prev => ({ ...prev, [field]: result }));
   };
 
