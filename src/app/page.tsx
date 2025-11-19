@@ -122,9 +122,9 @@ const [formData, setFormData] = useState<FormData>({
 
 
   // Set today's date on component mount
-  useEffect(() => {
-    setTodaysDate();
-  }, []);
+  const setTodaysDate = () => {
+    const today = getTodaysDate(); // getTodaysDate is imported from '@/lib/date-utils'
+    setFormData(prev => ({ ...prev, date: today }));
 
   const saveLetter = () => {
     debugUserAction('Save Letter', {
