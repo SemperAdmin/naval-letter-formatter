@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CopyToSectionProps {
   copyTos: string[];
@@ -22,74 +23,78 @@ export function CopyToSection({ copyTos, setCopyTos }: CopyToSectionProps) {
   const updateItem = (index: number, value: string) => setCopyTos(copyTos.map((item, i) => i === index ? value : item));
 
   return (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <label style={{ display: 'block', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-        <i className="fas fa-copy" style={{ marginRight: '8px' }}></i>
-        Copy To?
-      </label>
-      <div className="radio-group">
-        <label style={{ display: 'flex', alignItems: 'center' }}>
-          <input
-            type="radio"
-            name="ifCopy"
-            value="yes"
-            checked={showCopy}
-            onChange={() => setShowCopy(true)}
-            style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-          />
-          <span style={{ fontSize: '1.1rem' }}>Yes</span>
-        </label>
-        <label style={{ display: 'flex', alignItems: 'center' }}>
-          <input
-            type="radio"
-            name="ifCopy"
-            value="no"
-            checked={!showCopy}
-            onChange={() => { setShowCopy(false); setCopyTos(['']); }}
-            style={{ marginRight: '8px', transform: 'scale(1.25)' }}
-          />
-          <span style={{ fontSize: '1.1rem' }}>No</span>
-        </label>
-      </div>
-
-      {showCopy && (
-        <div className="dynamic-section">
-          <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-            <i className="fas fa-mail-bulk" style={{ marginRight: '8px' }}></i>
-            Enter Addressee(s):
+    <Card className="mb-6">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center text-lg font-semibold">
+          <i className="fas fa-copy mr-2"></i>
+          Copy To
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-6">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              name="ifCopy"
+              value="yes"
+              checked={showCopy}
+              onChange={() => setShowCopy(true)}
+              className="mr-2 scale-125"
+            />
+            <span className="text-base">Yes</span>
           </label>
-          {copyTos.map((copy, index) => (
-            <div key={index} className="input-group">
-              <input
-                className="form-control"
-                type="text"
-                placeholder="Enter copy to information"
-                value={copy}
-                onChange={(e) => updateItem(index, e.target.value)}
-              />
-              {index === copyTos.length - 1 ? (
-                <button
-                  className="btn btn-primary"
-                  type="button"
-                  onClick={addItem}
-                >
-                  <i className="fas fa-plus" style={{ marginRight: '4px' }}></i>
-                  Add
-                </button>
-              ) : (
-                <button
-                  className="btn btn-danger"
-                  type="button"
-                  onClick={() => removeItem(index)}
-                >
-                  <i className="fas fa-trash" style={{ marginRight: '4px' }}></i>
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              name="ifCopy"
+              value="no"
+              checked={!showCopy}
+              onChange={() => { setShowCopy(false); setCopyTos(['']); }}
+              className="mr-2 scale-125"
+            />
+            <span className="text-base">No</span>
+          </label>
         </div>
-      )}
-    </div>
+
+        {showCopy && (
+          <div className="space-y-3">
+            <label className="block font-semibold mb-2">
+              <i className="fas fa-mail-bulk mr-2"></i>
+              Enter Addressee(s):
+            </label>
+            {copyTos.map((copy, index) => (
+              <div key={index} className="input-group">
+                <input
+                  className="form-control"
+                  type="text"
+                  placeholder="Enter copy to information"
+                  value={copy}
+                  onChange={(e) => updateItem(index, e.target.value)}
+                />
+                {index === copyTos.length - 1 ? (
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={addItem}
+                  >
+                    <i className="fas fa-plus mr-1"></i>
+                    Add
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-danger"
+                    type="button"
+                    onClick={() => removeItem(index)}
+                  >
+                    <i className="fas fa-trash mr-1"></i>
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

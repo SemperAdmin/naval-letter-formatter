@@ -12,11 +12,9 @@ interface EnclosuresSectionProps {
   setEnclosures: (encls: string[]) => void;
   formData: FormData;
   setFormData: (data: FormData) => void;
-  getEnclosureNumber: (index: number, startingNumber: string) => number;
-  generateEnclosureOptions: () => Array<{ value: string, label: string }>;
 }
 
-export function EnclosuresSection({ enclosures, setEnclosures, formData, setFormData, getEnclosureNumber, generateEnclosureOptions }: EnclosuresSectionProps) {
+export function EnclosuresSection({ enclosures, setEnclosures, formData, setFormData }: EnclosuresSectionProps) {
   const [showEncl, setShowEncl] = useState(false);
 
   useEffect(() => {
@@ -26,6 +24,20 @@ export function EnclosuresSection({ enclosures, setEnclosures, formData, setForm
   const addItem = () => setEnclosures([...enclosures, '']);
   const removeItem = (index: number) => setEnclosures(enclosures.filter((_, i) => i !== index));
   const updateItem = (index: number, value: string) => setEnclosures(enclosures.map((item, i) => i === index ? value : item));
+
+  const getEnclosureNumber = (index: number, startingNumber: string): number => {
+    return parseInt(startingNumber, 10) + index;
+  };
+
+  const generateEnclosureOptions = () => {
+    return Array.from({ length: 20 }, (_, i) => {
+      const num = i + 1;
+      return {
+        value: num.toString(),
+        label: `Start with enclosure (${num})`
+      };
+    });
+  };
 
   return (
     <Card className="mb-6">
@@ -93,7 +105,7 @@ export function EnclosuresSection({ enclosures, setEnclosures, formData, setForm
                 Enter Enclosure(s):
               </h4>
               {enclosures.map((encl, index) => (
-                <div key={index} className="flex items-stretch rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md">
+                <div key={index} className="flex items-stretch rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all duration-200 shadow-sm hover:shadow-md">
                   <div className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white font-bold text-center min-w-[60px] border-r-2 border-yellow-700">
                     ({getEnclosureNumber(index, formData.startingEnclosureNumber)})
                   </div>
@@ -103,30 +115,12 @@ export function EnclosuresSection({ enclosures, setEnclosures, formData, setForm
                     placeholder="📎 Enter enclosure details (e.g., Training Certificate, Medical Records)"
                     value={encl}
                     onChange={(e) => updateItem(index, e.target.value)}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#b8860b';
-                      e.target.style.backgroundColor = '#fff';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(184, 134, 11, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#e9ecef';
-                      e.target.style.backgroundColor = '#f8f9fa';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   />
                   {index === enclosures.length - 1 ? (
                     <button
-                      className="px-4 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-white font-semibold transition-all duration-200 border-l-2 border-yellow-700 flex items-center"
+                      className="px-4 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 hover:-translate-y-px text-white font-semibold transition-all duration-200 border-l-2 border-yellow-700 flex items-center"
                       type="button"
                       onClick={addItem}
-                      onMouseEnter={(e) => {
-                        (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #ffd700, #b8860b)';
-                        (e.target as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #b8860b, #ffd700)';
-                        (e.target as HTMLButtonElement).style.transform = 'translateY(0)';
-                      }}
                     >
                       <i className="fas fa-plus mr-2"></i>
                       Add
