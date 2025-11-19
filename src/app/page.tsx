@@ -18,61 +18,8 @@ import { getBodyFont, getFromToSpacing, getViaSpacing, getSubjSpacing, getRefSpa
 import { numbersOnly, autoUppercase } from '@/lib/string-utils';
 import { REFERENCE_TYPES, COMMON_ORIGINATORS } from '@/lib/constants';
 import { StructuredReferenceInput } from '@/components/letter/StructuredReferenceInput';
+import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
-
-
-interface ParagraphData {
-  id: number;
-  level: number;
-  content: string;
-  acronymError?: string;
-}
-
-type EndorsementLevel = 'FIRST' | 'SECOND' | 'THIRD' | 'FOURTH' | 'FIFTH' | 'SIXTH' | '';
-
-interface FormData {
-  documentType: 'basic' | 'endorsement';
-  endorsementLevel: EndorsementLevel;
-  basicLetterReference: string;
-  referenceWho: string;
-  referenceType: string;
-  referenceDate: string;
-  startingReferenceLevel: string;
-  startingEnclosureNumber: string;
-  line1: string;
-  line2: string;
-  line3: string;
-  ssic: string;
-  originatorCode: string;
-  date: string;
-  from: string;
-  to: string;
-  subj: string;
-  sig: string;
-  delegationText: string;
-  startingPageNumber: number;
-  previousPackagePageCount: number;
-  headerType: 'USMC' | 'DON';
-  bodyFont: 'times' | 'courier';
-}
-
-interface SavedLetter extends FormData {
-  id: string;
-  savedAt: string;
-  vias: string[];
-  references: string[];
-  enclosures: string[];
-  copyTos: string[];
-  paragraphs: ParagraphData[];
-}
-
-
-interface ValidationState {
-  ssic: { isValid: boolean; message: string; };
-  subj: { isValid: boolean; message: string; };
-  from: { isValid: boolean; message: string; };
-  to: { isValid: boolean; message: string; };
-}
 
 
 // --- New Components for References and Enclosures ---
