@@ -16,6 +16,7 @@ import { NLDPFileManager } from '../components/NLDPFileManager';
 import { parseAndFormatDate, getTodaysDate } from '@/lib/date-utils';
 import { getBodyFont, getFromToSpacing, getViaSpacing, getSubjSpacing, getRefSpacing, getEnclSpacing, getCopyToSpacing, splitSubject } from '@/lib/naval-format-utils';
 import { numbersOnly, autoUppercase } from '@/lib/string-utils';
+import { REFERENCE_TYPES, COMMON_ORIGINATORS } from '@/lib/constants';
 import '../styles/letter-form.css';
 
 
@@ -71,37 +72,6 @@ interface ValidationState {
   from: { isValid: boolean; message: string; };
   to: { isValid: boolean; message: string; };
 }
-
-// ===============================
-// REFERENCE TYPE OPTIONS
-// ===============================
-
-const REFERENCE_TYPES = [
-  { value: 'ltr', label: 'Letter (ltr)' },
-  { value: 'msg', label: 'Message (msg)' },
-  { value: 'memo', label: 'Memorandum (memo)' },
-  { value: 'AA Form', label: 'Administrative Action Form (AA Form)' },
-  { value: 'request', label: 'Request' },
-  { value: 'report', label: 'Report' },
-  { value: 'instruction', label: 'Instruction' },
-  { value: 'notice', label: 'Notice' },
-  { value: 'order', label: 'Order' },
-  { value: 'directive', label: 'Directive' },
-  { value: 'endorsement', label: 'Endorsement' }
-];
-
-// Common "who" examples for autocomplete/suggestions
-const COMMON_ORIGINATORS = [
-  'CO',
-  'XO',
-  'CMC',
-  'S-1',
-  '1stSgt',
-  'CNO',
-  'SECNAV',
-  'LCpl Semper Admin'
-];
-
 
 // ===============================
 // STRUCTURED REFERENCE INPUT COMPONENT
