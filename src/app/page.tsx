@@ -1572,98 +1572,46 @@ if (enclsWithContent.length > 0) {
             setCopyTos={setCopyTos}
           />
 
-          {/* Saved Letters Section */}
-          {savedLetters.length > 0 && (
-            <div className="form-section">
-              <div className="section-legend">
-                <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
-                Saved Versions
-              </div>
-              {savedLetters.map(letter => (
-                <div key={letter.id} className="saved-letter-item">
-                  <div className="saved-letter-info">
-                    <strong>{letter.subj || "Untitled"}</strong>
-                    <small>Saved: {letter.savedAt}</small>
-                  </div>
-                  <div className="saved-letter-actions">
-                    <button className="btn btn-sm btn-success" onClick={() => loadLetter(letter.id)}>
-                      <i className="fas fa-upload" style={{ marginRight: '4px' }}></i>
-                      Load
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Hidden NLDP File Manager - used by sticky action bar refs */}
+          <div style={{ display: 'none' }}>
+            <NLDPFileManager
+              formData={formData}
+              vias={vias}
+              references={references}
+              enclosures={enclosures}
+              copyTos={copyTos}
+              paragraphs={paragraphs}
+              fileInputRef={importFileInputRef}
+              exportButtonRef={exportButtonRef}
+              onDataImported={(importedFormData, importedVias, importedReferences, importedEnclosures, importedCopyTos, importedParagraphs) => {
+                debugUserAction('Import NLDP Data', {
+                  subject: importedFormData.subj.substring(0, 30) + (importedFormData.subj.length > 30 ? '...' : ''),
+                  paragraphCount: importedParagraphs.length
+                });
 
-          {/* NLDP File Manager Section */}
-          <NLDPFileManager
-            formData={formData}
-            vias={vias}
-            references={references}
-            enclosures={enclosures}
-            copyTos={copyTos}
-            paragraphs={paragraphs}
-            fileInputRef={importFileInputRef}
-            exportButtonRef={exportButtonRef}
-            onDataImported={(importedFormData, importedVias, importedReferences, importedEnclosures, importedCopyTos, importedParagraphs) => {
-              debugUserAction('Import NLDP Data', {
-                subject: importedFormData.subj.substring(0, 30) + (importedFormData.subj.length > 30 ? '...' : ''),
-                paragraphCount: importedParagraphs.length
-              });
-                        
-              // Update all form data
-              setFormData(importedFormData);
-              setVias(importedVias);
-              setReferences(importedReferences);
-              setEnclosures(importedEnclosures);
-              setCopyTos(importedCopyTos);
-              setParagraphs(importedParagraphs);
+                // Update all form data
+                setFormData(importedFormData);
+                setVias(importedVias);
+                setReferences(importedReferences);
+                setEnclosures(importedEnclosures);
+                setCopyTos(importedCopyTos);
+                setParagraphs(importedParagraphs);
 
-              // Update UI toggles based on imported data
-              setShowRef(importedReferences.some(r => r.trim() !== ''));
-              setShowEncl(importedEnclosures.some(e => e.trim() !== ''));
-                        
-              // Re-validate fields after loading
-              handleValidateSSIC(importedFormData.ssic);
-              handleValidateSubject(importedFormData.subj);
-              handleValidateFromTo(importedFormData.from, 'from');
-              handleValidateFromTo(importedFormData.to, 'to');
-            }}
-          />
+                // Update UI toggles based on imported data
+                setShowRef(importedReferences.some(r => r.trim() !== ''));
+                setShowEncl(importedEnclosures.some(e => e.trim() !== ''));
+
+                // Re-validate fields after loading
+                handleValidateSSIC(importedFormData.ssic);
+                handleValidateSubject(importedFormData.subj);
+                handleValidateFromTo(importedFormData.from, 'from');
+                handleValidateFromTo(importedFormData.to, 'to');
+              }}
+            />
+          </div>
 
           {/* Validation Summary */}
           <ValidationSummary validation={validation} />
-
-          {/* Generate Button */}
-          <div style={{ textAlign: 'center' }}>
-            <button
-              className="generate-btn"
-              onClick={generateDocument}
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <span style={{
-                    display: 'inline-block',
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid white',
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    marginRight: '8px'
-                  }}></span>
-                  Generating Document...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-file-download" style={{ marginRight: '8px' }}></i>
-                  Generate Document
-                </>
-              )}
-            </button>
-          </div>
 
           {/* Footer */}
           <div style={{
