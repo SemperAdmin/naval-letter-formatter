@@ -17,7 +17,7 @@ interface NLDPFileManagerProps {
   enclosures: string[];
   copyTos: string[];
   paragraphs: ParagraphData[];
-  
+
   // Callbacks to update application state
   onDataImported: (
     formData: FormData,
@@ -27,9 +27,13 @@ interface NLDPFileManagerProps {
     copyTos: string[],
     paragraphs: ParagraphData[]
   ) => void;
-  
+
   // Optional styling
   className?: string;
+
+  // Optional refs for external triggering
+  fileInputRef?: React.RefObject<HTMLInputElement>;
+  exportButtonRef?: React.RefObject<HTMLButtonElement>;
 }
 
 export function NLDPFileManager({
@@ -40,7 +44,9 @@ export function NLDPFileManager({
   copyTos,
   paragraphs,
   onDataImported,
-  className = ''
+  className = '',
+  fileInputRef: externalFileInputRef,
+  exportButtonRef: externalExportButtonRef
 }: NLDPFileManagerProps) {
   
   const {
@@ -69,7 +75,12 @@ export function NLDPFileManager({
     includePersonalInfo: false
   });
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const internalFileInputRef = useRef<HTMLInputElement>(null);
+  const internalExportButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Use external refs if provided, otherwise use internal refs
+  const fileInputRef = externalFileInputRef || internalFileInputRef;
+  const exportButtonRef = externalExportButtonRef || internalExportButtonRef;
 
   // Handle file import
   const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,7 +88,7 @@ export function NLDPFileManager({
     if (!file) return;
 
     const result = await importFromNLDP(file);
-    
+
     if (result.success && result.data) {
       onDataImported(
         result.data.formData,
@@ -88,7 +99,7 @@ export function NLDPFileManager({
         result.data.paragraphs
       );
     }
-    
+
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -323,6 +334,7 @@ export function NLDPFileManager({
 
       <div className="nldp-buttons">
         <button
+          ref={exportButtonRef}
           className="nldp-btn nldp-btn-primary"
           onClick={prepareExport}
           disabled={isExporting}

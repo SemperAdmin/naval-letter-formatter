@@ -30,6 +30,7 @@ import { ClosingBlockSection } from '@/components/letter/ClosingBlockSection';
 import { DocumentTypeSection } from '@/components/letter/DocumentTypeSection';
 import { CollapsibleFormSection } from '@/components/ui/collapsible-form-section';
 import { ValidationSummary } from '@/components/ui/validation-summary';
+import { StickyActionBar } from '@/components/ui/sticky-action-bar';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 
@@ -79,9 +80,14 @@ const [formData, setFormData] = useState<FormData>({
   const [voiceRecognition, setVoiceRecognition] = useState<any>(null);
   const [activeVoiceInput, setActiveVoiceInput] = useState<number | null>(null);
 
+  // Sticky action bar state
+  const [lastSaved, setLastSaved] = useState<string>('');
+
   // Add useRef to track values without causing re-renders
   const activeVoiceInputRef = useRef<number | null>(null);
   const paragraphsRef = useRef<ParagraphData[]>(paragraphs);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
   
   // Update refs when state changes
   useEffect(() => {
@@ -148,7 +154,82 @@ const [formData, setFormData] = useState<FormData>({
 
     const updatedLetters = saveLetterToStorage(newLetter, savedLetters);
     setSavedLetters(updatedLetters);
+
+    // Update last saved indicator
+    setLastSaved('just now');
   };
+
+  // Helper function to format relative time
+  const formatRelativeTime = (timestamp: string): string => {
+    if (!timestamp) return '';
+
+    const now = new Date();
+    const saved = new Date(timestamp);
+    const diffMs = now.getTime() - saved.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 min ago';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+
+    return 'today';
+  };
+
+  // Sticky action bar handlers
+  const handleSaveDraft = () => {
+    saveLetter();
+  };
+
+  const handleImport = () => {
+    // Trigger the file input in NLDPFileManager
+    importFileInputRef.current?.click();
+  };
+
+  const handleExport = () => {
+    // Trigger the export button in NLDPFileManager
+    exportButtonRef.current?.click();
+  };
+
+  const handleClearForm = () => {
+    if (confirm('Are you sure you want to clear the form? Any unsaved changes will be lost.')) {
+      // Reset to initial state
+      setFormData({
+        documentType: 'basic',
+        endorsementLevel: '',
+        basicLetterReference: '',
+        referenceWho: '',
+        referenceType: '',
+        referenceDate: '',
+        startingReferenceLevel: 'a',
+        startingEnclosureNumber: '1',
+        line1: '', line2: '', line3: '', ssic: '', originatorCode: '', date: getTodaysDate(), from: '', to: '', subj: '', sig: '', delegationText: '',
+        startingPageNumber: 1,
+        previousPackagePageCount: 0,
+        headerType: 'USMC',
+        bodyFont: 'times',
+      });
+      setVias(['']);
+      setReferences(['']);
+      setEnclosures(['']);
+      setCopyTos(['']);
+      setParagraphs([{ id: 1, level: 1, content: '', acronymError: '' }]);
+      setShowRef(false);
+      setShowEncl(false);
+      setLastSaved('');
+
+      debugUserAction('Clear Form', {});
+    }
+  };
+
+  // Calculate if form is valid
+  const isFormValid = validation.ssic.isValid &&
+                      validation.subj.isValid &&
+                      validation.from.isValid &&
+                      validation.to.isValid;
 
   const loadLetter = (letterId: string) => {
     debugUserAction('Load Letter', { letterId });
@@ -1052,6 +1133,18 @@ if (enclsWithContent.length > 0) {
       {/* Font Awesome CSS */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+      {/* Sticky Action Bar */}
+      <StickyActionBar
+        onSaveDraft={handleSaveDraft}
+        onImport={handleImport}
+        onExport={handleExport}
+        onClearForm={handleClearForm}
+        onGenerate={generateDocument}
+        isGenerating={isGenerating}
+        isValid={isFormValid}
+        lastSaved={lastSaved}
+      />
+
       <div className="naval-gradient-bg">
         <div className="main-container">
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -1509,6 +1602,8 @@ if (enclsWithContent.length > 0) {
             enclosures={enclosures}
             copyTos={copyTos}
             paragraphs={paragraphs}
+            fileInputRef={importFileInputRef}
+            exportButtonRef={exportButtonRef}
             onDataImported={(importedFormData, importedVias, importedReferences, importedEnclosures, importedCopyTos, importedParagraphs) => {
               debugUserAction('Import NLDP Data', {
                 subject: importedFormData.subj.substring(0, 30) + (importedFormData.subj.length > 30 ? '...' : ''),
