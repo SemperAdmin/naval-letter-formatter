@@ -1136,6 +1136,7 @@ if (enclsWithContent.length > 0) {
       {/* Sticky Action Bar */}
       <StickyActionBar
         onSaveDraft={handleSaveDraft}
+        onLoadDraft={loadLetter}
         onImport={handleImport}
         onExport={handleExport}
         onClearForm={handleClearForm}
@@ -1143,6 +1144,7 @@ if (enclsWithContent.length > 0) {
         isGenerating={isGenerating}
         isValid={isFormValid}
         lastSaved={lastSaved}
+        savedLetters={savedLetters}
       />
 
       <div className="naval-gradient-bg">
