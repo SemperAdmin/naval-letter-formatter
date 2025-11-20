@@ -28,6 +28,8 @@ import { ParagraphSection } from '@/components/letter/ParagraphSection';
 import { HeaderFieldsSection } from '@/components/letter/HeaderFieldsSection';
 import { ClosingBlockSection } from '@/components/letter/ClosingBlockSection';
 import { DocumentTypeSection } from '@/components/letter/DocumentTypeSection';
+import { CollapsibleFormSection } from '@/components/ui/collapsible-form-section';
+import { ValidationSummary } from '@/components/ui/validation-summary';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 
@@ -1153,12 +1155,11 @@ if (enclsWithContent.length > 0) {
           />
 
           {/* Optional Items Section */}
-          <div className="form-section">
-            <div className="section-legend">
-              <i className="fas fa-plus-circle" style={{ marginRight: '8px' }}></i>
-              Optional Items
-            </div>
-
+          <CollapsibleFormSection
+            title="Optional Items"
+            icon="fas fa-plus-circle"
+            defaultExpanded={false}
+          >
             <ViaSection vias={vias} setVias={setVias} />
 
             <Card style={{ marginBottom: '1.5rem' }}>
@@ -1452,7 +1453,7 @@ if (enclsWithContent.length > 0) {
               </CardContent>
             </Card>
 
-          </div>
+          </CollapsibleFormSection>
 
           {/* Body Paragraphs Section */}
           <ParagraphSection
@@ -1533,6 +1534,9 @@ if (enclsWithContent.length > 0) {
               handleValidateFromTo(importedFormData.to, 'to');
             }}
           />
+
+          {/* Validation Summary */}
+          <ValidationSummary validation={validation} />
 
           {/* Generate Button */}
           <div style={{ textAlign: 'center' }}>
