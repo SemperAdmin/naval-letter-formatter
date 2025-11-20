@@ -2,15 +2,22 @@
  * StickyActionBar Component
  *
  * A persistent action bar that stays visible while scrolling, providing
- * quick access to key actions: Save, Import, Export, Clear, and Generate.
+ * quick access to key actions: Save, Load, Import, Export, Clear, and Generate.
  */
 
 "use client"
 
 import * as React from "react"
 
+interface SavedLetter {
+  id: string;
+  savedAt: string;
+  subj: string;
+}
+
 interface StickyActionBarProps {
   onSaveDraft: () => void;
+  onLoadDraft: (letterId: string) => void;
   onImport: () => void;
   onExport: () => void;
   onClearForm: () => void;
@@ -18,19 +25,24 @@ interface StickyActionBarProps {
   isGenerating: boolean;
   isValid: boolean;
   lastSaved?: string; // Timestamp of last save
+  savedLetters: SavedLetter[];
 }
 
 export function StickyActionBar({
   onSaveDraft,
+  onLoadDraft,
   onImport,
   onExport,
   onClearForm,
   onGenerate,
   isGenerating,
   isValid,
-  lastSaved
+  lastSaved,
+  savedLetters
 }: StickyActionBarProps) {
   const [showLabels, setShowLabels] = React.useState(true);
+  const [showLoadDropdown, setShowLoadDropdown] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Detect scroll to minimize bar on mobile
   React.useEffect(() => {
@@ -42,6 +54,50 @@ export function StickyActionBar({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowLoadDropdown(false);
+      }
+    };
+
+    if (showLoadDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showLoadDropdown]);
+
+  const handleLoadClick = (letterId: string) => {
+    onLoadDraft(letterId);
+    setShowLoadDropdown(false);
+  };
+
+  const formatRelativeTime = (savedAt: string): string => {
+    try {
+      const now = new Date();
+      const saved = new Date(savedAt);
+      const diffMs = now.getTime() - saved.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+
+      if (diffMins < 1) return 'just now';
+      if (diffMins === 1) return '1 min ago';
+      if (diffMins < 60) return `${diffMins} mins ago`;
+
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours === 1) return '1 hour ago';
+      if (diffHours < 24) return `${diffHours} hours ago`;
+
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays === 1) return 'yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+
+      return saved.toLocaleDateString();
+    } catch {
+      return savedAt;
+    }
+  };
 
   return (
     <>
@@ -161,9 +217,87 @@ export function StickyActionBar({
           animation: spin 1s linear infinite;
         }
 
+        .load-dropdown-container {
+          position: relative;
+          display: inline-block;
+        }
+
+        .load-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          background: white;
+          border: 2px solid #b8860b;
+          border-radius: 8px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          min-width: 320px;
+          max-width: 400px;
+          max-height: 400px;
+          overflow-y: auto;
+          z-index: 1000;
+        }
+
+        .load-dropdown-header {
+          padding: 12px 16px;
+          border-bottom: 1px solid #dee2e6;
+          background: #f8f9fa;
+          font-weight: 600;
+          color: #495057;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .load-dropdown-item {
+          padding: 12px 16px;
+          cursor: pointer;
+          border-bottom: 1px solid #f0f0f0;
+          transition: background 0.2s ease;
+        }
+
+        .load-dropdown-item:hover {
+          background: #f8f9fa;
+        }
+
+        .load-dropdown-item:last-child {
+          border-bottom: none;
+        }
+
+        .load-item-title {
+          font-weight: 600;
+          color: #1a1a2e;
+          margin-bottom: 4px;
+          font-size: 14px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .load-item-time {
+          font-size: 12px;
+          color: #6c757d;
+        }
+
+        .load-dropdown-empty {
+          padding: 24px 16px;
+          text-align: center;
+          color: #6c757d;
+          font-size: 14px;
+        }
+
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+          .load-dropdown {
+            min-width: 280px;
+            max-width: 320px;
+            right: 0;
+            left: auto;
+          }
         }
 
         @media (max-width: 768px) {
@@ -227,6 +361,51 @@ export function StickyActionBar({
             <i className="fas fa-save"></i>
             {showLabels && <span>Save</span>}
           </button>
+
+          <div className="load-dropdown-container" ref={dropdownRef}>
+            <button
+              className="action-bar-btn"
+              onClick={() => setShowLoadDropdown(!showLoadDropdown)}
+              title="Load Saved Draft"
+              type="button"
+            >
+              <i className="fas fa-folder-open"></i>
+              {showLabels && <span>Load</span>}
+              <i className={`fas fa-chevron-${showLoadDropdown ? 'up' : 'down'}`} style={{ fontSize: '12px', marginLeft: '4px' }}></i>
+            </button>
+
+            {showLoadDropdown && (
+              <div className="load-dropdown">
+                <div className="load-dropdown-header">
+                  <i className="fas fa-history"></i>
+                  <span>Saved Drafts ({savedLetters.length})</span>
+                </div>
+                {savedLetters.length === 0 ? (
+                  <div className="load-dropdown-empty">
+                    <i className="fas fa-inbox" style={{ fontSize: '32px', opacity: '0.3', marginBottom: '8px' }}></i>
+                    <div>No saved drafts yet</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>Save your work to see it here</div>
+                  </div>
+                ) : (
+                  savedLetters.map((letter) => (
+                    <div
+                      key={letter.id}
+                      className="load-dropdown-item"
+                      onClick={() => handleLoadClick(letter.id)}
+                    >
+                      <div className="load-item-title">
+                        {letter.subj || 'Untitled Draft'}
+                      </div>
+                      <div className="load-item-time">
+                        <i className="fas fa-clock" style={{ marginRight: '4px' }}></i>
+                        {formatRelativeTime(letter.savedAt)}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
 
           <button
             className="action-bar-btn"
