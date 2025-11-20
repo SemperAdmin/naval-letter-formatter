@@ -33,16 +33,20 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
     setSearchTerm("");
   }
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking/touching outside
   React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const selectedItem = items.find(item => item.value === value);
@@ -207,10 +211,11 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
           </div>
 
           {/* Results */}
-          <div style={{ 
-            maxHeight: '240px', 
+          <div style={{
+            maxHeight: '240px',
             overflowY: 'auto',
-            padding: '8px'
+            padding: '8px',
+            WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
           }}>
             {filteredItems.length === 0 ? (
               <div style={{
@@ -234,7 +239,8 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
                   key={item.value}
                   onClick={() => handleSelect(item.value)}
                   style={{
-                    padding: '12px 16px',
+                    padding: '14px 16px', // Increased for better touch targets
+                    minHeight: '44px', // Minimum touch target size
                     cursor: 'pointer',
                     borderRadius: '8px',
                     margin: '2px 0',
@@ -242,7 +248,7 @@ export function Combobox({ items, onSelect, placeholder, searchMessage, inputPla
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     transition: 'all 0.2s ease',
-                    backgroundColor: value === item.value ? 
+                    backgroundColor: value === item.value ?
                       'linear-gradient(90deg, #b8860b, #ffd700)' : 'transparent',
                     color: value === item.value ? 'white' : '#495057'
                   }}

@@ -125,7 +125,7 @@ export function ParagraphSection({
                 </div>
               )}
 
-              <div>
+              <div className="paragraph-actions">
                 <button
                   className="btn btn-smart-main btn-sm"
                   onClick={() => addParagraph('main', paragraph.id)}
@@ -161,7 +161,7 @@ export function ParagraphSection({
 
                 {paragraphs.length > 1 && (
                   <button
-                    className="btn btn-danger btn-sm ml-2"
+                    className="btn btn-danger btn-sm"
                     onClick={() => removeParagraph(paragraph.id)}
                   >
                     Delete
