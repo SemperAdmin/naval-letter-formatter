@@ -47,7 +47,7 @@ export function DocumentTypeSection({
           Choose Document Type
         </div>
 
-        <div className="grid grid-cols-2 gap-5 mb-4">
+        <div className="document-type-grid grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
           {/* Basic Letter Card */}
           <button
             type="button"

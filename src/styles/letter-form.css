@@ -441,47 +441,38 @@
   margin-left: 10px;
 }
 
-/* Responsive Styles */
+/* Document Type Cards - Mobile Styles */
+.document-type-grid button {
+  padding: 16px;
+  min-height: auto;
+}
+
+.document-type-grid button .flex {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.document-type-grid button .flex-1 {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
 @media (max-width: 768px) {
-  /* Document Type Cards - Single column on mobile */
-  .form-section .grid.grid-cols-2 {
-    grid-template-columns: 1fr !important;
+  .document-type-grid button .text-xl {
+    font-size: 1.125rem;
+    line-height: 1.4;
   }
 
-  /* Fix document type card button overflow */
-  .form-section .grid.grid-cols-2 button {
-    min-height: auto !important;
-    padding: 16px !important;
+  .document-type-grid button .text-base {
+    font-size: 0.9rem;
+    line-height: 1.4;
   }
 
-  /* Ensure card content wraps properly */
-  .form-section .grid.grid-cols-2 button .flex {
-    flex-wrap: nowrap !important;
-    align-items: flex-start !important;
-  }
-
-  /* Ensure text content can shrink and wrap */
-  .form-section .grid.grid-cols-2 button .flex-1 {
-    min-width: 0 !important;
-    overflow-wrap: break-word !important;
-    word-wrap: break-word !important;
-    word-break: break-word !important;
-  }
-
-  /* Adjust text sizes in cards */
-  .form-section .grid.grid-cols-2 button .text-xl {
-    font-size: 1.125rem !important;
-    line-height: 1.4 !important;
-  }
-
-  .form-section .grid.grid-cols-2 button .text-base {
-    font-size: 0.9rem !important;
-    line-height: 1.4 !important;
-  }
-
-  .form-section .grid.grid-cols-2 button .text-4xl {
-    font-size: 2rem !important;
-    min-width: 40px !important;
+  .document-type-grid button .text-4xl {
+    font-size: 2rem;
+    min-width: 40px;
   }
 
   .main-container {
@@ -541,22 +532,18 @@
   }
 
   /* Mobile: 2-column grid for paragraph actions */
-  .paragraph-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
+  .paragraph-container .paragraph-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
-  .btn-smart-main,
-  .btn-smart-sub,
-  .btn-smart-same,
-  .btn-smart-up,
-  .btn-danger {
-    font-size: 0.8rem !important;
-    padding: 10px 8px !important;
-    width: 100% !important;
-    min-width: unset !important;
-    margin: 0 !important;
+  .paragraph-container .paragraph-actions .btn {
+    font-size: 0.8rem;
+    padding: 10px 8px;
+    width: 100%;
+    min-width: unset;
+    margin: 0;
   }
 
   .paragraph-container {
