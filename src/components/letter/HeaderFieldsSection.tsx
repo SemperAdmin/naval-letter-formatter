@@ -124,10 +124,16 @@ export function HeaderFieldsSection({
             setFormData(prev => ({ ...prev, ssic: value }));
             handleValidateSSIC(value);
           }}
+          aria-invalid={formData.ssic && !validation.ssic.isValid}
+          aria-describedby={validation.ssic.message ? "ssic-validation" : undefined}
         />
       </div>
       {validation.ssic.message && (
-        <div className={`feedback-message ${validation.ssic.isValid ? 'text-success' : 'text-danger'}`}>
+        <div
+          id="ssic-validation"
+          className={`feedback-message ${validation.ssic.isValid ? 'text-success' : 'text-danger'}`}
+          role={validation.ssic.isValid ? "status" : "alert"}
+        >
           <i className={`fas ${validation.ssic.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
           {validation.ssic.message}
         </div>
@@ -207,12 +213,21 @@ export function HeaderFieldsSection({
           type="text"
           placeholder="Commanding Officer, Marine Corps Base or Private Devil D. Dog 12345678790/0111 USMC"
           value={formData.from}
-          onChange={(e) => setFormData(prev => ({ ...prev, from: e.target.value }))}
-          onBlur={(e) => handleValidateFromTo(e.target.value, 'from')}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFormData(prev => ({ ...prev, from: value }));
+            handleValidateFromTo(value, 'from');
+          }}
+          aria-invalid={formData.from && !validation.from.isValid}
+          aria-describedby={validation.from.message ? "from-validation" : undefined}
         />
       </div>
       {validation.from.message && (
-        <div className={`feedback-message ${validation.from.isValid ? 'text-success' : 'text-warning'}`}>
+        <div
+          id="from-validation"
+          className={`feedback-message ${validation.from.isValid ? 'text-success' : 'text-warning'}`}
+          role={validation.from.isValid ? "status" : "alert"}
+        >
           <i className={`fas ${validation.from.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
           {validation.from.message}
         </div>
@@ -228,12 +243,21 @@ export function HeaderFieldsSection({
           type="text"
           placeholder="Platoon Commander, 1st Platoon or Private Devil D. Dog 12345678790/0111 USMC"
           value={formData.to}
-          onChange={(e) => setFormData(prev => ({ ...prev, to: e.target.value }))}
-          onBlur={(e) => handleValidateFromTo(e.target.value, 'to')}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFormData(prev => ({ ...prev, to: value }));
+            handleValidateFromTo(value, 'to');
+          }}
+          aria-invalid={formData.to && !validation.to.isValid}
+          aria-describedby={validation.to.message ? "to-validation" : undefined}
         />
       </div>
       {validation.to.message && (
-        <div className={`feedback-message ${validation.to.isValid ? 'text-success' : 'text-warning'}`}>
+        <div
+          id="to-validation"
+          className={`feedback-message ${validation.to.isValid ? 'text-success' : 'text-warning'}`}
+          role={validation.to.isValid ? "status" : "alert"}
+        >
           <i className={`fas ${validation.to.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
           {validation.to.message}
         </div>
@@ -255,10 +279,16 @@ export function HeaderFieldsSection({
             setFormData(prev => ({ ...prev, subj: value }));
             handleValidateSubject(value);
           }}
+          aria-invalid={formData.subj && !validation.subj.isValid}
+          aria-describedby={validation.subj.message ? "subj-validation" : undefined}
         />
       </div>
       {validation.subj.message && (
-        <div className={`feedback-message ${validation.subj.isValid ? 'text-success' : 'text-warning'}`}>
+        <div
+          id="subj-validation"
+          className={`feedback-message ${validation.subj.isValid ? 'text-success' : 'text-warning'}`}
+          role={validation.subj.isValid ? "status" : "alert"}
+        >
           <i className={`fas ${validation.subj.isValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1`}></i>
           {validation.subj.message}
         </div>
