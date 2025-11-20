@@ -94,7 +94,7 @@ export function HeaderFieldsSection({
           <InfoTooltip side="right" content={<SSICTooltipContent />} />
         </span>
         <input
-          className={`form-control ${validation.ssic.isValid ? 'is-valid' : !validation.ssic.isValid && validation.ssic.message ? 'is-invalid' : ''}`}
+          className={`form-control ${validation.ssic.isValid ? 'is-valid' : validation.ssic.message ? 'is-invalid' : ''}`}
           type="text"
           placeholder="e.g., 1650"
           value={formData.ssic}
@@ -167,7 +167,7 @@ export function HeaderFieldsSection({
           From:
         </span>
         <input
-          className={`form-control ${validation.from.isValid ? 'is-valid' : !validation.from.isValid && validation.from.message ? 'is-invalid' : ''}`}
+          className={`form-control ${validation.from.isValid ? 'is-valid' : validation.from.message ? 'is-invalid' : ''}`}
           type="text"
           placeholder="Commanding Officer, Marine Corps Base or Private Devil D. Dog 12345678790/0111 USMC"
           value={formData.from}
@@ -197,7 +197,7 @@ export function HeaderFieldsSection({
           To:
         </span>
         <input
-          className={`form-control ${validation.to.isValid ? 'is-valid' : !validation.to.isValid && validation.to.message ? 'is-invalid' : ''}`}
+          className={`form-control ${validation.to.isValid ? 'is-valid' : validation.to.message ? 'is-invalid' : ''}`}
           type="text"
           placeholder="Platoon Commander, 1st Platoon or Private Devil D. Dog 12345678790/0111 USMC"
           value={formData.to}
@@ -227,7 +227,7 @@ export function HeaderFieldsSection({
           Subject:
         </span>
         <input
-          className={`form-control ${validation.subj.isValid ? 'is-valid' : !validation.subj.isValid && validation.subj.message ? 'is-invalid' : ''}`}
+          className={`form-control ${validation.subj.isValid ? 'is-valid' : validation.subj.message ? 'is-invalid' : ''}`}
           type="text"
           placeholder="SUBJECT LINE IN ALL CAPS"
           value={formData.subj}
