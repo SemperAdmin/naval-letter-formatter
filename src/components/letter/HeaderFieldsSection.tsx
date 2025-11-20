@@ -103,7 +103,7 @@ export function HeaderFieldsSection({
             setFormData(prev => ({ ...prev, ssic: value }));
             handleValidateSSIC(value);
           }}
-          aria-invalid={formData.ssic && !validation.ssic.isValid}
+          aria-invalid={!validation.ssic.isValid && !!validation.ssic.message}
           aria-describedby={validation.ssic.message ? "ssic-validation" : undefined}
         />
       </div>
@@ -176,7 +176,7 @@ export function HeaderFieldsSection({
             setFormData(prev => ({ ...prev, from: value }));
             handleValidateFromTo(value, 'from');
           }}
-          aria-invalid={formData.from && !validation.from.isValid}
+          aria-invalid={!validation.from.isValid && !!validation.from.message}
           aria-describedby={validation.from.message ? "from-validation" : undefined}
         />
       </div>
@@ -206,7 +206,7 @@ export function HeaderFieldsSection({
             setFormData(prev => ({ ...prev, to: value }));
             handleValidateFromTo(value, 'to');
           }}
-          aria-invalid={formData.to && !validation.to.isValid}
+          aria-invalid={!validation.to.isValid && !!validation.to.message}
           aria-describedby={validation.to.message ? "to-validation" : undefined}
         />
       </div>
@@ -237,7 +237,7 @@ export function HeaderFieldsSection({
             setFormData(prev => ({ ...prev, subj: value }));
             handleValidateSubject(value);
           }}
-          aria-invalid={formData.subj && !validation.subj.isValid}
+          aria-invalid={!validation.subj.isValid && !!validation.subj.message}
           aria-describedby={validation.subj.message ? "subj-validation" : undefined}
         />
       </div>
