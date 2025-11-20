@@ -324,13 +324,21 @@
   font-weight: bold;
 }
 
+/* Paragraph action buttons container */
+.paragraph-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 /* Common properties for all btn-smart-* buttons */
 .btn-smart-main,
 .btn-smart-sub,
 .btn-smart-same,
 .btn-smart-up {
-  margin-right: 8px;
-  margin-bottom: 4px;
+  margin-right: 0;
+  margin-bottom: 0;
 }
 
 .btn-smart-main {
@@ -491,19 +499,37 @@
     width: 100% !important;
   }
 
+  /* Mobile: 2-column grid for paragraph actions */
+  .paragraph-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
   .btn-smart-main,
   .btn-smart-sub,
   .btn-smart-same,
-  .btn-smart-up {
-    font-size: 0.75rem !important;
-    padding: 6px 10px !important;
-    margin-right: 4px !important;
-    margin-bottom: 6px !important;
-    min-width: 80px !important;
+  .btn-smart-up,
+  .btn-danger {
+    font-size: 0.8rem !important;
+    padding: 10px 8px !important;
+    width: 100% !important;
+    min-width: unset !important;
+    margin: 0 !important;
   }
 
   .paragraph-container {
     padding: 12px !important;
+  }
+
+  /* Fix voice input button on mobile */
+  .paragraph-container .flex.items-start.gap-2 {
+    flex-direction: column !important;
+  }
+
+  .paragraph-container .flex.items-start.gap-2 button {
+    width: 100% !important;
+    min-width: unset !important;
   }
 
   .paragraph-container[data-level="2"] {
