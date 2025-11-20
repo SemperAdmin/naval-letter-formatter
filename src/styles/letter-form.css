@@ -443,6 +443,47 @@
 
 /* Responsive Styles */
 @media (max-width: 768px) {
+  /* Document Type Cards - Single column on mobile */
+  .form-section .grid.grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fix document type card button overflow */
+  .form-section .grid.grid-cols-2 button {
+    min-height: auto !important;
+    padding: 16px !important;
+  }
+
+  /* Ensure card content wraps properly */
+  .form-section .grid.grid-cols-2 button .flex {
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+  }
+
+  /* Ensure text content can shrink and wrap */
+  .form-section .grid.grid-cols-2 button .flex-1 {
+    min-width: 0 !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  /* Adjust text sizes in cards */
+  .form-section .grid.grid-cols-2 button .text-xl {
+    font-size: 1.125rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .form-section .grid.grid-cols-2 button .text-base {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .form-section .grid.grid-cols-2 button .text-4xl {
+    font-size: 2rem !important;
+    min-width: 40px !important;
+  }
+
   .main-container {
     margin: 10px !important;
     padding: 15px !important;
