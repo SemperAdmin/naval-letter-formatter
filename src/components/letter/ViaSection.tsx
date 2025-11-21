@@ -63,7 +63,7 @@ export function ViaSection({ vias, setVias }: ViaSectionProps) {
               Enter Via Addressee(s):
             </label>
             {vias.map((via, index) => (
-              <div key={`via-${index}-${via.substring(0, 20)}`} className="flex w-full">
+              <div key={`via-${index}`} className="flex w-full">
                 <span className="flex min-w-[60px] items-center justify-center flex-shrink-0 rounded-l-lg border-2 border-[#b8860b] bg-gradient-to-br from-[#b8860b] to-[#ffd700] text-center font-semibold text-white">
                   ({index + 1})
                 </span>

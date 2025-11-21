@@ -53,27 +53,16 @@ export function validateSubject(value: string): ValidationResult {
 
 /**
  * Validates From/To field format
- * Must follow naval correspondence format
+ * Requires minimum length to ensure field is filled out
  */
 export function validateFromTo(value: string): ValidationResult {
-  if (value.length <= 5) {
+  if (!value || value.trim().length === 0) {
     return { isValid: false, message: '' };
   }
 
-  const validPatterns = [
-    /^(Commanding Officer|Chief of|Commander|Private|Corporal|Sergeant|Lieutenant|Captain|Major|Colonel|General)/i,
-    /^(Private|Corporal|Sergeant|Lieutenant|Captain|Major|Colonel|General)\s[A-Za-z\s\.]+\s\d{10}\/\d{4}\s(USMC|USN)$/i,
-    /^(Secretary|Under Secretary|Assistant Secretary)/i
-  ];
-
-  const isValid = validPatterns.some(pattern => pattern.test(value));
-
-  if (isValid) {
-    return { isValid: true, message: 'Valid naval format' };
+  if (value.trim().length < 5) {
+    return { isValid: false, message: 'Please enter a complete From/To address' };
   }
 
-  return {
-    isValid: false,
-    message: 'Use proper naval format: "Commanding Officer, Unit Name" or "Rank First M. Last 1234567890/MOS USMC"'
-  };
+  return { isValid: true, message: 'Valid format' };
 }
