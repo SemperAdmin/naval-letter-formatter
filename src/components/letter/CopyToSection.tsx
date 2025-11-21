@@ -63,7 +63,7 @@ export function CopyToSection({ copyTos, setCopyTos }: CopyToSectionProps) {
               Enter Addressee(s):
             </label>
             {copyTos.map((copy, index) => (
-              <div key={`copy-${index}-${copy.substring(0, 20)}`} className="input-group">
+              <div key={`copy-${index}`} className="input-group">
                 <input
                   className="form-control"
                   type="text"
