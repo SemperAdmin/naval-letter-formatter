@@ -1,0 +1,16 @@
+[
+  {
+    "id": "usmc-basic-letter",
+    "title": "USMC Basic Letter",
+    "description": "Standard Marine Corps basic letter layout",
+    "documentType": "basic",
+    "url": "/templates/global/usmc-basic-letter.nldp"
+  },
+  {
+    "id": "cddm-appointment",
+    "title": "APPOINTMENT AS COMMAND DESIGNATED DIRECTIVES MANAGER (CDDM)",
+    "description": "Appointment letter for Command Designated Directives Manager",
+    "documentType": "basic",
+    "url": "/templates/global/cddm-appointment.nldp"
+  }
+]

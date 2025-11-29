@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNLDP } from '../hooks/useNLDP';
 import { NLDPExportConfig, FormData, ParagraphData } from '../lib/nldp-format';
 
@@ -391,7 +392,7 @@ export function NLDPFileManager({
       )}
 
       {/* Export Dialog */}
-      {showExportDialog && (
+      {showExportDialog && createPortal(
         <div className="nldp-dialog-overlay" onClick={() => setShowExportDialog(false)}>
           <div className="nldp-dialog" onClick={(e) => e.stopPropagation()}>
             <h3>Export Data Package</h3>
@@ -478,7 +479,8 @@ export function NLDPFileManager({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        typeof document !== 'undefined' ? document.body : undefined
       )}
     </div>
   );

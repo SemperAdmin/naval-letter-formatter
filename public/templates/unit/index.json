@@ -1,0 +1,11 @@
+[
+  {
+    "id": "1st-mardiv-standard",
+    "title": "1st Marine Division Standard Letter",
+    "description": "Unit-specific header and routing",
+    "unitName": "1ST MARINE DIVISION",
+    "unitCode": "RUC-12345",
+    "documentType": "basic",
+    "url": "/templates/unit/1st-mardiv-standard.nldp"
+  }
+]
