@@ -392,11 +392,11 @@ export function NLDPFileManager({
       )}
 
       {/* Export Dialog */}
-      {showExportDialog && createPortal(
+      {showExportDialog && typeof document !== 'undefined' && createPortal(
         <div className="nldp-dialog-overlay" onClick={() => setShowExportDialog(false)}>
           <div className="nldp-dialog" onClick={(e) => e.stopPropagation()}>
             <h3>Export Data Package</h3>
-            
+
             <div className="nldp-form-group">
               <label>Package Title *</label>
               <input
@@ -409,7 +409,7 @@ export function NLDPFileManager({
                 placeholder="Enter a descriptive title for this package"
               />
             </div>
-            
+
             <div className="nldp-form-group">
               <label>Description</label>
               <textarea
@@ -421,7 +421,7 @@ export function NLDPFileManager({
                 placeholder="Optional description of the package contents"
               />
             </div>
-            
+
             <div className="nldp-form-group">
               <label>Your Name</label>
               <input
@@ -434,7 +434,7 @@ export function NLDPFileManager({
                 placeholder="Your name (optional)"
               />
             </div>
-            
+
             <div className="nldp-form-group">
               <label>Unit/Organization</label>
               <input
@@ -447,7 +447,7 @@ export function NLDPFileManager({
                 placeholder="Your unit or organization (optional)"
               />
             </div>
-            
+
             <div className="nldp-form-group">
               <label className="nldp-checkbox">
                 <input
@@ -461,7 +461,7 @@ export function NLDPFileManager({
                 Include personal information in export
               </label>
             </div>
-            
+
             <div className="nldp-dialog-buttons">
               <button
                 className="nldp-btn nldp-btn-secondary"
@@ -480,7 +480,7 @@ export function NLDPFileManager({
             </div>
           </div>
         </div>,
-        typeof document !== 'undefined' ? document.body : undefined
+        document.body
       )}
     </div>
   );

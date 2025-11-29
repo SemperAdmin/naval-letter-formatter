@@ -125,7 +125,7 @@ export function StickyActionBar({
       list = list.filter(t => {
         const tCode = (t.unitCode || '').toLowerCase();
         const tName = (t.unitName || '').toLowerCase();
-        return (code && tCode === code) || (name && tName.includes(name));
+        return (code && tCode === code) || (name && name.includes(tName));
       });
     }
     return list;
@@ -563,7 +563,7 @@ export function StickyActionBar({
                       <div className="load-dropdown-empty">No global templates match</div>
                     ) : (
                       visibleGlobalTemplates.map(t => (
-                        <div key={t.id} className="load-dropdown-item" onClick={() => { setTemplateLoading(true); onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
+                        <div key={t.id} className="load-dropdown-item" onClick={async () => { setTemplateLoading(true); await onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
                           <div className="load-item-title">{t.title}</div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}
                         </div>
@@ -574,7 +574,7 @@ export function StickyActionBar({
                       <div className="load-dropdown-empty">No unit templates match</div>
                     ) : (
                       visibleUnitTemplates.map(t => (
-                        <div key={t.id} className="load-dropdown-item" onClick={() => { setTemplateLoading(true); onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
+                        <div key={t.id} className="load-dropdown-item" onClick={async () => { setTemplateLoading(true); await onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
                           <div className="load-item-title">{t.title}</div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}
                         </div>
