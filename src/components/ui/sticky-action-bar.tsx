@@ -8,6 +8,7 @@
 "use client"
 
 import * as React from "react"
+import { getBasePath } from '@/lib/path-utils';
 
 interface SavedLetter {
   id: string;
@@ -91,9 +92,10 @@ export function StickyActionBar({
   React.useEffect(() => {
     const loadIndexes = async () => {
       try {
+        const basePath = getBasePath();
         const [g, u] = await Promise.all([
-          fetch('/templates/global/index.json').then(r => r.ok ? r.json() : []),
-          fetch('/templates/unit/index.json').then(r => r.ok ? r.json() : []),
+          fetch(`${basePath}/templates/global/index.json`).then(r => r.ok ? r.json() : []),
+          fetch(`${basePath}/templates/unit/index.json`).then(r => r.ok ? r.json() : []),
         ]);
         setGlobalTemplates(Array.isArray(g) ? g : []);
         setUnitTemplates(Array.isArray(u) ? u : []);
@@ -437,7 +439,7 @@ export function StickyActionBar({
       <div className="sticky-action-bar">
         <div className="action-bar-title">
           <i className="fas fa-anchor"></i>
-          <span>Naval Letter Generator</span>
+          <span>Naval Letter Formatter</span>
           {lastSaved && <span className="last-saved">Saved {lastSaved}</span>}
         </div>
 
