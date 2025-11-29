@@ -27,6 +27,8 @@ interface StickyActionBarProps {
   lastSaved?: string; // Timestamp of last save
   savedLetters: SavedLetter[];
   onLoadTemplateUrl: (url: string) => void;
+  currentUnitCode?: string;
+  currentUnitName?: string;
 }
 
 export function StickyActionBar({
@@ -40,7 +42,9 @@ export function StickyActionBar({
   isValid,
   lastSaved,
   savedLetters,
-  onLoadTemplateUrl
+  onLoadTemplateUrl,
+  currentUnitCode,
+  currentUnitName,
 }: StickyActionBarProps) {
   const [showLabels, setShowLabels] = React.useState(true);
   const [showLoadDropdown, setShowLoadDropdown] = React.useState(false);
@@ -52,6 +56,8 @@ export function StickyActionBar({
   const [unitTemplates, setUnitTemplates] = React.useState<Array<{ id: string; title: string; description?: string; unitName?: string; unitCode?: string; documentType?: string; url: string }>>([]);
   const [templateError, setTemplateError] = React.useState('');
   const [templateLoading, setTemplateLoading] = React.useState(false);
+  const [templateSearch, setTemplateSearch] = React.useState('');
+  const [matchSelectedUnit, setMatchSelectedUnit] = React.useState(false);
 
   // Detect scroll to minimize bar on mobile
   React.useEffect(() => {
@@ -97,6 +103,46 @@ export function StickyActionBar({
     };
     loadIndexes();
   }, []);
+
+  const matchesQuery = (t: { id: string; title: string; description?: string; unitName?: string; unitCode?: string; documentType?: string; url: string }) => {
+    const q = templateSearch.trim().toLowerCase();
+    if (!q) return true;
+    return [t.title, t.description || '', t.unitName || '', t.unitCode || '', t.documentType || '']
+      .some(field => field.toLowerCase().includes(q));
+  };
+
+  const visibleGlobalTemplates = React.useMemo(() => {
+    return globalTemplates.filter(matchesQuery);
+  }, [globalTemplates, templateSearch]);
+
+  const visibleUnitTemplates = React.useMemo(() => {
+    let list = unitTemplates.filter(matchesQuery);
+    if (matchSelectedUnit && (currentUnitCode || currentUnitName)) {
+      const code = (currentUnitCode || '').toLowerCase();
+      const name = (currentUnitName || '').toLowerCase();
+      list = list.filter(t => {
+        const tCode = (t.unitCode || '').toLowerCase();
+        const tName = (t.unitName || '').toLowerCase();
+        return (code && tCode === code) || (name && tName.includes(name));
+      });
+    }
+    return list;
+  }, [unitTemplates, templateSearch, matchSelectedUnit, currentUnitCode, currentUnitName]);
+
+  React.useEffect(() => {
+    const q = templateSearch.trim();
+    if (!q) return;
+    if (activeTemplateType === 'global' && visibleGlobalTemplates.length === 0 && visibleUnitTemplates.length > 0) {
+      setActiveTemplateType('unit');
+    } else if (activeTemplateType === 'unit' && visibleUnitTemplates.length === 0 && visibleGlobalTemplates.length > 0) {
+      setActiveTemplateType('global');
+    }
+  }, [templateSearch, activeTemplateType, visibleGlobalTemplates, visibleUnitTemplates]);
+
+  React.useEffect(() => {
+    // Auto-enable unit matching when unit info present
+    setMatchSelectedUnit(!!(currentUnitCode || currentUnitName));
+  }, [currentUnitCode, currentUnitName]);
 
   const handleLoadClick = (letterId: string) => {
     onLoadDraft(letterId);
@@ -468,7 +514,24 @@ export function StickyActionBar({
                 <div className="load-dropdown-header">
                   <i className="fas fa-file-alt"></i>
                   <span>Templates</span>
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      placeholder="Search templates..."
+                      style={{ padding: '6px 10px', border: '1px solid #ced4da', borderRadius: 6, fontSize: 12 }}
+                    />
+                    <span style={{ fontSize: 12, color: '#495057' }}>{activeTemplateType === 'global' ? `${visibleGlobalTemplates.length} match(es)` : `${visibleUnitTemplates.length} match(es)`}</span>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#495057' }}>
+                      <input
+                        type="checkbox"
+                        checked={matchSelectedUnit}
+                        onChange={(e) => setMatchSelectedUnit(e.target.checked)}
+                        title="Filter unit templates to selected unit"
+                      />
+                      Match selected unit
+                    </label>
                     <button
                       className="action-bar-btn"
                       type="button"
@@ -494,10 +557,10 @@ export function StickyActionBar({
 
                 {(!templateError && !templateLoading) && (
                   <>
-                    {activeTemplateType === 'global' && (globalTemplates.length === 0 ? (
-                      <div className="load-dropdown-empty">No global templates</div>
+                    {activeTemplateType === 'global' && (visibleGlobalTemplates.length === 0 ? (
+                      <div className="load-dropdown-empty">No global templates match</div>
                     ) : (
-                      globalTemplates.map(t => (
+                      visibleGlobalTemplates.map(t => (
                         <div key={t.id} className="load-dropdown-item" onClick={() => { setTemplateLoading(true); onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
                           <div className="load-item-title">{t.title}</div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}
@@ -505,10 +568,10 @@ export function StickyActionBar({
                       ))
                     ))}
 
-                    {activeTemplateType === 'unit' && (unitTemplates.length === 0 ? (
-                      <div className="load-dropdown-empty">No unit templates</div>
+                    {activeTemplateType === 'unit' && (visibleUnitTemplates.length === 0 ? (
+                      <div className="load-dropdown-empty">No unit templates match</div>
                     ) : (
-                      unitTemplates.map(t => (
+                      visibleUnitTemplates.map(t => (
                         <div key={t.id} className="load-dropdown-item" onClick={() => { setTemplateLoading(true); onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
                           <div className="load-item-title">{t.title}</div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}

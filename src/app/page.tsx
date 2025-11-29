@@ -1113,6 +1113,9 @@ if (enclsWithContent.length > 0) {
     ...unit,
   }));
 
+  const [currentUnitCode, setCurrentUnitCode] = useState<string | undefined>(undefined);
+  const [currentUnitName, setCurrentUnitName] = useState<string | undefined>(undefined);
+
   const handleUnitSelect = (value: string) => {
     const selectedUnit = unitComboboxData.find(unit => unit.value === value);
     if (selectedUnit) {
@@ -1122,11 +1125,15 @@ if (enclsWithContent.length > 0) {
         line2: selectedUnit.streetAddress.toUpperCase(),
         line3: `${selectedUnit.cityState} ${selectedUnit.zip}`.toUpperCase(),
       }));
+      setCurrentUnitCode(selectedUnit.ruc);
+      setCurrentUnitName(selectedUnit.unitName.toUpperCase());
     }
   };
 
   const clearUnitInfo = () => {
     setFormData(prev => ({ ...prev, line1: '', line2: '', line3: '' }));
+    setCurrentUnitCode(undefined);
+    setCurrentUnitName(undefined);
   };
 
   return (
@@ -1166,6 +1173,8 @@ if (enclsWithContent.length > 0) {
             alert(e?.message || 'Failed to load template');
           }
         }}
+        currentUnitCode={currentUnitCode}
+        currentUnitName={currentUnitName}
       />
 
       <div className="naval-gradient-bg">
