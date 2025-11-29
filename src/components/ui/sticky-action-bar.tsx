@@ -280,7 +280,7 @@ export function StickyActionBar({
           overflow-y: auto;
           z-index: 1000;
         }
-
+        
         .load-dropdown-header {
           padding: 12px 16px;
           border-bottom: 1px solid #dee2e6;
@@ -520,7 +520,6 @@ export function StickyActionBar({
               </div>
             )}
           </div>
-
           <button
             className="action-bar-btn"
             onClick={onImport}

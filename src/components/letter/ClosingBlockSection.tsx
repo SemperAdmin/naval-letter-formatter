@@ -60,7 +60,6 @@ export function ClosingBlockSection({
       </div>
 
       
-
       <div className="mb-6">
         <label className="block text-lg font-bold mb-2">
           <i className="fas fa-user-tie mr-2"></i>
