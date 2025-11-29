@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "packageId": "tmpl_unit_1stmardiv_001",
+    "formatVersion": "1.0.0",
+    "createdAt": "2025-11-29T00:00:00Z",
+    "author": {
+      "name": "1st Marine Division"
+    },
+    "package": {
+      "title": "1st Marine Division Standard Letter",
+      "description": "Unit-specific template with preset header",
+      "subject": "UNIT CORRESPONDENCE",
+      "documentType": "basic"
+    }
+  },
+  "data": {
+    "formData": {
+      "documentType": "basic",
+      "endorsementLevel": "",
+      "basicLetterReference": "",
+      "referenceWho": "",
+      "referenceType": "",
+      "referenceDate": "",
+      "startingReferenceLevel": "a",
+      "startingEnclosureNumber": "1",
+      "line1": "HEADQUARTERS, 1ST MARINE DIVISION",
+      "line2": "BOX 5555",
+      "line3": "CAMP PENDLETON, CA 92055-5000",
+      "ssic": "5000",
+      "originatorCode": "G1",
+      "date": "",
+      "from": "COMMANDING OFFICER",
+      "to": "CG, I MEF",
+      "subj": "UNIT CORRESPONDENCE",
+      "sig": "F. M. LASTNAME",
+      "delegationText": "",
+      "startingPageNumber": 1,
+      "previousPackagePageCount": 0
+    },
+    "vias": ["I MEF"],
+    "references": ["MCO 5216.4C"],
+    "enclosures": ["Enclosure (1) – Unit SOP"],
+    "copyTos": ["CG, MARFORPAC"],
+    "paragraphs": [
+      { "id": 1, "level": 1, "content": "Purpose. Preset for unit usage." }
+    ]
+  }
+}

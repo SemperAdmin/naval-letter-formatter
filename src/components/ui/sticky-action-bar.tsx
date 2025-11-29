@@ -26,6 +26,7 @@ interface StickyActionBarProps {
   isValid: boolean;
   lastSaved?: string; // Timestamp of last save
   savedLetters: SavedLetter[];
+  onLoadTemplateUrl: (url: string) => void;
 }
 
 export function StickyActionBar({
@@ -38,11 +39,19 @@ export function StickyActionBar({
   isGenerating,
   isValid,
   lastSaved,
-  savedLetters
+  savedLetters,
+  onLoadTemplateUrl
 }: StickyActionBarProps) {
   const [showLabels, setShowLabels] = React.useState(true);
   const [showLoadDropdown, setShowLoadDropdown] = React.useState(false);
+  const [showTemplateDropdown, setShowTemplateDropdown] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const templateDropdownRef = React.useRef<HTMLDivElement>(null);
+  const [activeTemplateType, setActiveTemplateType] = React.useState<'global' | 'unit'>('global');
+  const [globalTemplates, setGlobalTemplates] = React.useState<Array<{ id: string; title: string; description?: string; documentType?: string; url: string }>>([]);
+  const [unitTemplates, setUnitTemplates] = React.useState<Array<{ id: string; title: string; description?: string; unitName?: string; unitCode?: string; documentType?: string; url: string }>>([]);
+  const [templateError, setTemplateError] = React.useState('');
+  const [templateLoading, setTemplateLoading] = React.useState(false);
 
   // Detect scroll to minimize bar on mobile
   React.useEffect(() => {
@@ -61,13 +70,33 @@ export function StickyActionBar({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowLoadDropdown(false);
       }
+      if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
+        setShowTemplateDropdown(false);
+      }
     };
 
     if (showLoadDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showLoadDropdown]);
+  }, [showLoadDropdown, showTemplateDropdown]);
+
+  // Load template indexes
+  React.useEffect(() => {
+    const loadIndexes = async () => {
+      try {
+        const [g, u] = await Promise.all([
+          fetch('/templates/global/index.json').then(r => r.ok ? r.json() : []),
+          fetch('/templates/unit/index.json').then(r => r.ok ? r.json() : []),
+        ]);
+        setGlobalTemplates(Array.isArray(g) ? g : []);
+        setUnitTemplates(Array.isArray(u) ? u : []);
+      } catch (e) {
+        setTemplateError('Failed to load template indexes');
+      }
+    };
+    loadIndexes();
+  }, []);
 
   const handleLoadClick = (letterId: string) => {
     onLoadDraft(letterId);
@@ -237,6 +266,21 @@ export function StickyActionBar({
           z-index: 1000;
         }
 
+        .template-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          background: white;
+          border: 2px solid #b8860b;
+          border-radius: 8px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          min-width: 360px;
+          max-width: 480px;
+          max-height: 420px;
+          overflow-y: auto;
+          z-index: 1000;
+        }
+        
         .load-dropdown-header {
           padding: 12px 16px;
           border-bottom: 1px solid #dee2e6;
@@ -407,6 +451,75 @@ export function StickyActionBar({
             )}
           </div>
 
+          <div className="load-dropdown-container" ref={templateDropdownRef}>
+            <button
+              className="action-bar-btn"
+              onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
+              title="Load from Template"
+              type="button"
+            >
+              <i className="fas fa-file-alt"></i>
+              {showLabels && <span>Templates</span>}
+              <i className={`fas fa-chevron-${showTemplateDropdown ? 'up' : 'down'}`} style={{ fontSize: '12px', marginLeft: '4px' }}></i>
+            </button>
+
+            {showTemplateDropdown && (
+              <div className="template-dropdown">
+                <div className="load-dropdown-header">
+                  <i className="fas fa-file-alt"></i>
+                  <span>Templates</span>
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                    <button
+                      className="action-bar-btn"
+                      type="button"
+                      onClick={() => setActiveTemplateType('global')}
+                      style={{ padding: '6px 10px', fontSize: '12px', background: activeTemplateType==='global' ? '#ffd700' : 'rgba(255,255,255,0.1)', color: activeTemplateType==='global' ? '#1a1a2e' : 'white' }}
+                    >Global</button>
+                    <button
+                      className="action-bar-btn"
+                      type="button"
+                      onClick={() => setActiveTemplateType('unit')}
+                      style={{ padding: '6px 10px', fontSize: '12px', background: activeTemplateType==='unit' ? '#ffd700' : 'rgba(255,255,255,0.1)', color: activeTemplateType==='unit' ? '#1a1a2e' : 'white' }}
+                    >Unit</button>
+                  </div>
+                </div>
+
+                {templateError && (
+                  <div className="load-dropdown-empty" style={{ color: '#dc3545' }}>{templateError}</div>
+                )}
+
+                {templateLoading && (
+                  <div className="load-dropdown-empty"><span className="loading-spinner"></span> Loading...</div>
+                )}
+
+                {(!templateError && !templateLoading) && (
+                  <>
+                    {activeTemplateType === 'global' && (globalTemplates.length === 0 ? (
+                      <div className="load-dropdown-empty">No global templates</div>
+                    ) : (
+                      globalTemplates.map(t => (
+                        <div key={t.id} className="load-dropdown-item" onClick={() => { setTemplateLoading(true); onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
+                          <div className="load-item-title">{t.title}</div>
+                          {t.description && (<div className="load-item-time">{t.description}</div>)}
+                        </div>
+                      ))
+                    ))}
+
+                    {activeTemplateType === 'unit' && (unitTemplates.length === 0 ? (
+                      <div className="load-dropdown-empty">No unit templates</div>
+                    ) : (
+                      unitTemplates.map(t => (
+                        <div key={t.id} className="load-dropdown-item" onClick={() => { setTemplateLoading(true); onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
+                          <div className="load-item-title">{t.title}</div>
+                          {t.description && (<div className="load-item-time">{t.description}</div>)}
+                        </div>
+                      ))
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           <button
             className="action-bar-btn"
             onClick={onImport}

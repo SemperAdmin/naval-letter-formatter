@@ -1,0 +1,142 @@
+{
+  "metadata": {
+    "packageId": "nldp_1764453847152_azcfpp",
+    "formatVersion": "1.0.0",
+    "createdAt": "2025-11-29T22:04:07.152Z",
+    "author": {
+      "name": "",
+      "unit": ""
+    },
+    "package": {
+      "title": "APPOINTMENT AS COMMAND DESIGNATED DIRECTIVES MANAGER (CDDM) Data Package",
+      "description": "Data package for correspondence: APPOINTMENT AS COMMAND DESIGNATED DIRECTIVES MANAGER (CDDM)",
+      "subject": "APPOINTMENT AS COMMAND DESIGNATED DIRECTIVES MANAGER (CDDM)",
+      "documentType": "basic",
+      "tags": []
+    },
+    "checksums": {
+      "dataHash": "14b429b33ab9163fa6c600ea669c3d92de49f02fc130875b1cfebda4ec71fc6b",
+      "crc32": "47CE4567"
+    }
+  },
+  "data": {
+    "formData": {
+      "documentType": "basic",
+      "endorsementLevel": "",
+      "basicLetterReference": "",
+      "referenceWho": "",
+      "referenceType": "",
+      "referenceDate": "",
+      "startingReferenceLevel": "a",
+      "startingEnclosureNumber": "1",
+      "line1": "",
+      "line2": "",
+      "line3": "",
+      "ssic": "5215",
+      "originatorCode": "CO",
+      "date": "29 Nov 25",
+      "from": "Commanding Officer, (Unit)",
+      "to": "Staff Sergeant John T. Smith 1234567890/0111 USMC",
+      "subj": "APPOINTMENT AS COMMAND DESIGNATED DIRECTIVES MANAGER (CDDM)",
+      "sig": "I. M. COMMANDER",
+      "delegationText": "",
+      "startingPageNumber": 1,
+      "previousPackagePageCount": 0,
+      "headerType": "USMC",
+      "bodyFont": "times"
+    },
+    "vias": [],
+    "references": [
+      "MCO 5215.1K w/Admin CH-3",
+      "The Directives Review Process (DRP) Guide"
+    ],
+    "enclosures": [],
+    "copyTos": [],
+    "paragraphs": [
+      {
+        "id": 1,
+        "level": 1,
+        "content": "Per references (a) and (b), the individuals listed below are appointed as the Command Designated Directives Managers (CDDMs). They are directed to coordinate with the Marine Corps Directives Management Program (MCDMP)/ARDB/ARD/AR/HQMC, for orientation and training. They will be instructed on how to manage the command’s Directives Control Point (DCP) SharePoint Site as required, and to effectively coordinate with directives Action Officers (AOs), and their Offices of Primary Responsibility (OPRs), to conduct the Directives Review Process (DRP).",
+        "acronymError": "Acronym \"ARDB\" used without being defined first. Please define it as \"Full Name (ARDB)\"."
+      },
+      {
+        "id": 14,
+        "level": 1,
+        "content": "Points of contact.",
+        "acronymError": ""
+      },
+      {
+        "id": 2,
+        "level": 2,
+        "content": "Primary CDDM",
+        "acronymError": "Acronym \"CDDM\" used without being defined first. Please define it as \"Full Name (CDDM)\"."
+      },
+      {
+        "id": 3,
+        "level": 3,
+        "content": "Name:",
+        "acronymError": ""
+      },
+      {
+        "id": 15,
+        "level": 3,
+        "content": "Grade:",
+        "acronymError": ""
+      },
+      {
+        "id": 16,
+        "level": 3,
+        "content": "Phone:",
+        "acronymError": ""
+      },
+      {
+        "id": 17,
+        "level": 3,
+        "content": "E-mail:",
+        "acronymError": ""
+      },
+      {
+        "id": 18,
+        "level": 2,
+        "content": "Alternate CDDM",
+        "acronymError": "Acronym \"CDDM\" used without being defined first. Please define it as \"Full Name (CDDM)\"."
+      },
+      {
+        "id": 19,
+        "level": 3,
+        "content": "Name:",
+        "acronymError": ""
+      },
+      {
+        "id": 21,
+        "level": 3,
+        "content": "Grade:",
+        "acronymError": ""
+      },
+      {
+        "id": 20,
+        "level": 3,
+        "content": "Phone:",
+        "acronymError": ""
+      },
+      {
+        "id": 22,
+        "level": 3,
+        "content": "E-mail:",
+        "acronymError": ""
+      },
+      {
+        "id": 13,
+        "level": 1,
+        "content": "This letter supersedes all previous correspondence. This appointment will remain in effect from the date signed, until the assigned CDDM leaves their assignment.",
+        "acronymError": "Acronym \"CDDM\" used without being defined first. Please define it as \"Full Name (CDDM)\"."
+      },
+      {
+        "id": 23,
+        "level": 1,
+        "content": "The point of contact regarding this matter is (provide name, phone number, and email address).",
+        "acronymError": ""
+      }
+    ]
+  }
+}

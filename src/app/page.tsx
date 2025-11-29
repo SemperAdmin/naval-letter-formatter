@@ -33,6 +33,7 @@ import { ValidationSummary } from '@/components/ui/validation-summary';
 import { StickyActionBar } from '@/components/ui/sticky-action-bar';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
+import { importNLDPFile, sanitizeImportedData } from '@/lib/nldp-utils';
 
 
 export default function NavalLetterGenerator() {
@@ -1145,6 +1146,26 @@ if (enclsWithContent.length > 0) {
         isValid={isFormValid}
         lastSaved={lastSaved}
         savedLetters={savedLetters}
+        onLoadTemplateUrl={async (url: string) => {
+          try {
+            const res = await fetch(url);
+            const text = await res.text();
+            const result = importNLDPFile(text);
+            if (!result.success || !result.data) {
+              alert((result.errors && result.errors[0]) || 'Invalid template');
+              return;
+            }
+            const sanitized = sanitizeImportedData(result.data);
+            setFormData(prev => ({ ...prev, ...sanitized.formData }));
+            setVias(sanitized.vias);
+            setReferences(sanitized.references);
+            setEnclosures(sanitized.enclosures);
+            setCopyTos(sanitized.copyTos);
+            setParagraphs(sanitized.paragraphs);
+          } catch (e: any) {
+            alert(e?.message || 'Failed to load template');
+          }
+        }}
       />
 
       <div className="naval-gradient-bg">

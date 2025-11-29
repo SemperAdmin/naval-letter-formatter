@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "packageId": "tmpl_usmc_basic_001",
+    "formatVersion": "1.0.0",
+    "createdAt": "2025-11-29T00:00:00Z",
+    "author": {
+      "name": "HQMC"
+    },
+    "package": {
+      "title": "USMC Basic Letter",
+      "description": "Standard Marine Corps basic letter template",
+      "subject": "STANDARD CORRESPONDENCE",
+      "documentType": "basic"
+    }
+  },
+  "data": {
+    "formData": {
+      "documentType": "basic",
+      "endorsementLevel": "",
+      "basicLetterReference": "",
+      "referenceWho": "",
+      "referenceType": "",
+      "referenceDate": "",
+      "startingReferenceLevel": "a",
+      "startingEnclosureNumber": "1",
+      "line1": "HEADQUARTERS MARINE CORPS",
+      "line2": "3000 MARINE CORPS PENTAGON",
+      "line3": "WASHINGTON, DC 20350-3000",
+      "ssic": "5000",
+      "originatorCode": "CODE",
+      "date": "",
+      "from": "COMMANDING OFFICER",
+      "to": "COMMANDANT OF THE MARINE CORPS",
+      "subj": "STANDARD CORRESPONDENCE",
+      "sig": "F. M. LASTNAME",
+      "delegationText": "",
+      "startingPageNumber": 1,
+      "previousPackagePageCount": 0
+    },
+    "vias": [""],
+    "references": ["MCO 5216.4C"],
+    "enclosures": ["Enclosure (1) – Supporting Material"],
+    "copyTos": ["CG, MARFORCOM"],
+    "paragraphs": [
+      { "id": 1, "level": 1, "content": "Purpose. State the purpose of the correspondence." },
+      { "id": 2, "level": 1, "content": "Background. Provide necessary background information." }
+    ]
+  }
+}
