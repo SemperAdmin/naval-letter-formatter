@@ -12,8 +12,8 @@ export function resolvePublicPath(url: string): string {
   const basePath = getBasePath();
   if (/^https?:\/\//.test(url)) return url;
   if (basePath) {
-    const hasLeadingSlash = url.startsWith('/');
-    return `${basePath}${hasLeadingSlash ? '' : '/'}${url}`;
+    const urlPath = url.startsWith('/') ? url.slice(1) : url;
+    return `${basePath}/${urlPath}`;
   }
   return url;
 }

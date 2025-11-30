@@ -85,17 +85,12 @@ export function useStats(): UseStatsReturn {
       }
       
       const data = await response.json();
-      
-      setStats(prev => ({ 
-        ...prev, 
-        documentsGenerated: data.value || prev.documentsGenerated + 1 
+
+      setStats(prev => ({
+        ...prev,
+        documentsGenerated: data.value || prev.documentsGenerated + 1
       }));
-      
-      // Also call global function if it exists (for StatsDisplay component)
-      if (typeof window !== 'undefined' && (window as any).updateStatsDisplay) {
-        (window as any).updateStatsDisplay();
-      }
-      
+
       console.log('Document generated! New count:', data.value);
     } catch (error) {
       console.error('Failed to increment document count:', error);

@@ -85,6 +85,17 @@ const [formData, setFormData] = useState<FormData>({
   // Sticky action bar state
   const [lastSaved, setLastSaved] = useState<string>('');
 
+  // Notification state for better error handling
+  const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' | 'info' } | null>(null);
+
+  // Auto-dismiss notifications after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   // Add useRef to track values without causing re-renders
   const activeVoiceInputRef = useRef<number | null>(null);
   const paragraphsRef = useRef<ParagraphData[]>(paragraphs);
@@ -1142,6 +1153,46 @@ if (enclsWithContent.length > 0) {
       {/* Font Awesome CSS */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+      {/* Notification Bar */}
+      {notification && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          maxWidth: '500px',
+          width: '90%',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          backgroundColor: notification.type === 'error' ? '#dc3545' : notification.type === 'success' ? '#28a745' : '#17a2b8',
+          color: 'white',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          animation: 'slideDown 0.3s ease-out'
+        }}>
+          <span style={{ flex: 1 }}>
+            <i className={`fas fa-${notification.type === 'error' ? 'exclamation-circle' : notification.type === 'success' ? 'check-circle' : 'info-circle'}`} style={{ marginRight: '8px' }}></i>
+            {notification.message}
+          </span>
+          <button
+            onClick={() => setNotification(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '18px',
+              padding: '0 0 0 12px'
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Sticky Action Bar */}
       <StickyActionBar
         onSaveDraft={handleSaveDraft}
@@ -1160,7 +1211,10 @@ if (enclsWithContent.length > 0) {
             const text = await res.text();
             const result = importNLDPFile(text);
             if (!result.success || !result.data) {
-              alert((result.errors && result.errors[0]) || 'Invalid template');
+              setNotification({
+                message: (result.errors && result.errors[0]) || 'Invalid template',
+                type: 'error'
+              });
               return;
             }
             const sanitized = sanitizeImportedData(result.data);
@@ -1170,8 +1224,12 @@ if (enclsWithContent.length > 0) {
             setEnclosures(sanitized.enclosures);
             setCopyTos(sanitized.copyTos);
             setParagraphs(sanitized.paragraphs);
+            setNotification({ message: 'Template loaded successfully', type: 'success' });
           } catch (e: any) {
-            alert(e?.message || 'Failed to load template');
+            setNotification({
+              message: e?.message || 'Failed to load template',
+              type: 'error'
+            });
           }
         }}
         currentUnitCode={currentUnitCode}
