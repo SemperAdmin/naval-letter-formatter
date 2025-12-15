@@ -239,10 +239,15 @@ const [formData, setFormData] = useState<FormData>({
   };
 
   // Calculate if form is valid
+  // For endorsements, also require endorsementLevel and basicLetterReference
+  const isEndorsementValid = formData.documentType !== 'endorsement' ||
+                              (!!formData.endorsementLevel && !!formData.basicLetterReference);
+
   const isFormValid = validation.ssic.isValid &&
                       validation.subj.isValid &&
                       validation.from.isValid &&
-                      validation.to.isValid;
+                      validation.to.isValid &&
+                      isEndorsementValid;
 
   const loadLetter = (letterId: string) => {
     debugUserAction('Load Letter', { letterId });
