@@ -760,11 +760,13 @@ if (viasWithContent.length > 0) {
       refsWithContent.forEach((ref, i) => {
         const refLetter = String.fromCharCode('a'.charCodeAt(0) + i);
         const refText = getRefSpacing(refLetter, i, formData.bodyFont) + ref;
-        
+
         if (formData.bodyFont === 'courier') {
-          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+          // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
+          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
         } else {
-          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+          // Times: hanging indent at second tab stop (1046 twips)
+          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
         }
       });
     }
@@ -774,11 +776,13 @@ if (viasWithContent.length > 0) {
       if (refsWithContent.length > 0) content.push(new Paragraph({ text: "" }));
       enclsWithContent.forEach((encl, i) => {
         const enclText = getEnclSpacing(i + 1, i, formData.bodyFont) + encl;
-        
+
         if (formData.bodyFont === 'courier') {
-          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+          // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
+          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
         } else {
-          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+          // Times: hanging indent at second tab stop (1046 twips)
+          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
         }
       });
     }
@@ -979,11 +983,13 @@ if (refsWithContent.length > 0) {
   refsWithContent.forEach((ref, i) => {
     const refLetter = String.fromCharCode(startCharCode + i);
     const refText = getRefSpacing(refLetter, i, formData.bodyFont) + ref;
-    
+
     if (formData.bodyFont === 'courier') {
-      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
+      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
     } else {
-      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+      // Times: hanging indent at second tab stop (1046 twips)
+      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
     }
   });
 }
@@ -996,11 +1002,13 @@ if (enclsWithContent.length > 0) {
   enclsWithContent.forEach((encl, i) => {
     const enclNum = startEnclNum + i;
     const enclText = getEnclSpacing(enclNum, i, formData.bodyFont) + encl;
-    
+
     if (formData.bodyFont === 'courier') {
-      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT }));
+      // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
+      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
     } else {
-      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }] }));
+      // Times: hanging indent at second tab stop (1046 twips)
+      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
     }
   });
 }
