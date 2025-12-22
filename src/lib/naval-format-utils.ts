@@ -68,7 +68,8 @@ export function getRefSpacing(letter: string, index: number, bodyFont: 'times' |
       ? `Ref:\u00A0\u00A0\u00A0(${letter})\u00A0` // 3 spaces before, 1 space after
       : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${letter})\u00A0`; // 7 spaces before, 1 space after
   }
-  return index === 0 ? `Ref:\t(${letter})\t` : `\t(${letter})\t`;
+  // Times: tab to position "(a)", then single space before text
+  return index === 0 ? `Ref:\t(${letter}) ` : `\t(${letter}) `;
 }
 
 /**
@@ -85,7 +86,8 @@ export function getEnclSpacing(number: number, index: number, bodyFont: 'times' 
       ? `Encl:\u00A0\u00A0(${number})\u00A0` // 2 spaces before, 1 space after
       : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${number})\u00A0`; // 7 spaces before, 1 space after
   }
-  return index === 0 ? `Encl:\t(${number})\t` : `\t(${number})\t`;
+  // Times: tab to position "(1)", then single space before text
+  return index === 0 ? `Encl:\t(${number}) ` : `\t(${number}) `;
 }
 
 /**
