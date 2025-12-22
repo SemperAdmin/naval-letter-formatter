@@ -764,8 +764,8 @@ if (viasWithContent.length > 0) {
           // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
           content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
         } else {
-          // Times: hanging indent at second tab stop (1046 twips)
-          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
+          // Times: tab at 720 for "(a)", text starts at 1440 (1 inch), continuation aligns there
+          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1440 }], indent: { left: 1440, hanging: 1440 } }));
         }
       });
     }
@@ -780,8 +780,8 @@ if (viasWithContent.length > 0) {
           // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
           content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
         } else {
-          // Times: hanging indent at second tab stop (1046 twips)
-          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
+          // Times: tab at 720 for "(1)", text starts at 1440 (1 inch), continuation aligns there
+          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1440 }], indent: { left: 1440, hanging: 1440 } }));
         }
       });
     }
@@ -987,8 +987,8 @@ if (refsWithContent.length > 0) {
       // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
       content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
     } else {
-      // Times: hanging indent at second tab stop (1046 twips)
-      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
+      // Times: tab at 720 for "(a)", text starts at 1440 (1 inch), continuation aligns there
+      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1440 }], indent: { left: 1440, hanging: 1440 } }));
     }
   });
 }
@@ -1006,8 +1006,8 @@ if (enclsWithContent.length > 0) {
       // Courier: hanging indent at ~11 chars (1584 twips at 12pt)
       content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
     } else {
-      // Times: hanging indent at second tab stop (1046 twips)
-      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1046 }], indent: { left: 1046, hanging: 1046 } }));
+      // Times: tab at 720 for "(1)", text starts at 1440 (1 inch), continuation aligns there
+      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }, { type: TabStopType.LEFT, position: 1440 }], indent: { left: 1440, hanging: 1440 } }));
     }
   });
 }
