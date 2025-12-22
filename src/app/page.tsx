@@ -1229,6 +1229,13 @@ if (enclsWithContent.length > 0) {
             setEnclosures(sanitized.enclosures);
             setCopyTos(sanitized.copyTos);
             setParagraphs(sanitized.paragraphs);
+
+            // Run validation on loaded template data
+            handleValidateSSIC(sanitized.formData.ssic || '');
+            handleValidateSubject(sanitized.formData.subj || '');
+            handleValidateFromTo(sanitized.formData.from || '', 'from');
+            handleValidateFromTo(sanitized.formData.to || '', 'to');
+
             setNotification({ message: 'Template loaded successfully', type: 'success' });
           } catch (e: any) {
             setNotification({
