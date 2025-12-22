@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, TabStopType, Header, ImageRun, VerticalPositionRelativeFrom, HorizontalPositionRelativeFrom, Footer, PageNumber, IParagraphOptions, convertInchesToTwip, TextWrappingType } from 'docx';
-import { saveAs } from 'file-saver';
 import { getDoDSealBufferSync } from '@/lib/dod-seal';
 import { DOC_SETTINGS } from '@/lib/doc-settings';
 import { createFormattedParagraph } from '@/lib/paragraph-formatter';
@@ -1120,7 +1119,21 @@ if (enclsWithContent.length > 0) {
 
       if (doc) {
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, filename);
+        const url = URL.createObjectURL(blob);
+
+        // Open in new tab and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the blob URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
         debugUserAction('Document Generated Successfully', { filename });
       }
 
