@@ -765,7 +765,7 @@ if (viasWithContent.length > 0) {
           content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
         } else {
           // Times: tab at 720 for "(a)", hanging indent for continuation
-          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 336, hanging: 336 } }));
+          content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 730, hanging: 730 } }));
         }
       });
     }
@@ -781,7 +781,7 @@ if (viasWithContent.length > 0) {
           content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
         } else {
           // Times: tab at 720 for "(1)", hanging indent for continuation
-          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 336, hanging: 336 } }));
+          content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 730, hanging: 730 } }));
         }
       });
     }
@@ -988,7 +988,7 @@ if (refsWithContent.length > 0) {
       content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
     } else {
       // Times: tab at 720 for "(a)", hanging indent for continuation
-      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 336, hanging: 336 } }));
+      content.push(new Paragraph({ children: [new TextRun({ text: refText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 730, hanging: 730 } }));
     }
   });
 }
@@ -1007,7 +1007,7 @@ if (enclsWithContent.length > 0) {
       content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], alignment: AlignmentType.LEFT, indent: { left: 1584, hanging: 1584 } }));
     } else {
       // Times: tab at 720 for "(1)", hanging indent for continuation
-      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 336, hanging: 336 } }));
+      content.push(new Paragraph({ children: [new TextRun({ text: enclText, font: bodyFont, size: 24 })], tabStops: [{ type: TabStopType.LEFT, position: 720 }], indent: { left: 730, hanging: 730 } }));
     }
   });
 }
