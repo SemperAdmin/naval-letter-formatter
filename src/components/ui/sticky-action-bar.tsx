@@ -59,6 +59,9 @@ export function StickyActionBar({
   const [templateLoading, setTemplateLoading] = React.useState(false);
   const [templateSearch, setTemplateSearch] = React.useState('');
   const [matchSelectedUnit, setMatchSelectedUnit] = React.useState(false);
+  const [filterBy, setFilterBy] = React.useState<'name' | 'unit'>('name');
+  const [showFilterDropdown, setShowFilterDropdown] = React.useState(false);
+  const filterDropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Detect scroll to minimize bar on mobile
   React.useEffect(() => {
@@ -79,14 +82,18 @@ export function StickyActionBar({
       }
       if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
         setShowTemplateDropdown(false);
+        setShowFilterDropdown(false);
+      }
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false);
       }
     };
 
-    if (showLoadDropdown) {
+    if (showLoadDropdown || showTemplateDropdown || showFilterDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showLoadDropdown, showTemplateDropdown]);
+  }, [showLoadDropdown, showTemplateDropdown, showFilterDropdown]);
 
   // Load template indexes
   React.useEffect(() => {
@@ -109,13 +116,19 @@ export function StickyActionBar({
   const matchesQuery = (t: { id: string; title: string; description?: string; unitName?: string; unitCode?: string; documentType?: string; url: string }) => {
     const q = templateSearch.trim().toLowerCase();
     if (!q) return true;
-    return [t.title, t.description || '', t.unitName || '', t.unitCode || '', t.documentType || '']
-      .some(field => field.toLowerCase().includes(q));
+
+    if (filterBy === 'name') {
+      // Filter by template name and description only
+      return [t.title, t.description || ''].some(field => field.toLowerCase().includes(q));
+    } else {
+      // Filter by unit info (unitName, unitCode)
+      return [t.unitName || '', t.unitCode || ''].some(field => field.toLowerCase().includes(q));
+    }
   };
 
   const visibleGlobalTemplates = React.useMemo(() => {
     return globalTemplates.filter(matchesQuery);
-  }, [globalTemplates, templateSearch]);
+  }, [globalTemplates, templateSearch, filterBy]);
 
   const visibleUnitTemplates = React.useMemo(() => {
     let list = unitTemplates.filter(matchesQuery);
@@ -129,7 +142,7 @@ export function StickyActionBar({
       });
     }
     return list;
-  }, [unitTemplates, templateSearch, matchSelectedUnit, currentUnitCode, currentUnitName]);
+  }, [unitTemplates, templateSearch, matchSelectedUnit, currentUnitCode, currentUnitName, filterBy]);
 
   React.useEffect(() => {
     const q = templateSearch.trim();
@@ -328,6 +341,200 @@ export function StickyActionBar({
           overflow-y: auto;
           z-index: 1000;
         }
+
+        .template-search-container {
+          display: flex;
+          align-items: stretch;
+          border: 2px solid #b8860b;
+          border-radius: 6px;
+          overflow: hidden;
+          background: white;
+        }
+
+        .template-search-input {
+          flex: 1;
+          padding: 10px 14px;
+          border: none;
+          font-size: 14px;
+          outline: none;
+          min-width: 0;
+        }
+
+        .template-search-input::placeholder {
+          color: #adb5bd;
+        }
+
+        .template-search-input:focus {
+          background: #fffdf5;
+        }
+
+        .filter-dropdown-container {
+          position: relative;
+          display: flex;
+        }
+
+        .filter-toggle-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 14px;
+          background: linear-gradient(135deg, #b8860b, #d4a017);
+          color: white;
+          border: none;
+          border-left: 2px solid #b8860b;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.2s ease;
+        }
+
+        .filter-toggle-btn:hover {
+          background: linear-gradient(135deg, #d4a017, #ffd700);
+        }
+
+        .filter-toggle-btn i {
+          font-size: 10px;
+          transition: transform 0.2s ease;
+        }
+
+        .filter-toggle-btn.open i {
+          transform: rotate(180deg);
+        }
+
+        .filter-options {
+          position: absolute;
+          top: calc(100% + 4px);
+          right: 0;
+          background: white;
+          border: 2px solid #b8860b;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          min-width: 140px;
+          z-index: 1001;
+          overflow: hidden;
+        }
+
+        .filter-option {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          cursor: pointer;
+          transition: background 0.15s ease;
+          font-size: 13px;
+          color: #495057;
+        }
+
+        .filter-option:hover {
+          background: #f8f9fa;
+        }
+
+        .filter-option.selected {
+          background: linear-gradient(135deg, rgba(184, 134, 11, 0.1), rgba(255, 215, 0, 0.1));
+          color: #b8860b;
+          font-weight: 600;
+        }
+
+        .filter-option i {
+          width: 16px;
+          text-align: center;
+        }
+
+        .filter-radio {
+          width: 14px;
+          height: 14px;
+          border: 2px solid #b8860b;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .filter-radio.checked::after {
+          content: '';
+          width: 8px;
+          height: 8px;
+          background: #b8860b;
+          border-radius: 50%;
+        }
+
+        .template-results-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 16px;
+          background: #f8f9fa;
+          border-bottom: 1px solid #dee2e6;
+          font-size: 12px;
+          color: #6c757d;
+        }
+
+        .template-tabs {
+          display: flex;
+          border-bottom: 1px solid #dee2e6;
+        }
+
+        .template-tab {
+          flex: 1;
+          padding: 10px 16px;
+          background: none;
+          border: none;
+          font-size: 13px;
+          font-weight: 500;
+          color: #6c757d;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border-bottom: 2px solid transparent;
+        }
+
+        .template-tab:hover {
+          background: #f8f9fa;
+          color: #495057;
+        }
+
+        .template-tab.active {
+          color: #b8860b;
+          border-bottom-color: #b8860b;
+          background: rgba(184, 134, 11, 0.05);
+        }
+
+        .template-tab-count {
+          display: inline-block;
+          margin-left: 6px;
+          padding: 2px 6px;
+          background: #e9ecef;
+          border-radius: 10px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+
+        .template-tab.active .template-tab-count {
+          background: linear-gradient(135deg, #b8860b, #ffd700);
+          color: white;
+        }
+
+        .template-empty-state {
+          padding: 32px 16px;
+          text-align: center;
+          color: #6c757d;
+        }
+
+        .template-empty-icon {
+          font-size: 36px;
+          opacity: 0.3;
+          margin-bottom: 12px;
+        }
+
+        .template-empty-text {
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+
+        .template-empty-hint {
+          font-size: 12px;
+          opacity: 0.7;
+        }
         
         .load-dropdown-header {
           padding: 12px 16px;
@@ -513,70 +720,137 @@ export function StickyActionBar({
 
             {showTemplateDropdown && (
               <div className="template-dropdown">
-                <div className="load-dropdown-header">
-                  <i className="fas fa-file-alt"></i>
-                  <span>Templates</span>
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {/* Option D: Search bar with filter dropdown */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #dee2e6' }}>
+                  <div className="template-search-container">
+                    <i className="fas fa-search" style={{ padding: '10px 0 10px 14px', color: '#b8860b' }}></i>
                     <input
                       type="text"
+                      className="template-search-input"
                       value={templateSearch}
                       onChange={(e) => setTemplateSearch(e.target.value)}
-                      placeholder="Search templates..."
-                      style={{ padding: '6px 10px', border: '1px solid #ced4da', borderRadius: 6, fontSize: 12 }}
+                      placeholder="Search..."
+                      autoFocus
                     />
-                    <span style={{ fontSize: 12, color: '#495057' }}>{activeTemplateType === 'global' ? `${visibleGlobalTemplates.length} match(es)` : `${visibleUnitTemplates.length} match(es)`}</span>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#495057' }}>
-                      <input
-                        type="checkbox"
-                        checked={matchSelectedUnit}
-                        onChange={(e) => setMatchSelectedUnit(e.target.checked)}
-                        title="Filter unit templates to selected unit"
-                      />
-                      Match selected unit
-                    </label>
-                    <button
-                      className="action-bar-btn"
-                      type="button"
-                      onClick={() => setActiveTemplateType('global')}
-                      style={{ padding: '6px 10px', fontSize: '12px', background: activeTemplateType==='global' ? '#ffd700' : 'rgba(255,255,255,0.1)', color: activeTemplateType==='global' ? '#1a1a2e' : 'white' }}
-                    >Global</button>
-                    <button
-                      className="action-bar-btn"
-                      type="button"
-                      onClick={() => setActiveTemplateType('unit')}
-                      style={{ padding: '6px 10px', fontSize: '12px', background: activeTemplateType==='unit' ? '#ffd700' : 'rgba(255,255,255,0.1)', color: activeTemplateType==='unit' ? '#1a1a2e' : 'white' }}
-                    >Unit</button>
+                    <div className="filter-dropdown-container" ref={filterDropdownRef}>
+                      <button
+                        type="button"
+                        className={`filter-toggle-btn ${showFilterDropdown ? 'open' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowFilterDropdown(!showFilterDropdown);
+                        }}
+                      >
+                        <i className="fas fa-filter"></i>
+                        {filterBy === 'name' ? 'Name' : 'Unit'}
+                        <i className="fas fa-chevron-down"></i>
+                      </button>
+                      {showFilterDropdown && (
+                        <div className="filter-options">
+                          <div
+                            className={`filter-option ${filterBy === 'name' ? 'selected' : ''}`}
+                            onClick={() => {
+                              setFilterBy('name');
+                              setShowFilterDropdown(false);
+                            }}
+                          >
+                            <div className={`filter-radio ${filterBy === 'name' ? 'checked' : ''}`}></div>
+                            <i className="fas fa-tag"></i>
+                            <span>Name</span>
+                          </div>
+                          <div
+                            className={`filter-option ${filterBy === 'unit' ? 'selected' : ''}`}
+                            onClick={() => {
+                              setFilterBy('unit');
+                              setShowFilterDropdown(false);
+                            }}
+                          >
+                            <div className={`filter-radio ${filterBy === 'unit' ? 'checked' : ''}`}></div>
+                            <i className="fas fa-building"></i>
+                            <span>Unit Info</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
+                {/* Tabs for Global/Unit */}
+                <div className="template-tabs">
+                  <button
+                    type="button"
+                    className={`template-tab ${activeTemplateType === 'global' ? 'active' : ''}`}
+                    onClick={() => setActiveTemplateType('global')}
+                  >
+                    <i className="fas fa-globe" style={{ marginRight: '6px' }}></i>
+                    Global
+                    <span className="template-tab-count">{visibleGlobalTemplates.length}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`template-tab ${activeTemplateType === 'unit' ? 'active' : ''}`}
+                    onClick={() => setActiveTemplateType('unit')}
+                  >
+                    <i className="fas fa-building" style={{ marginRight: '6px' }}></i>
+                    Unit
+                    <span className="template-tab-count">{visibleUnitTemplates.length}</span>
+                  </button>
+                </div>
+
                 {templateError && (
-                  <div className="load-dropdown-empty" style={{ color: '#dc3545' }}>{templateError}</div>
+                  <div className="template-empty-state" style={{ color: '#dc3545' }}>
+                    <i className="fas fa-exclamation-circle template-empty-icon"></i>
+                    <div className="template-empty-text">{templateError}</div>
+                  </div>
                 )}
 
                 {templateLoading && (
-                  <div className="load-dropdown-empty"><span className="loading-spinner"></span> Loading...</div>
+                  <div className="template-empty-state">
+                    <span className="loading-spinner" style={{ width: '24px', height: '24px', marginBottom: '12px' }}></span>
+                    <div className="template-empty-text">Loading template...</div>
+                  </div>
                 )}
 
                 {(!templateError && !templateLoading) && (
                   <>
                     {activeTemplateType === 'global' && (visibleGlobalTemplates.length === 0 ? (
-                      <div className="load-dropdown-empty">No global templates match</div>
+                      <div className="template-empty-state">
+                        <i className="fas fa-anchor template-empty-icon"></i>
+                        <div className="template-empty-text">No templates found</div>
+                        <div className="template-empty-hint">Try adjusting your search</div>
+                      </div>
                     ) : (
                       visibleGlobalTemplates.map(t => (
                         <div key={t.id} className="load-dropdown-item" onClick={async () => { setTemplateLoading(true); await onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
-                          <div className="load-item-title">{t.title}</div>
+                          <div className="load-item-title">
+                            <i className="fas fa-file-alt" style={{ marginRight: '8px', color: '#b8860b' }}></i>
+                            {t.title}
+                          </div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}
                         </div>
                       ))
                     ))}
 
                     {activeTemplateType === 'unit' && (visibleUnitTemplates.length === 0 ? (
-                      <div className="load-dropdown-empty">No unit templates match</div>
+                      <div className="template-empty-state">
+                        <i className="fas fa-anchor template-empty-icon"></i>
+                        <div className="template-empty-text">No templates found</div>
+                        <div className="template-empty-hint">Try adjusting your search</div>
+                      </div>
                     ) : (
                       visibleUnitTemplates.map(t => (
                         <div key={t.id} className="load-dropdown-item" onClick={async () => { setTemplateLoading(true); await onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
-                          <div className="load-item-title">{t.title}</div>
+                          <div className="load-item-title">
+                            <i className="fas fa-file-alt" style={{ marginRight: '8px', color: '#b8860b' }}></i>
+                            {t.title}
+                          </div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}
+                          {(t.unitName || t.unitCode) && (
+                            <div className="load-item-time" style={{ marginTop: '2px' }}>
+                              <i className="fas fa-building" style={{ marginRight: '4px' }}></i>
+                              {t.unitName}{t.unitCode ? ` (${t.unitCode})` : ''}
+                            </div>
+                          )}
                         </div>
                       ))
                     ))}
