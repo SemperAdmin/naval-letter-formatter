@@ -83,8 +83,7 @@ export function StickyActionBar({
       if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
         setShowTemplateDropdown(false);
         setShowFilterDropdown(false);
-      }
-      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+      } else if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
         setShowFilterDropdown(false);
       }
     };
@@ -162,6 +161,13 @@ export function StickyActionBar({
   const handleLoadClick = (letterId: string) => {
     onLoadDraft(letterId);
     setShowLoadDropdown(false);
+  };
+
+  const handleTemplateSelect = async (url: string) => {
+    setTemplateLoading(true);
+    await onLoadTemplateUrl(url);
+    setShowTemplateDropdown(false);
+    setTemplateLoading(false);
   };
 
   const formatRelativeTime = (savedAt: string): string => {
@@ -424,6 +430,10 @@ export function StickyActionBar({
           transition: background 0.15s ease;
           font-size: 13px;
           color: #495057;
+          width: 100%;
+          border: none;
+          background: none;
+          text-align: left;
         }
 
         .filter-option:hover {
@@ -561,6 +571,63 @@ export function StickyActionBar({
 
         .load-dropdown-item:last-child {
           border-bottom: none;
+        }
+
+        .template-item-btn {
+          display: block;
+          width: 100%;
+          padding: 12px 16px;
+          cursor: pointer;
+          border: none;
+          border-bottom: 1px solid #f0f0f0;
+          background: none;
+          text-align: left;
+          transition: background 0.2s ease;
+        }
+
+        .template-item-btn:hover {
+          background: #f8f9fa;
+        }
+
+        .template-item-btn:last-child {
+          border-bottom: none;
+        }
+
+        .template-search-header {
+          padding: 12px 16px;
+          border-bottom: 1px solid #dee2e6;
+        }
+
+        .template-search-icon {
+          padding: 10px 0 10px 14px;
+          color: #b8860b;
+        }
+
+        .template-icon {
+          margin-right: 8px;
+          color: #b8860b;
+        }
+
+        .template-tab-icon {
+          margin-right: 6px;
+        }
+
+        .template-unit-info {
+          margin-top: 2px;
+        }
+
+        .template-unit-icon {
+          margin-right: 4px;
+        }
+
+        .template-error-state {
+          color: #dc3545;
+        }
+
+        .loading-spinner-large {
+          width: 24px;
+          height: 24px;
+          margin-bottom: 12px;
         }
 
         .load-item-title {
@@ -721,9 +788,9 @@ export function StickyActionBar({
             {showTemplateDropdown && (
               <div className="template-dropdown">
                 {/* Option D: Search bar with filter dropdown */}
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid #dee2e6' }}>
+                <div className="template-search-header">
                   <div className="template-search-container">
-                    <i className="fas fa-search" style={{ padding: '10px 0 10px 14px', color: '#b8860b' }}></i>
+                    <i className="fas fa-search template-search-icon"></i>
                     <input
                       type="text"
                       className="template-search-input"
@@ -747,7 +814,8 @@ export function StickyActionBar({
                       </button>
                       {showFilterDropdown && (
                         <div className="filter-options">
-                          <div
+                          <button
+                            type="button"
                             className={`filter-option ${filterBy === 'name' ? 'selected' : ''}`}
                             onClick={() => {
                               setFilterBy('name');
@@ -757,8 +825,9 @@ export function StickyActionBar({
                             <div className={`filter-radio ${filterBy === 'name' ? 'checked' : ''}`}></div>
                             <i className="fas fa-tag"></i>
                             <span>Name</span>
-                          </div>
-                          <div
+                          </button>
+                          <button
+                            type="button"
                             className={`filter-option ${filterBy === 'unit' ? 'selected' : ''}`}
                             onClick={() => {
                               setFilterBy('unit');
@@ -768,7 +837,7 @@ export function StickyActionBar({
                             <div className={`filter-radio ${filterBy === 'unit' ? 'checked' : ''}`}></div>
                             <i className="fas fa-building"></i>
                             <span>Unit Info</span>
-                          </div>
+                          </button>
                         </div>
                       )}
                     </div>
@@ -782,7 +851,7 @@ export function StickyActionBar({
                     className={`template-tab ${activeTemplateType === 'global' ? 'active' : ''}`}
                     onClick={() => setActiveTemplateType('global')}
                   >
-                    <i className="fas fa-globe" style={{ marginRight: '6px' }}></i>
+                    <i className="fas fa-globe template-tab-icon"></i>
                     Global
                     <span className="template-tab-count">{visibleGlobalTemplates.length}</span>
                   </button>
@@ -791,14 +860,14 @@ export function StickyActionBar({
                     className={`template-tab ${activeTemplateType === 'unit' ? 'active' : ''}`}
                     onClick={() => setActiveTemplateType('unit')}
                   >
-                    <i className="fas fa-building" style={{ marginRight: '6px' }}></i>
+                    <i className="fas fa-building template-tab-icon"></i>
                     Unit
                     <span className="template-tab-count">{visibleUnitTemplates.length}</span>
                   </button>
                 </div>
 
                 {templateError && (
-                  <div className="template-empty-state" style={{ color: '#dc3545' }}>
+                  <div className="template-empty-state template-error-state">
                     <i className="fas fa-exclamation-circle template-empty-icon"></i>
                     <div className="template-empty-text">{templateError}</div>
                   </div>
@@ -806,7 +875,7 @@ export function StickyActionBar({
 
                 {templateLoading && (
                   <div className="template-empty-state">
-                    <span className="loading-spinner" style={{ width: '24px', height: '24px', marginBottom: '12px' }}></span>
+                    <span className="loading-spinner loading-spinner-large"></span>
                     <div className="template-empty-text">Loading template...</div>
                   </div>
                 )}
@@ -821,13 +890,18 @@ export function StickyActionBar({
                       </div>
                     ) : (
                       visibleGlobalTemplates.map(t => (
-                        <div key={t.id} className="load-dropdown-item" onClick={async () => { setTemplateLoading(true); await onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
+                        <button
+                          key={t.id}
+                          type="button"
+                          className="template-item-btn"
+                          onClick={() => handleTemplateSelect(t.url)}
+                        >
                           <div className="load-item-title">
-                            <i className="fas fa-file-alt" style={{ marginRight: '8px', color: '#b8860b' }}></i>
+                            <i className="fas fa-file-alt template-icon"></i>
                             {t.title}
                           </div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}
-                        </div>
+                        </button>
                       ))
                     ))}
 
@@ -839,19 +913,24 @@ export function StickyActionBar({
                       </div>
                     ) : (
                       visibleUnitTemplates.map(t => (
-                        <div key={t.id} className="load-dropdown-item" onClick={async () => { setTemplateLoading(true); await onLoadTemplateUrl(t.url); setShowTemplateDropdown(false); setTemplateLoading(false); }}>
+                        <button
+                          key={t.id}
+                          type="button"
+                          className="template-item-btn"
+                          onClick={() => handleTemplateSelect(t.url)}
+                        >
                           <div className="load-item-title">
-                            <i className="fas fa-file-alt" style={{ marginRight: '8px', color: '#b8860b' }}></i>
+                            <i className="fas fa-file-alt template-icon"></i>
                             {t.title}
                           </div>
                           {t.description && (<div className="load-item-time">{t.description}</div>)}
                           {(t.unitName || t.unitCode) && (
-                            <div className="load-item-time" style={{ marginTop: '2px' }}>
-                              <i className="fas fa-building" style={{ marginRight: '4px' }}></i>
+                            <div className="load-item-time template-unit-info">
+                              <i className="fas fa-building template-unit-icon"></i>
                               {t.unitName}{t.unitCode ? ` (${t.unitCode})` : ''}
                             </div>
                           )}
-                        </div>
+                        </button>
                       ))
                     ))}
                   </>
