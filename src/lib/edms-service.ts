@@ -154,7 +154,7 @@ export async function sendToEDMS(
   if (!isValidEDMSContext(edmsContext)) {
     return {
       success: false,
-      error: 'Invalid EDMS context: missing required fields (edmsId, returnUrl, or token)'
+      error: 'Invalid EDMS context: missing required fields (edmsId or returnUrl)'
     };
   }
 
@@ -178,7 +178,6 @@ export async function sendToEDMS(
     const response = await fetch(apiUrl.toString(), {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${edmsContext.token}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
@@ -244,7 +243,6 @@ export async function checkEDMSConnection(edmsContext: EDMSContext): Promise<{
     const response = await fetch(healthUrl.toString(), {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${edmsContext.token}`,
         'Accept': 'application/json'
       },
       // Short timeout for health check
