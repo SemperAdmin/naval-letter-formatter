@@ -34,9 +34,15 @@ import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 import { importNLDPFile, sanitizeImportedData } from '@/lib/nldp-utils';
 import { resolvePublicPath } from '@/lib/path-utils';
+import { useEDMSContext } from '@/hooks/useEDMSContext';
+import { sendToEDMS } from '@/lib/edms-service';
+import { EDMSLinkBadge } from '@/components/EDMSLinkBadge';
+import { ReturnToEDMSDialog } from '@/components/ReturnToEDMSDialog';
+import { Suspense } from 'react';
 
 
-export default function NavalLetterGenerator() {
+// Inner component that uses useSearchParams (requires Suspense boundary)
+function NavalLetterGeneratorInner() {
   // Configure console to suppress browser extension errors
   useEffect(() => {
     configureConsole();
@@ -95,6 +101,15 @@ const [formData, setFormData] = useState<FormData>({
     }
   }, [notification]);
 
+  // EDMS Integration - detect if launched from EDMS system
+  const edmsContext = useEDMSContext();
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
+  const [edmsError, setEdmsError] = useState<string | null>(null);
+
+  // Unit selection state (moved here for EDMS auto-selection)
+  const [currentUnitCode, setCurrentUnitCode] = useState<string | undefined>(undefined);
+  const [currentUnitName, setCurrentUnitName] = useState<string | undefined>(undefined);
+
   // Add useRef to track values without causing re-renders
   const activeVoiceInputRef = useRef<number | null>(null);
   const paragraphsRef = useRef<ParagraphData[]>(paragraphs);
@@ -145,6 +160,25 @@ const [formData, setFormData] = useState<FormData>({
   useEffect(() => {
     setFormData(prev => ({ ...prev, date: getTodaysDate() }));
   }, []);
+
+  // Auto-select unit if launched from EDMS with unitCode parameter
+  useEffect(() => {
+    if (edmsContext.isLinked && edmsContext.unitCode) {
+      // Find unit by RUC code (unitCode from EDMS)
+      const matchedUnit = UNITS.find(u => u.ruc === edmsContext.unitCode);
+      if (matchedUnit) {
+        setFormData(prev => ({
+          ...prev,
+          line1: matchedUnit.unitName.toUpperCase(),
+          line2: matchedUnit.streetAddress.toUpperCase(),
+          line3: `${matchedUnit.cityState} ${matchedUnit.zip}`.toUpperCase(),
+        }));
+        setCurrentUnitCode(matchedUnit.ruc);
+        setCurrentUnitName(matchedUnit.unitName.toUpperCase());
+        debugUserAction('EDMS Auto-Select Unit', { unitCode: edmsContext.unitCode, unitName: matchedUnit.unitName });
+      }
+    }
+  }, [edmsContext.isLinked, edmsContext.unitCode]);
 
   const saveLetter = () => {
     debugUserAction('Save Letter', {
@@ -1135,6 +1169,35 @@ if (enclsWithContent.length > 0) {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
 
         debugUserAction('Document Generated Successfully', { filename });
+
+        // If linked to EDMS, send data back to the EDMS system
+        if (edmsContext.isLinked) {
+          // Get SSIC title if available
+          const ssicMatch = SSICS.find(s => s.code === formData.ssic);
+          const ssicTitle = ssicMatch ? ssicMatch.title : '';
+
+          const result = await sendToEDMS(
+            formData,
+            vias,
+            references,
+            enclosures,
+            copyTos,
+            paragraphs,
+            edmsContext,
+            ssicTitle
+          );
+
+          if (result.success) {
+            debugUserAction('EDMS Send Success', { edmsId: edmsContext.edmsId });
+            setEdmsError(null);
+            setShowReturnDialog(true);
+          } else {
+            // Document still generated successfully, but EDMS send failed
+            debugUserAction('EDMS Send Failed', { error: result.error });
+            setEdmsError(result.error || 'Failed to send to EDMS');
+            setShowReturnDialog(true);
+          }
+        }
       }
 
     } catch (error) {
@@ -1150,9 +1213,6 @@ if (enclsWithContent.length > 0) {
     label: `${unit.unitName} (RUC: ${unit.ruc}, MCC: ${unit.mcc})`,
     ...unit,
   }));
-
-  const [currentUnitCode, setCurrentUnitCode] = useState<string | undefined>(undefined);
-  const [currentUnitName, setCurrentUnitName] = useState<string | undefined>(undefined);
 
   const handleUnitSelect = (value: string) => {
     const selectedUnit = unitComboboxData.find(unit => unit.value === value);
@@ -1278,6 +1338,12 @@ if (enclsWithContent.length > 0) {
             </h1>
             <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
             <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20251129</p>
+            {/* EDMS Link Indicator - shows when launched from EDMS */}
+            {edmsContext.isLinked && (
+              <div style={{ marginTop: '12px' }}>
+                <EDMSLinkBadge edmsContext={edmsContext} />
+              </div>
+            )}
           </div>
 
           <DocumentTypeSection formData={formData} setFormData={setFormData} />
@@ -1749,6 +1815,34 @@ if (enclsWithContent.length > 0) {
           </div>
         </div>
       </div>
+
+      {/* EDMS Return Dialog - shown after generating when linked to EDMS */}
+      <ReturnToEDMSDialog
+        open={showReturnDialog}
+        returnUrl={edmsContext.returnUrl}
+        onClose={() => setShowReturnDialog(false)}
+        edmsError={edmsError}
+      />
     </div>
+  );
+}
+
+// Main export with Suspense boundary for useSearchParams
+export default function NavalLetterGenerator() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#1a1a2e',
+        color: '#b8860b'
+      }}>
+        Loading Naval Letter Formatter...
+      </div>
+    }>
+      <NavalLetterGeneratorInner />
+    </Suspense>
   );
 }
