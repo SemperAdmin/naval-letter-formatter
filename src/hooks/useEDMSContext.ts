@@ -50,7 +50,25 @@ export function useEDMSContext(): EDMSContext {
   const edmsContext = useMemo(() => {
     const edmsId = searchParams.get('edmsId');
     const unitCode = searchParams.get('unitCode');
-    const returnUrl = searchParams.get('returnUrl');
+    const rawReturnUrl = searchParams.get('returnUrl');
+
+    // Decode returnUrl if it's still URL-encoded (handles double-encoding)
+    let returnUrl = rawReturnUrl;
+    if (rawReturnUrl) {
+      try {
+        // Keep decoding while there are encoded characters
+        let decoded = rawReturnUrl;
+        while (decoded.includes('%')) {
+          const newDecoded = decodeURIComponent(decoded);
+          if (newDecoded === decoded) break; // No more decoding possible
+          decoded = newDecoded;
+        }
+        returnUrl = decoded;
+      } catch {
+        // If decoding fails, use the raw value
+        returnUrl = rawReturnUrl;
+      }
+    }
 
     return {
       isLinked: !!edmsId,
