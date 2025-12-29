@@ -5,10 +5,11 @@
  * and provides context for optional integration features.
  *
  * URL Parameters:
- * - edmsId: Unique identifier of the EDMS record
- * - unitCode: Unit code for auto-selection (RUC code)
+ * - edmsId: Unique identifier of the EDMS record (request_id)
+ * - unitCode: Unit code for auto-selection (unit_uic)
  * - returnUrl: URL to redirect back to EDMS after completion
- * - token: Authentication token for EDMS API calls
+ * - supabaseUrl: Supabase project URL for API calls
+ * - supabaseKey: Supabase anon key for authentication
  */
 
 'use client';
@@ -19,12 +20,34 @@ import { useMemo } from 'react';
 export interface EDMSContext {
   /** Whether the NLF was launched from an EDMS system */
   isLinked: boolean;
-  /** EDMS record identifier */
+  /** EDMS record identifier (request_id) */
   edmsId: string | null;
-  /** Unit code for auto-selection (RUC code) */
+  /** Unit code for auto-selection (unit_uic) */
   unitCode: string | null;
   /** URL to return to after completion */
   returnUrl: string | null;
+  /** Supabase project URL */
+  supabaseUrl: string | null;
+  /** Supabase anon key */
+  supabaseKey: string | null;
+}
+
+/**
+ * Helper to decode URL-encoded strings (handles double-encoding)
+ */
+function decodeUrlParam(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    let decoded = value;
+    while (decoded.includes('%')) {
+      const newDecoded = decodeURIComponent(decoded);
+      if (newDecoded === decoded) break;
+      decoded = newDecoded;
+    }
+    return decoded;
+  } catch {
+    return value;
+  }
 }
 
 /**
@@ -40,9 +63,9 @@ export interface EDMSContext {
  * // Returns: { isLinked: false, edmsId: null, ... }
  *
  * @example
- * // EDMS launch
- * // URL: https://nlf.example.com/?edmsId=REC-2024-001&unitCode=12345&returnUrl=https://edms.example.com/record/REC-2024-001&token=abc123
- * // Returns: { isLinked: true, edmsId: 'REC-2024-001', unitCode: '12345', ... }
+ * // EDMS launch with Supabase
+ * // URL: https://nlf.example.com/?edmsId=req-123&unitCode=M00001&returnUrl=...&supabaseUrl=https://xxx.supabase.co&supabaseKey=eyJ...
+ * // Returns: { isLinked: true, edmsId: 'req-123', supabaseUrl: 'https://xxx.supabase.co', ... }
  */
 export function useEDMSContext(): EDMSContext {
   const searchParams = useSearchParams();
@@ -50,31 +73,17 @@ export function useEDMSContext(): EDMSContext {
   const edmsContext = useMemo(() => {
     const edmsId = searchParams.get('edmsId');
     const unitCode = searchParams.get('unitCode');
-    const rawReturnUrl = searchParams.get('returnUrl');
-
-    // Decode returnUrl if it's still URL-encoded (handles double-encoding)
-    let returnUrl = rawReturnUrl;
-    if (rawReturnUrl) {
-      try {
-        // Keep decoding while there are encoded characters
-        let decoded = rawReturnUrl;
-        while (decoded.includes('%')) {
-          const newDecoded = decodeURIComponent(decoded);
-          if (newDecoded === decoded) break; // No more decoding possible
-          decoded = newDecoded;
-        }
-        returnUrl = decoded;
-      } catch {
-        // If decoding fails, use the raw value
-        returnUrl = rawReturnUrl;
-      }
-    }
+    const returnUrl = decodeUrlParam(searchParams.get('returnUrl'));
+    const supabaseUrl = decodeUrlParam(searchParams.get('supabaseUrl'));
+    const supabaseKey = searchParams.get('supabaseKey');
 
     return {
       isLinked: !!edmsId,
       edmsId,
       unitCode,
-      returnUrl
+      returnUrl,
+      supabaseUrl,
+      supabaseKey
     };
   }, [searchParams]);
 
@@ -82,11 +91,21 @@ export function useEDMSContext(): EDMSContext {
 }
 
 /**
- * Type guard to check if EDMS context has all required fields for API calls
+ * Type guard to check if EDMS context has required fields for Supabase API calls
  */
 export function isValidEDMSContext(context: EDMSContext): context is EDMSContext & {
   edmsId: string;
+  supabaseUrl: string;
+  supabaseKey: string;
+} {
+  return !!(context.isLinked && context.edmsId && context.supabaseUrl && context.supabaseKey);
+}
+
+/**
+ * Type guard to check if context has return URL for navigation
+ */
+export function hasReturnUrl(context: EDMSContext): context is EDMSContext & {
   returnUrl: string;
 } {
-  return !!(context.isLinked && context.edmsId && context.returnUrl);
+  return !!context.returnUrl;
 }
