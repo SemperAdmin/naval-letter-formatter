@@ -25,8 +25,6 @@ export interface EDMSContext {
   unitCode: string | null;
   /** URL to return to after completion */
   returnUrl: string | null;
-  /** Authentication token for EDMS API */
-  token: string | null;
 }
 
 /**
@@ -53,14 +51,12 @@ export function useEDMSContext(): EDMSContext {
     const edmsId = searchParams.get('edmsId');
     const unitCode = searchParams.get('unitCode');
     const returnUrl = searchParams.get('returnUrl');
-    const token = searchParams.get('token');
 
     return {
       isLinked: !!edmsId,
       edmsId,
       unitCode,
-      returnUrl,
-      token
+      returnUrl
     };
   }, [searchParams]);
 
@@ -73,7 +69,6 @@ export function useEDMSContext(): EDMSContext {
 export function isValidEDMSContext(context: EDMSContext): context is EDMSContext & {
   edmsId: string;
   returnUrl: string;
-  token: string;
 } {
-  return !!(context.isLinked && context.edmsId && context.returnUrl && context.token);
+  return !!(context.isLinked && context.edmsId && context.returnUrl);
 }
