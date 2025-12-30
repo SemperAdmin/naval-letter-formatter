@@ -1407,7 +1407,7 @@ if (enclsWithContent.length > 0) {
               Naval Letter Formatter
             </h1>
             <p style={{ marginTop: '0', fontSize: '1.2rem', color: '#6c757d' }}>by Semper Admin</p>
-            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}>Last Updated: 20251129</p>
+            <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic', opacity: '0.8' }}></p>
             {/* EDMS Link Indicator - shows when launched from EDMS */}
             {edmsContext.isLinked && (
               <div style={{ marginTop: '12px' }}>
