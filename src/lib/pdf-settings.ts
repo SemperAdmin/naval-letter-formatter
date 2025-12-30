@@ -79,9 +79,9 @@ export const PDF_SUBJECT = {
 
 // Line spacing
 export const PDF_SPACING = {
-  paragraph: 12,      // Space between each body paragraph/subparagraph
+  paragraph: 14.4,      // Space between each body paragraph/subparagraph
   emptyLine: 14.4,    // Height of one blank line
-  sectionGap: 12,     // Space between sections (Date->From, To->Subj, etc.)
+  sectionGap: 14.4,     // Space between sections (Date->From, To->Subj, etc.)
 };
 
 // Content width
