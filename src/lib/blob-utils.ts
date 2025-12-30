@@ -1,3 +1,5 @@
+const BLOB_URL_CLEANUP_DELAY_MS = 10000;
+
 /**
  * Opens a blob in a new browser tab with a suggested filename for download.
  * Uses an anchor tag with download attribute to preserve the filename.
@@ -21,5 +23,5 @@ export function openBlobInNewTab(blob: Blob, filename: string): void {
   document.body.removeChild(link);
 
   // Clean up the blob URL after a delay (give time for download to start)
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  setTimeout(() => URL.revokeObjectURL(url), BLOB_URL_CLEANUP_DELAY_MS);
 }
