@@ -77,11 +77,11 @@ export const PDF_SUBJECT = {
   continuationIndent: 36,
 };
 
-// Line spacing - adjust sectionGap to control space between all sections
+// Line spacing
 export const PDF_SPACING = {
-  paragraph: 12,      // Space between body paragraphs
+  paragraph: 12,      // Space between each body paragraph/subparagraph
   emptyLine: 14.4,    // Height of one blank line
-  sectionGap: 12,     // Space between sections (Date->From, To->Subj, Subj->Ref, etc.)
+  sectionGap: 12,     // Space between sections (Date->From, To->Subj, etc.)
 };
 
 // Content width
