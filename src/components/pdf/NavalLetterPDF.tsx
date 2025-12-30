@@ -98,7 +98,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     },
     
     subjectSection: {
-      marginTop: 0,
+      marginTop: 12,
       marginBottom: 12,
     },
     subjectLine: {
