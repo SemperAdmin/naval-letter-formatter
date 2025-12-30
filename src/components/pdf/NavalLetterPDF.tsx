@@ -78,7 +78,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     // SSIC block - pushed right
     addressBlock: {
       marginLeft: PDF_INDENTS.ssicBlock,
-      marginBottom: 0,
+      marginBottom: 12,
     },
     addressLine: {
       fontFamily: fontFamily,
@@ -99,7 +99,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     
     subjectSection: {
       marginTop: 0,
-      marginBottom: 0,
+      marginBottom: 12,
     },
     subjectLine: {
       flexDirection: 'row',
@@ -114,7 +114,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     },
     
     refEnclSection: {
-      marginBottom: 0,
+      marginBottom: 12,
     },
     refEnclLine: {
       flexDirection: 'row',
@@ -129,7 +129,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     },
     
     bodySection: {
-      marginBottom: 0,
+      marginBottom: 12,
     },
     
     signatureBlock: {
