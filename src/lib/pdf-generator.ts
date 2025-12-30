@@ -3,6 +3,7 @@ import { FormData, ParagraphData } from '@/types';
 import { registerPDFFonts } from './pdf-fonts';
 import NavalLetterPDF from '@/components/pdf/NavalLetterPDF';
 import React from 'react';
+import { openBlobInNewTab } from './blob-utils';
 
 // Track if fonts have been registered
 let fontsRegistered = false;
@@ -67,10 +68,6 @@ export async function downloadPDF(
     filename = `${formData.subj || 'NavalLetter'}.pdf`;
   }
 
-  // Open in new tab for download
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank', 'noopener,noreferrer');
-
-  // Clean up the blob URL after a delay (give time for new tab to load)
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  // Open in new tab for download with proper filename
+  openBlobInNewTab(blob, filename);
 }
