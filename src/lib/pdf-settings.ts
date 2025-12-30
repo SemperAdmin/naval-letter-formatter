@@ -16,7 +16,7 @@ export const PDF_PAGE = {
 
 // Page margins
 export const PDF_MARGINS = {
-  top: 36,           // 0.5" - REDUCED from 1" to move header down less
+  top: 54,           // 0.5" - REDUCED from 1" to move header down less
   bottom: 72,        // 1"
   left: 72,          // 1"
   right: 72,         // 1"
