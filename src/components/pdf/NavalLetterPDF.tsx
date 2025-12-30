@@ -175,6 +175,22 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       fontSize: PDF_FONT_SIZES.body,
       fontFamily: fontFamily,
     },
+    
+    // Continuation page header (pages 2+)
+    continuationHeader: {
+      position: 'absolute',
+      top: 36,
+      left: PDF_MARGINS.left,
+      right: PDF_MARGINS.right,
+    },
+    continuationSubjLabel: {
+      width: PDF_INDENTS.tabStop1,
+    },
+    continuationSubjLine: {
+      flexDirection: 'row',
+      fontFamily: fontFamily,
+      fontSize: PDF_FONT_SIZES.body,
+    },
   });
 };
 
@@ -502,11 +518,25 @@ export function NavalLetterPDF({
           </View>
         )}
 
-        {/* Footer */}
+        {/* Footer - page number on pages after first */}
         <Text
           style={styles.footer}
           render={({ pageNumber }) => (pageNumber > 1 ? pageNumber : '')}
           fixed
+        />
+        
+        {/* Continuation page header - Subject line on pages 2+ */}
+        <View
+          style={styles.continuationHeader}
+          fixed
+          render={({ pageNumber }) => (
+            pageNumber > 1 ? (
+              <View style={styles.continuationSubjLine}>
+                <Text style={styles.continuationSubjLabel}>Subj:</Text>
+                <Text>{formData.subj.toUpperCase()}</Text>
+              </View>
+            ) : null
+          )}
         />
       </Page>
     </Document>
