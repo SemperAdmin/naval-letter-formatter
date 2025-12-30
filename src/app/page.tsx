@@ -1194,8 +1194,7 @@ if (enclsWithContent.length > 0) {
   const handleEdmsSubmission = async () => {
     if (!edmsContext.isLinked) return;
 
-    const ssicMatch = SSICS.find(s => s.code === formData.ssic);
-    const ssicTitle = ssicMatch ? ssicMatch.title : '';
+    const ssicTitle = SSICS.find(s => s.code === formData.ssic)?.nomenclature ?? '';
 
     const result = await sendToEDMS(
       formData,
@@ -1213,7 +1212,7 @@ if (enclsWithContent.length > 0) {
       setEdmsError(null);
     } else {
       debugUserAction('EDMS Send Failed', { error: result.error });
-      setEdmsError(result.error || 'Failed to send to EDMS');
+      setEdmsError(result.error ?? 'Failed to send to EDMS');
     }
     setShowReturnDialog(true);
   };
