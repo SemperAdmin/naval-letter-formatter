@@ -4,12 +4,14 @@ import { registerPDFFonts } from './pdf-fonts';
 import NavalLetterPDF from '@/components/pdf/NavalLetterPDF';
 import React from 'react';
 import { openBlobInNewTab } from './blob-utils';
+import { addSignatureField } from './pdf-signature-field';
 
 // Track if fonts have been registered
 let fontsRegistered = false;
 
 /**
  * Generate a PDF blob from the naval letter data
+ * Includes a digital signature field for CAC/PKI signing in Adobe Reader
  */
 export async function generatePDFBlob(
   formData: FormData,
@@ -35,9 +37,20 @@ export async function generatePDFBlob(
     paragraphs,
   });
 
-  // Generate PDF blob
-  const blob = await pdf(document).toBlob();
-  return blob;
+  // Generate initial PDF blob
+  const initialBlob = await pdf(document).toBlob();
+
+  // Convert blob to bytes for pdf-lib processing
+  const pdfBytes = await initialBlob.arrayBuffer();
+
+  // Add digital signature field for CAC signing
+  const signedPdfBytes = await addSignatureField(pdfBytes, {
+    signerName: formData.sig || 'Signer',
+    fieldName: 'CAC_Signature',
+  });
+
+  // Return the modified PDF as a blob
+  return new Blob([signedPdfBytes], { type: 'application/pdf' });
 }
 
 /**
