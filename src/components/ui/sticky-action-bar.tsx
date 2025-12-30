@@ -16,13 +16,15 @@ interface SavedLetter {
   subj: string;
 }
 
+export type ExportFormat = 'docx' | 'pdf';
+
 interface StickyActionBarProps {
   onSaveDraft: () => void;
   onLoadDraft: (letterId: string) => void;
   onImport: () => void;
   onExport: () => void;
   onClearForm: () => void;
-  onGenerate: () => void;
+  onGenerate: (format: ExportFormat) => void;
   isGenerating: boolean;
   isValid: boolean;
   lastSaved?: string; // Timestamp of last save
@@ -50,8 +52,10 @@ export function StickyActionBar({
   const [showLabels, setShowLabels] = React.useState(true);
   const [showLoadDropdown, setShowLoadDropdown] = React.useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = React.useState(false);
+  const [showGenerateDropdown, setShowGenerateDropdown] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const templateDropdownRef = React.useRef<HTMLDivElement>(null);
+  const generateDropdownRef = React.useRef<HTMLDivElement>(null);
   const [activeTemplateType, setActiveTemplateType] = React.useState<'global' | 'unit'>('global');
   const [globalTemplates, setGlobalTemplates] = React.useState<Array<{ id: string; title: string; description?: string; documentType?: string; url: string }>>([]);
   const [unitTemplates, setUnitTemplates] = React.useState<Array<{ id: string; title: string; description?: string; unitName?: string; unitCode?: string; documentType?: string; url: string }>>([]);
@@ -86,13 +90,16 @@ export function StickyActionBar({
       } else if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
         setShowFilterDropdown(false);
       }
+      if (generateDropdownRef.current && !generateDropdownRef.current.contains(event.target as Node)) {
+        setShowGenerateDropdown(false);
+      }
     };
 
-    if (showLoadDropdown || showTemplateDropdown || showFilterDropdown) {
+    if (showLoadDropdown || showTemplateDropdown || showFilterDropdown || showGenerateDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showLoadDropdown, showTemplateDropdown, showFilterDropdown]);
+  }, [showLoadDropdown, showTemplateDropdown, showFilterDropdown, showGenerateDropdown]);
 
   // Load template indexes
   React.useEffect(() => {
@@ -168,6 +175,11 @@ export function StickyActionBar({
     await onLoadTemplateUrl(url);
     setShowTemplateDropdown(false);
     setTemplateLoading(false);
+  };
+
+  const handleGenerateClick = (format: ExportFormat) => {
+    setShowGenerateDropdown(false);
+    onGenerate(format);
   };
 
   const formatRelativeTime = (savedAt: string): string => {
@@ -652,6 +664,87 @@ export function StickyActionBar({
           font-size: 14px;
         }
 
+        .generate-dropdown-container {
+          position: relative;
+          display: inline-block;
+        }
+
+        .generate-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          background: white;
+          border: 2px solid #b8860b;
+          border-radius: 8px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          min-width: 200px;
+          z-index: 1000;
+          overflow: hidden;
+        }
+
+        .generate-dropdown-header {
+          padding: 10px 16px;
+          border-bottom: 1px solid #dee2e6;
+          background: #f8f9fa;
+          font-weight: 600;
+          color: #495057;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .generate-dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 16px;
+          cursor: pointer;
+          border: none;
+          background: none;
+          width: 100%;
+          text-align: left;
+          font-size: 14px;
+          color: #1a1a2e;
+          transition: background 0.2s ease;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .generate-dropdown-item:last-child {
+          border-bottom: none;
+        }
+
+        .generate-dropdown-item:hover:not(:disabled) {
+          background: linear-gradient(135deg, rgba(184, 134, 11, 0.1), rgba(255, 215, 0, 0.1));
+        }
+
+        .generate-dropdown-item:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .generate-dropdown-item i {
+          font-size: 18px;
+          color: #b8860b;
+          width: 24px;
+          text-align: center;
+        }
+
+        .generate-dropdown-item-text {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .generate-dropdown-item-title {
+          font-weight: 600;
+        }
+
+        .generate-dropdown-item-desc {
+          font-size: 11px;
+          color: #6c757d;
+          margin-top: 2px;
+        }
+
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -968,25 +1061,61 @@ export function StickyActionBar({
             {showLabels && <span>Clear</span>}
           </button>
 
-          <button
-            className="action-bar-btn action-bar-btn-primary"
-            onClick={onGenerate}
-            disabled={!isValid || isGenerating}
-            title={isValid ? "Generate Document" : "Fix validation errors to generate"}
-            type="button"
-          >
-            {isGenerating ? (
-              <>
-                <span className="loading-spinner"></span>
-                {showLabels && <span>Generating...</span>}
-              </>
-            ) : (
-              <>
-                <i className="fas fa-file-download"></i>
-                {showLabels && <span>Generate</span>}
-              </>
+          <div className="generate-dropdown-container" ref={generateDropdownRef}>
+            <button
+              className="action-bar-btn action-bar-btn-primary"
+              onClick={() => setShowGenerateDropdown(!showGenerateDropdown)}
+              disabled={!isValid || isGenerating}
+              title={isValid ? "Generate Document" : "Fix validation errors to generate"}
+              type="button"
+            >
+              {isGenerating ? (
+                <>
+                  <span className="loading-spinner"></span>
+                  {showLabels && <span>Generating...</span>}
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-file-download"></i>
+                  {showLabels && <span>Generate</span>}
+                  <i className="fas fa-chevron-down" style={{ fontSize: '10px', marginLeft: '6px' }}></i>
+                </>
+              )}
+            </button>
+
+            {showGenerateDropdown && (
+              <div className="generate-dropdown">
+                <div className="generate-dropdown-header">
+                  <i className="fas fa-download"></i>
+                  <span>Export Format</span>
+                </div>
+                <button
+                  type="button"
+                  className="generate-dropdown-item"
+                  onClick={() => handleGenerateClick('docx')}
+                  disabled={isGenerating}
+                >
+                  <i className="fas fa-file-word"></i>
+                  <div className="generate-dropdown-item-text">
+                    <span className="generate-dropdown-item-title">Word Document</span>
+                    <span className="generate-dropdown-item-desc">.docx format</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className="generate-dropdown-item"
+                  onClick={() => handleGenerateClick('pdf')}
+                  disabled={isGenerating}
+                >
+                  <i className="fas fa-file-pdf"></i>
+                  <div className="generate-dropdown-item-text">
+                    <span className="generate-dropdown-item-title">PDF Document</span>
+                    <span className="generate-dropdown-item-desc">.pdf format</span>
+                  </div>
+                </button>
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </>

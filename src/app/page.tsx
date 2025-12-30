@@ -29,7 +29,8 @@ import { ClosingBlockSection } from '@/components/letter/ClosingBlockSection';
 import { DocumentTypeSection } from '@/components/letter/DocumentTypeSection';
 import { CollapsibleFormSection } from '@/components/ui/collapsible-form-section';
 import { ValidationSummary } from '@/components/ui/validation-summary';
-import { StickyActionBar } from '@/components/ui/sticky-action-bar';
+import { StickyActionBar, ExportFormat } from '@/components/ui/sticky-action-bar';
+import { downloadPDF } from '@/lib/pdf-generator';
 import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 import { importNLDPFile, sanitizeImportedData } from '@/lib/nldp-utils';
@@ -1189,17 +1190,69 @@ if (enclsWithContent.length > 0) {
     });
   }
 
-  const generateDocument = async () => {
+  const generateDocument = async (format: ExportFormat = 'docx') => {
     debugUserAction('Generate Document', {
       documentType: formData.documentType,
       paragraphCount: paragraphs.length,
-      subject: formData.subj.substring(0, 30) + (formData.subj.length > 30 ? '...' : '')
+      subject: formData.subj.substring(0, 30) + (formData.subj.length > 30 ? '...' : ''),
+      format
     });
-    
+
     setIsGenerating(true);
     try {
       saveLetter(); // Save the current state before generating
 
+      // Handle PDF export
+      if (format === 'pdf') {
+        await downloadPDF(
+          formData,
+          vias,
+          references,
+          enclosures,
+          copyTos,
+          paragraphs
+        );
+
+        let filename: string;
+        if (formData.documentType === 'endorsement') {
+          filename = `${formData.endorsementLevel}_ENDORSEMENT_on_${formData.subj || 'letter'}_Page${formData.startingPageNumber}.pdf`;
+        } else {
+          filename = `${formData.subj || 'NavalLetter'}.pdf`;
+        }
+
+        debugUserAction('PDF Generated Successfully', { filename });
+
+        // If linked to EDMS, send data back to the EDMS system
+        if (edmsContext.isLinked) {
+          const ssicMatch = SSICS.find(s => s.code === formData.ssic);
+          const ssicTitle = ssicMatch ? ssicMatch.title : '';
+
+          const result = await sendToEDMS(
+            formData,
+            vias,
+            references,
+            enclosures,
+            copyTos,
+            paragraphs,
+            edmsContext,
+            ssicTitle
+          );
+
+          if (result.success) {
+            debugUserAction('EDMS Send Success', { edmsId: edmsContext.edmsId });
+            setEdmsError(null);
+            setShowReturnDialog(true);
+          } else {
+            debugUserAction('EDMS Send Failed', { error: result.error });
+            setEdmsError(result.error || 'Failed to send to EDMS');
+            setShowReturnDialog(true);
+          }
+        }
+
+        return;
+      }
+
+      // Handle Word export (existing logic)
       let doc;
       let filename;
 
