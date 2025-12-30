@@ -1,14 +1,9 @@
 /**
  * PDF Settings for Naval Letter Generation
  * 
- * FINAL CORRECTED VALUES - Precisely matched against Word document
- *
- * Word Document Key Settings:
- * - pgMar: top="0", right="1440", bottom="1440", left="1440", header="708"
- * - Seal: 458700 EMUs from page edge (0.5"), size 914400 EMUs (1")
- * - Seal uses wrapSquare - text wraps around it
- * 
- * Measurements: 1 inch = 72 points = 1440 TWIPs = 914400 EMUs
+ * UPDATED: Removed extra blank lines between sections
+ * Spacing now matches the tight spacing between paragraphs
+ * (like between "2. Points of contact." and "a. Primary CDDM")
  */
 
 // Page dimensions
@@ -18,10 +13,9 @@ export const PDF_PAGE = {
   orientation: 'portrait' as const,
 };
 
-// Page margins - matches Word: left/right/bottom = 1"
-// Top margin is 0 in Word, but content starts after header area
+// Page margins
 export const PDF_MARGINS = {
-  top: 72,           // 1" - standard top margin for body content
+  top: 72,           // 1"
   bottom: 72,        // 1"
   left: 72,          // 1"
   right: 72,         // 1"
@@ -29,69 +23,38 @@ export const PDF_MARGINS = {
 
 // Font sizes in points
 export const PDF_FONT_SIZES = {
-  title: 10,         // Header title (UNITED STATES MARINE CORPS) - sz="20" half-pts
-  unitLines: 8,      // Unit address lines - sz="16" half-pts
-  body: 12,          // Body text - sz="24" half-pts
+  title: 10,         // Header title
+  unitLines: 8,      // Unit address lines
+  body: 12,          // Body text
 };
 
 // Colors
 export const PDF_COLORS = {
-  usmc: '#000000',   // Black for USMC
-  don: '#002D72',    // Navy blue for DON
+  usmc: '#000000',
+  don: '#002D72',
 };
 
-// DoD Seal dimensions and position (from Word header2.xml)
-// Positioned relative to PAGE edge, not margin
+// DoD Seal
 export const PDF_SEAL = {
-  width: 72,         // 1" (914400 EMUs)
-  height: 72,        // 1"
-  offsetX: 36,       // 0.5" from page left edge (458700 EMUs)
-  offsetY: 36,       // 0.5" from page top edge
-};
-
-// Letterhead positioning
-// In Word, letterhead is centered text that wraps around the seal
-// The seal occupies 0.5" to 1.5" horizontally
-// Letterhead text is centered on the page, but the left portion is blocked by seal
-export const PDF_LETTERHEAD = {
-  // Vertical position - align with seal (seal top is at 0.5")
-  // Word header="708" TWIPs = 35.4pt from page top for header content start
-  topMargin: 36,     // Start at 0.5" from page top (aligns with seal top)
+  width: 72,
+  height: 72,
+  offsetX: 36,
+  offsetY: 36,
 };
 
 // Indentation positions in points
 export const PDF_INDENTS = {
-  // Tab stop for From/To/Via/Subj/Ref/Encl labels
-  // Word: w:pos="720" TWIPs = 36pt = 0.5"
   tabStop1: 36,
-
-  // Tab stop 2 for Via/Ref numbering  
-  // Word: w:pos="1046" TWIPs = 52.3pt
   tabStop2: 52.3,
-
-  // SSIC/Code/Date block position
-  // Word: w:ind w:left="7920" TWIPs = 396pt from left margin edge
-  // This means 5.5" from left margin = 4.5" indent from content area
-  // In react-pdf with 1" margins, content width is 6.5"
-  // Position from left margin: 396 - 72 = 324pt
   ssicBlock: 324,
-
-  // Signature block indent
-  // Word: w:ind w:left="4680" TWIPs = 234pt = 3.25"
   signature: 234,
-
-  // Reference/Enclosure hanging indent
-  refHangingTimes: 54,    // 1080 TWIPs
-  refHangingCourier: 79.2, // 1584 TWIPs
-
-  // Paragraph level spacing (0.25" per level)
-  levelSpacing: 18,  // 360 TWIPs
-
-  // Copy-to indent
+  refHangingTimes: 54,
+  refHangingCourier: 79.2,
+  levelSpacing: 18,
   copyTo: 36,
 };
 
-// Paragraph tab stops for 8-level numbering
+// Paragraph tab stops
 export const PDF_PARAGRAPH_TABS = {
   1: { citation: 0, text: 18 },
   2: { citation: 18, text: 36 },
@@ -103,16 +66,22 @@ export const PDF_PARAGRAPH_TABS = {
   8: { citation: 126, text: 144 },
 } as const;
 
-// Subject line configuration
+// Subject line
 export const PDF_SUBJECT = {
   maxLineLength: 57,
   continuationIndent: 36,
 };
 
-// Line spacing
+// Line spacing - NO extra blank lines between sections
 export const PDF_SPACING = {
-  paragraph: 12,
-  emptyLine: 14.4,   // Height of one empty line
+  // Standard paragraph spacing (bottom margin after each paragraph/line)
+  paragraph: 0,      // No extra space - just line height
+  
+  // Empty line height when explicitly needed
+  emptyLine: 14.4,
+  
+  // Section spacing - same as normal line flow (NO blank line)
+  sectionGap: 0,
 };
 
 // Content width
