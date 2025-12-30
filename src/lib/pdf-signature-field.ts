@@ -6,7 +6,7 @@
  */
 
 import { PDFDocument, rgb } from 'pdf-lib';
-import { PDF_INDENTS, PDF_PAGE } from './pdf-settings';
+import { PDF_INDENTS, PDF_PAGE, PDF_SPACING, PDF_MARGINS } from './pdf-settings';
 
 // Signature field dimensions in points (1 inch = 72 points)
 const SIGNATURE_FIELD = {
@@ -15,6 +15,20 @@ const SIGNATURE_FIELD = {
   xOffset: PDF_INDENTS.signature,  // 3.25" from page left (aligned with signature block)
   yAboveName: 36,      // Space above the typed name where signature appears
 };
+
+// Text appearance constants for the placeholder
+const PLACEHOLDER_TEXT = {
+  content: 'SIGN HERE',
+  size: 10,
+  hPadding: 25,
+  vOffset: 4,
+  color: rgb(0.4, 0.4, 0.6),
+};
+
+// Position estimation bounds
+const MIN_Y_RATIO = 0.20;
+const MAX_Y_RATIO = 0.60;
+const DEFAULT_Y_RATIO = 0.25;
 
 /**
  * Configuration for signature field placement
@@ -26,6 +40,33 @@ export interface SignatureFieldConfig {
   fieldName?: string;
   /** Signer's name (for field tooltip) */
   signerName?: string;
+  /** Approximate number of content lines for position estimation */
+  contentLines?: number;
+}
+
+/**
+ * Estimates the Y position of the signature block based on typical naval letter layout.
+ *
+ * @param pageHeight - Height of the page in points
+ * @param contentLines - Approximate number of content lines on the page
+ * @returns Estimated Y position for the signature field
+ */
+export function estimateSignatureYPosition(
+  pageHeight: number = PDF_PAGE.height,
+  contentLines: number = 30
+): number {
+  // Typical naval letter has signature block 2-3 inches from bottom on last page
+  // Adjust based on content density
+  const contentHeight = contentLines * PDF_SPACING.emptyLine;
+
+  // Position signature about 3 lines above where typed name would be
+  const estimatedNamePosition = pageHeight - PDF_MARGINS.bottom - contentHeight;
+
+  // Ensure reasonable bounds (between 20% and 60% from bottom)
+  const minY = pageHeight * MIN_Y_RATIO;
+  const maxY = pageHeight * MAX_Y_RATIO;
+
+  return Math.max(minY, Math.min(maxY, estimatedNamePosition + SIGNATURE_FIELD.yAboveName));
 }
 
 /**
@@ -47,9 +88,12 @@ export async function addSignatureField(
   const lastPage = pages[pages.length - 1];
   const { height } = lastPage.getSize();
 
-  // Calculate Y position - default to lower third of page where signature typically appears
-  // In PDF coordinates, Y=0 is at bottom
-  const yPosition = config.yPosition ?? (height * 0.25); // ~25% from bottom of page
+  // Calculate Y position using estimation if contentLines provided, otherwise use default
+  const yPosition =
+    config.yPosition ??
+    (config.contentLines
+      ? estimateSignatureYPosition(height, config.contentLines)
+      : height * DEFAULT_Y_RATIO);
 
   // Draw a visual indicator for the signature box (visible placeholder)
   lastPage.drawRectangle({
@@ -64,41 +108,13 @@ export async function addSignatureField(
   });
 
   // Add "SIGN HERE" text inside the box
-  lastPage.drawText('SIGN HERE', {
-    x: SIGNATURE_FIELD.xOffset + 25,
-    y: yPosition + SIGNATURE_FIELD.height / 2 - 4,
-    size: 10,
-    color: rgb(0.4, 0.4, 0.6),
+  lastPage.drawText(PLACEHOLDER_TEXT.content, {
+    x: SIGNATURE_FIELD.xOffset + PLACEHOLDER_TEXT.hPadding,
+    y: yPosition + SIGNATURE_FIELD.height / 2 - PLACEHOLDER_TEXT.vOffset,
+    size: PLACEHOLDER_TEXT.size,
+    color: PLACEHOLDER_TEXT.color,
   });
 
   // Save and return the modified PDF
   return pdfDoc.save();
-}
-
-/**
- * Estimates the Y position of the signature block based on typical naval letter layout.
- * This is a fallback when exact position cannot be determined.
- *
- * @param pageHeight - Height of the page in points
- * @param contentLines - Approximate number of content lines on the page
- * @returns Estimated Y position for the signature field
- */
-export function estimateSignatureYPosition(
-  pageHeight: number = PDF_PAGE.height,
-  contentLines: number = 30
-): number {
-  // Typical naval letter has signature block 2-3 inches from bottom on last page
-  // Adjust based on content density
-  const lineHeight = 14.4; // Approximate line height in points
-  const topMargin = 72; // 1 inch
-  const contentHeight = contentLines * lineHeight;
-
-  // Position signature about 3 lines above where typed name would be
-  const estimatedNamePosition = pageHeight - topMargin - contentHeight;
-
-  // Ensure reasonable bounds (between 20% and 60% from bottom)
-  const minY = pageHeight * 0.20;
-  const maxY = pageHeight * 0.60;
-
-  return Math.max(minY, Math.min(maxY, estimatedNamePosition + SIGNATURE_FIELD.yAboveName));
 }
