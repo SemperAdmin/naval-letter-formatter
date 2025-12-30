@@ -79,9 +79,9 @@ export const PDF_SUBJECT = {
 
 // Line spacing
 export const PDF_SPACING = {
-  paragraph: 0,
+  paragraph: 14.4,
   emptyLine: 14.4,
-  sectionGap: 0,
+  sectionGap: 14.4,
 };
 
 // Content width
