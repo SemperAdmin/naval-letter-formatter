@@ -6,7 +6,7 @@
  */
 
 import { PDFDocument, rgb } from 'pdf-lib';
-import { PDF_INDENTS, PDF_PAGE, PDF_SPACING, PDF_MARGINS } from './pdf-settings';
+import { PDF_INDENTS, PDF_PAGE, PDF_SPACING } from './pdf-settings';
 
 // Signature field dimensions in points (1 inch = 72 points)
 const SIGNATURE_FIELD = {
@@ -36,10 +36,6 @@ const DEFAULT_Y_RATIO = 0.25;
 export interface SignatureFieldConfig {
   /** Y position from bottom of page in points (if known) */
   yPosition?: number;
-  /** Field name for the signature */
-  fieldName?: string;
-  /** Signer's name (for field tooltip) */
-  signerName?: string;
   /** Approximate number of content lines for position estimation */
   contentLines?: number;
 }
@@ -60,7 +56,9 @@ export function estimateSignatureYPosition(
   const contentHeight = contentLines * PDF_SPACING.emptyLine;
 
   // Position signature about 3 lines above where typed name would be
-  const estimatedNamePosition = pageHeight - PDF_MARGINS.bottom - contentHeight;
+  // Note: Using 72pt (1 inch) as effective top margin where content starts
+  const TOP_MARGIN_PT = 72;
+  const estimatedNamePosition = pageHeight - TOP_MARGIN_PT - contentHeight;
 
   // Ensure reasonable bounds (between 20% and 60% from bottom)
   const minY = pageHeight * MIN_Y_RATIO;

@@ -5,9 +5,15 @@ import NavalLetterPDF from '@/components/pdf/NavalLetterPDF';
 import React from 'react';
 import { openBlobInNewTab } from './blob-utils';
 import { addSignatureField } from './pdf-signature-field';
+import { logError } from './console-utils';
 
 // Track if fonts have been registered
 let fontsRegistered = false;
+
+// Estimated line count for fixed header content:
+// Header title (1) + unit lines (3) + blank (1) + SSIC/code/date (3) + blank (1) +
+// from/to (2) + subj (2) + blank (1) = 14 lines, rounded up to 15 for margin
+const FIXED_HEADER_LINES = 15;
 
 /**
  * Generate a PDF blob from the naval letter data
@@ -44,24 +50,22 @@ export async function generatePDFBlob(
   try {
     const pdfBytes = await initialBlob.arrayBuffer();
 
-    // Estimate content lines for signature positioning:
-    // Header (~5 lines) + date block (3) + from/to (2) + subj (2) + paragraphs + refs/encls
+    // Estimate content lines for signature positioning
+    const LINES_PER_PARAGRAPH = 3; // Average lines per body paragraph
     const estimatedContentLines =
-      15 + // Fixed header content (header, date, from/to, subj)
+      FIXED_HEADER_LINES +
       vias.filter(v => v.trim()).length +
       references.filter(r => r.trim()).length +
       enclosures.filter(e => e.trim()).length +
-      paragraphs.length * 3; // Average ~3 lines per paragraph
+      paragraphs.length * LINES_PER_PARAGRAPH;
 
     const signedPdfBytes = await addSignatureField(pdfBytes, {
-      signerName: formData.sig || 'Signer',
-      fieldName: 'CAC_Signature',
       contentLines: estimatedContentLines,
     });
     return new Blob([signedPdfBytes], { type: 'application/pdf' });
   } catch (error) {
     // If signature field addition fails, return the original PDF
-    console.warn('Could not add signature field to PDF:', error);
+    logError('PDF Signature Field', error);
     return initialBlob;
   }
 }
