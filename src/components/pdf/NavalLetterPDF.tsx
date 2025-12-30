@@ -21,6 +21,10 @@ import {
   PDF_CONTENT_WIDTH,
   PDF_SPACING,
 } from '@/lib/pdf-settings';
+
+// Height reserved for continuation page header (Subj line + spacing)
+// Approximately 2 lines of text + sectionGap
+const CONTINUATION_HEADER_HEIGHT = 50;
 import { getPDFSealDataUrl } from '@/lib/pdf-seal';
 import { parseAndFormatDate } from '@/lib/date-utils';
 import { splitSubject } from '@/lib/naval-format-utils';
@@ -141,7 +145,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     },
     
     signatureBlock: {
-      marginTop: 24,
+      marginTop: 0,
       marginLeft: PDF_INDENTS.signature,
     },
     signatureLine: {
@@ -177,17 +181,24 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     },
     
     // Continuation page header (pages 2+)
+    // This is a fixed header that reserves space at the top of continuation pages
     continuationHeader: {
-      position: 'absolute',
-      top: 36,
-      left: PDF_MARGINS.left,
-      right: PDF_MARGINS.right,
+      height: CONTINUATION_HEADER_HEIGHT,
+      marginBottom: PDF_SPACING.sectionGap,
+    },
+    continuationHeaderHidden: {
+      height: 0,
     },
     continuationSubjLabel: {
       width: PDF_INDENTS.tabStop1,
     },
     continuationSubjLine: {
       flexDirection: 'row',
+      fontFamily: fontFamily,
+      fontSize: PDF_FONT_SIZES.body,
+    },
+    continuationSubjText: {
+      flex: 1,
       fontFamily: fontFamily,
       fontSize: PDF_FONT_SIZES.body,
     },
@@ -526,16 +537,20 @@ export function NavalLetterPDF({
         />
         
         {/* Continuation page header - Subject line on pages 2+ */}
+        {/* This fixed View reserves space at top and shows subject on continuation pages */}
         <View
-          style={styles.continuationHeader}
           fixed
           render={({ pageNumber }) => (
             pageNumber > 1 ? (
-              <View style={styles.continuationSubjLine}>
-                <Text style={styles.continuationSubjLabel}>Subj:</Text>
-                <Text>{formData.subj.toUpperCase()}</Text>
+              <View style={styles.continuationHeader}>
+                <View style={styles.continuationSubjLine}>
+                  <Text style={styles.continuationSubjLabel}>Subj:</Text>
+                  <Text style={styles.continuationSubjText}>{formData.subj.toUpperCase()}</Text>
+                </View>
               </View>
-            ) : null
+            ) : (
+              <View style={styles.continuationHeaderHidden} />
+            )
           )}
         />
       </Page>
