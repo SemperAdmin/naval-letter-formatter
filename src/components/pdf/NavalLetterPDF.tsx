@@ -19,9 +19,7 @@ import {
   PDF_SEAL,
   PDF_SUBJECT,
   PDF_CONTENT_WIDTH,
-  PDF_LETTERHEAD,
   PDF_SPACING,
-  PDF_FIRST_PAGE_CONTENT_START,
 } from '@/lib/pdf-settings';
 import { getPDFSealDataUrl } from '@/lib/pdf-seal';
 import { parseAndFormatDate } from '@/lib/date-utils';
@@ -36,15 +34,23 @@ interface NavalLetterPDFProps {
   paragraphs: ParagraphData[];
 }
 
-// Create styles with corrected header positioning
+/**
+ * Create styles matching Word document layout exactly
+ * 
+ * Word Layout Structure:
+ * - Seal: absolute positioned at 0.5" from page top-left, 1"x1"
+ * - Letterhead: centered text, positioned to align with seal vertically
+ * - SSIC block: right-aligned at 5.5" from left margin
+ * - From/To/etc: standard body content with tab stops
+ */
 const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON') => {
   const fontFamily = getPDFBodyFont(bodyFont);
   const headerColor = headerType === 'DON' ? PDF_COLORS.don : PDF_COLORS.usmc;
 
   return StyleSheet.create({
+    // Page with standard margins
     page: {
-      // No top padding - we position everything absolutely or with specific margins
-      paddingTop: 0,
+      paddingTop: PDF_MARGINS.top,
       paddingBottom: PDF_MARGINS.bottom,
       paddingLeft: PDF_MARGINS.left,
       paddingRight: PDF_MARGINS.right,
@@ -52,51 +58,44 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       fontSize: PDF_FONT_SIZES.body,
     },
     
-    // Seal - positioned absolutely from page edge
-    // Word: 0.5" from left edge, 0.5" from top edge, 1" x 1"
+    // Seal - ABSOLUTE position from PAGE edge (not margin)
+    // Word: 0.5" from left, 0.5" from top, 1"x1"
     seal: {
       position: 'absolute',
-      top: PDF_SEAL.offsetY,       // 36pt = 0.5"
-      left: PDF_SEAL.offsetX,      // 36pt = 0.5"
+      top: PDF_SEAL.offsetY,       // 36pt = 0.5" from page top
+      left: PDF_SEAL.offsetX,      // 36pt = 0.5" from page left
       width: PDF_SEAL.width,       // 72pt = 1"
       height: PDF_SEAL.height,     // 72pt = 1"
     },
     
-    // Letterhead container - positioned to align vertically with seal center
-    // Seal center is at 72pt from top (0.5" offset + 0.5" half-height)
-    // Letterhead should be centered around this point
+    // Letterhead container - centered, at top of content area
+    // In Word, this starts at the header position and is centered
     letterhead: {
-      position: 'absolute',
-      top: PDF_LETTERHEAD.topPosition,  // ~52pt to center text block with seal
-      left: PDF_MARGINS.left,
-      right: PDF_MARGINS.right,
+      marginBottom: PDF_SPACING.emptyLine,
     },
     
-    // Header title (UNITED STATES MARINE CORPS)
+    // Header title (UNITED STATES MARINE CORPS) - centered, bold
     headerTitle: {
       fontFamily: PDF_FONTS.SERIF,
-      fontSize: PDF_FONT_SIZES.title,  // 10pt
+      fontSize: PDF_FONT_SIZES.title,
       fontWeight: 'bold',
       textAlign: 'center',
       color: headerColor,
     },
     
-    // Unit address lines (smaller font, centered)
+    // Unit address lines - centered, smaller
     headerLine: {
       fontFamily: PDF_FONTS.SERIF,
-      fontSize: PDF_FONT_SIZES.unitLines,  // 8pt
+      fontSize: PDF_FONT_SIZES.unitLines,
       textAlign: 'center',
       color: headerColor,
     },
     
-    // Main content wrapper - starts below letterhead area
-    contentWrapper: {
-      marginTop: PDF_FIRST_PAGE_CONTENT_START,  // Start after seal/letterhead area
-    },
-    
-    // Address block (SSIC, Code, Date) - right-aligned
+    // SSIC/Code/Date block - right aligned
+    // Word: w:ind w:left="7920" = 5.5" from left margin = 396pt
+    // Relative to content area (after 1" left margin): 396 - 72 = 324pt
     addressBlock: {
-      marginLeft: PDF_INDENTS.ssicBlock,  // 324pt from content left
+      marginLeft: PDF_INDENTS.ssicBlock,
       marginBottom: PDF_SPACING.emptyLine,
     },
     addressLine: {
@@ -114,7 +113,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       fontSize: PDF_FONT_SIZES.body,
     },
     fromToLabel: {
-      width: PDF_INDENTS.tabStop1,  // 36pt = 0.5"
+      width: PDF_INDENTS.tabStop1,
     },
     
     // Subject section
@@ -161,7 +160,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       fontSize: PDF_FONT_SIZES.body,
     },
     
-    // Signature block
+    // Signature block - indented 3.25"
     signatureBlock: {
       marginTop: 24,
       marginLeft: PDF_INDENTS.signature,
@@ -190,7 +189,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       height: PDF_SPACING.emptyLine,
     },
     
-    // Footer
+    // Footer with page number
     footer: {
       position: 'absolute',
       bottom: 36,
@@ -337,6 +336,7 @@ export function NavalLetterPDF({
 
   const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), PDF_SUBJECT.maxLineLength);
 
+  // Courier spacing helpers
   const getFromToSpacing = (label: string): string => {
     if (formData.bodyFont === 'courier') {
       if (label === 'From') return 'From:  ';
@@ -363,10 +363,13 @@ export function NavalLetterPDF({
       subject="Generated Naval Letter Format"
     >
       <Page size="LETTER" style={styles.page}>
-        {/* DoD Seal - Absolute positioned 0.5" from top-left of page */}
+        {/* 
+          DoD Seal - ABSOLUTE positioned from PAGE edge
+          Must be 0.5" from top and left of page (not margin)
+        */}
         <Image src={sealDataUrl} style={styles.seal} />
 
-        {/* Letterhead - Absolute positioned to align with seal */}
+        {/* Letterhead - centered text block */}
         <View style={styles.letterhead}>
           <Text style={styles.headerTitle}>
             {formData.headerType === 'USMC'
@@ -378,176 +381,177 @@ export function NavalLetterPDF({
           {formData.line3 && <Text style={styles.headerLine}>{formData.line3}</Text>}
         </View>
 
-        {/* Main content - starts below letterhead area */}
-        <View style={styles.contentWrapper}>
-          {/* SSIC, Originator Code, Date */}
-          <View style={styles.addressBlock}>
-            <Text style={styles.addressLine}>{formData.ssic || ''}</Text>
-            <Text style={styles.addressLine}>{formData.originatorCode || ''}</Text>
-            <Text style={styles.addressLine}>{formattedDate}</Text>
-          </View>
+        {/* Empty line after letterhead */}
+        <View style={styles.emptyLine} />
 
-          {/* Empty line */}
-          <View style={styles.emptyLine} />
+        {/* SSIC, Originator Code, Date - right aligned */}
+        <View style={styles.addressBlock}>
+          <Text style={styles.addressLine}>{formData.ssic || ''}</Text>
+          <Text style={styles.addressLine}>{formData.originatorCode || ''}</Text>
+          <Text style={styles.addressLine}>{formattedDate}</Text>
+        </View>
 
-          {/* From/To/Via */}
-          <View style={styles.fromToSection}>
-            {formData.bodyFont === 'courier' ? (
-              <>
-                <Text style={styles.addressLine}>{getFromToSpacing('From')}{formData.from}</Text>
-                <Text style={styles.addressLine}>{getFromToSpacing('To')}{formData.to}</Text>
-              </>
-            ) : (
-              <>
-                <View style={styles.fromToLine}>
-                  <Text style={styles.fromToLabel}>From:</Text>
-                  <Text>{formData.from}</Text>
-                </View>
-                <View style={styles.fromToLine}>
-                  <Text style={styles.fromToLabel}>To:</Text>
-                  <Text>{formData.to}</Text>
-                </View>
-              </>
-            )}
+        {/* Empty line */}
+        <View style={styles.emptyLine} />
 
-            {viasWithContent.map((via, i) => (
-              formData.bodyFont === 'courier' ? (
-                <Text key={i} style={styles.addressLine}>
-                  {getViaSpacing(i, viasWithContent.length)}{via}
-                </Text>
-              ) : (
-                <View key={i} style={styles.fromToLine}>
-                  <Text style={styles.fromToLabel}>{i === 0 ? 'Via:' : ''}</Text>
-                  {viasWithContent.length > 1 ? (
-                    <Text>({i + 1}) {via}</Text>
-                  ) : (
-                    <Text>{via}</Text>
-                  )}
-                </View>
-              )
-            ))}
-          </View>
-
-          {/* Empty line before subject */}
-          <View style={styles.emptyLine} />
-
-          {/* Subject */}
-          <View style={styles.subjectSection}>
-            {formData.bodyFont === 'courier' ? (
-              <>
-                <Text>Subj:  {formattedSubjLines[0] || ''}</Text>
-                {formattedSubjLines.slice(1).map((line, i) => (
-                  <Text key={i} style={styles.subjectContinuation}>
-                    {'       '}{line}
-                  </Text>
-                ))}
-              </>
-            ) : (
-              <>
-                <View style={styles.subjectLine}>
-                  <Text style={styles.subjectLabel}>Subj:</Text>
-                  <Text>{formattedSubjLines[0] || ''}</Text>
-                </View>
-                {formattedSubjLines.slice(1).map((line, i) => (
-                  <Text key={i} style={{ marginLeft: PDF_INDENTS.tabStop1 }}>{line}</Text>
-                ))}
-              </>
-            )}
-          </View>
-
-          {/* Empty line */}
-          <View style={styles.emptyLine} />
-
-          {/* References */}
-          {refsWithContent.length > 0 && (
-            <View style={styles.refEnclSection}>
-              {refsWithContent.map((ref, i) => {
-                const refLetter = String.fromCharCode('a'.charCodeAt(0) + i);
-                if (formData.bodyFont === 'courier') {
-                  const prefix = i === 0
-                    ? `Ref:\u00A0\u00A0\u00A0(${refLetter})\u00A0`
-                    : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${refLetter})\u00A0`;
-                  return <Text key={i}>{prefix}{ref}</Text>;
-                }
-                return (
-                  <View key={i} style={styles.refEnclLine}>
-                    <Text style={styles.refEnclLabel}>{i === 0 ? 'Ref:' : ''}</Text>
-                    <Text>({refLetter}) {ref}</Text>
-                  </View>
-                );
-              })}
-            </View>
+        {/* From/To/Via section */}
+        <View style={styles.fromToSection}>
+          {formData.bodyFont === 'courier' ? (
+            <>
+              <Text style={styles.addressLine}>{getFromToSpacing('From')}{formData.from}</Text>
+              <Text style={styles.addressLine}>{getFromToSpacing('To')}{formData.to}</Text>
+            </>
+          ) : (
+            <>
+              <View style={styles.fromToLine}>
+                <Text style={styles.fromToLabel}>From:</Text>
+                <Text>{formData.from}</Text>
+              </View>
+              <View style={styles.fromToLine}>
+                <Text style={styles.fromToLabel}>To:</Text>
+                <Text>{formData.to}</Text>
+              </View>
+            </>
           )}
 
-          {/* Enclosures */}
-          {enclsWithContent.length > 0 && (
-            <View style={styles.refEnclSection}>
-              {refsWithContent.length > 0 && <View style={styles.emptyLine} />}
-              {enclsWithContent.map((encl, i) => {
-                const enclNum = i + 1;
-                if (formData.bodyFont === 'courier') {
-                  const prefix = i === 0
-                    ? `Encl:\u00A0\u00A0(${enclNum})\u00A0`
-                    : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${enclNum})\u00A0`;
-                  return <Text key={i}>{prefix}{encl}</Text>;
-                }
-                return (
-                  <View key={i} style={styles.refEnclLine}>
-                    <Text style={styles.refEnclLabel}>{i === 0 ? 'Encl:' : ''}</Text>
-                    <Text>({enclNum}) {encl}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          {/* Empty line before body */}
-          {(refsWithContent.length > 0 || enclsWithContent.length > 0) && (
-            <View style={styles.emptyLine} />
-          )}
-
-          {/* Body paragraphs */}
-          <View style={styles.bodySection}>
-            {paragraphsWithContent.map((p, i) => (
-              <ParagraphItem
-                key={p.id}
-                paragraph={p}
-                index={i}
-                allParagraphs={paragraphsWithContent}
-                bodyFont={formData.bodyFont}
-              />
-            ))}
-          </View>
-
-          {/* Signature block */}
-          {formData.sig && (
-            <View style={styles.signatureBlock}>
-              <View style={styles.emptyLine} />
-              <View style={styles.emptyLine} />
-              <Text style={styles.signatureLine}>{formData.sig.toUpperCase()}</Text>
-              {formData.delegationText && (
-                <Text style={styles.signatureLine}>{formData.delegationText}</Text>
-              )}
-            </View>
-          )}
-
-          {/* Copy to section */}
-          {copiesWithContent.length > 0 && (
-            <View style={styles.copyToSection}>
-              <View style={styles.emptyLine} />
-              <Text style={styles.copyToLabel}>
-                {formData.bodyFont === 'courier' ? 'Copy to:  ' : 'Copy to:'}
+          {/* Via entries */}
+          {viasWithContent.map((via, i) => (
+            formData.bodyFont === 'courier' ? (
+              <Text key={i} style={styles.addressLine}>
+                {getViaSpacing(i, viasWithContent.length)}{via}
               </Text>
-              {copiesWithContent.map((copy, i) => (
-                <Text key={i} style={styles.copyToLine}>
-                  {formData.bodyFont === 'courier' ? '       ' : ''}{copy}
+            ) : (
+              <View key={i} style={styles.fromToLine}>
+                <Text style={styles.fromToLabel}>{i === 0 ? 'Via:' : ''}</Text>
+                {viasWithContent.length > 1 ? (
+                  <Text>({i + 1}) {via}</Text>
+                ) : (
+                  <Text>{via}</Text>
+                )}
+              </View>
+            )
+          ))}
+        </View>
+
+        {/* Empty line before subject */}
+        <View style={styles.emptyLine} />
+
+        {/* Subject line */}
+        <View style={styles.subjectSection}>
+          {formData.bodyFont === 'courier' ? (
+            <>
+              <Text>Subj:  {formattedSubjLines[0] || ''}</Text>
+              {formattedSubjLines.slice(1).map((line, i) => (
+                <Text key={i} style={styles.subjectContinuation}>
+                  {'       '}{line}
                 </Text>
               ))}
-            </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.subjectLine}>
+                <Text style={styles.subjectLabel}>Subj:</Text>
+                <Text>{formattedSubjLines[0] || ''}</Text>
+              </View>
+              {formattedSubjLines.slice(1).map((line, i) => (
+                <Text key={i} style={{ marginLeft: PDF_INDENTS.tabStop1 }}>{line}</Text>
+              ))}
+            </>
           )}
         </View>
 
-        {/* Footer with page number - only on pages after first */}
+        {/* Empty line */}
+        <View style={styles.emptyLine} />
+
+        {/* References */}
+        {refsWithContent.length > 0 && (
+          <View style={styles.refEnclSection}>
+            {refsWithContent.map((ref, i) => {
+              const refLetter = String.fromCharCode('a'.charCodeAt(0) + i);
+              if (formData.bodyFont === 'courier') {
+                const prefix = i === 0
+                  ? `Ref:\u00A0\u00A0\u00A0(${refLetter})\u00A0`
+                  : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${refLetter})\u00A0`;
+                return <Text key={i}>{prefix}{ref}</Text>;
+              }
+              return (
+                <View key={i} style={styles.refEnclLine}>
+                  <Text style={styles.refEnclLabel}>{i === 0 ? 'Ref:' : ''}</Text>
+                  <Text>({refLetter}) {ref}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Enclosures */}
+        {enclsWithContent.length > 0 && (
+          <View style={styles.refEnclSection}>
+            {refsWithContent.length > 0 && <View style={styles.emptyLine} />}
+            {enclsWithContent.map((encl, i) => {
+              const enclNum = i + 1;
+              if (formData.bodyFont === 'courier') {
+                const prefix = i === 0
+                  ? `Encl:\u00A0\u00A0(${enclNum})\u00A0`
+                  : `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(${enclNum})\u00A0`;
+                return <Text key={i}>{prefix}{encl}</Text>;
+              }
+              return (
+                <View key={i} style={styles.refEnclLine}>
+                  <Text style={styles.refEnclLabel}>{i === 0 ? 'Encl:' : ''}</Text>
+                  <Text>({enclNum}) {encl}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Empty line before body */}
+        {(refsWithContent.length > 0 || enclsWithContent.length > 0) && (
+          <View style={styles.emptyLine} />
+        )}
+
+        {/* Body paragraphs */}
+        <View style={styles.bodySection}>
+          {paragraphsWithContent.map((p, i) => (
+            <ParagraphItem
+              key={p.id}
+              paragraph={p}
+              index={i}
+              allParagraphs={paragraphsWithContent}
+              bodyFont={formData.bodyFont}
+            />
+          ))}
+        </View>
+
+        {/* Signature block */}
+        {formData.sig && (
+          <View style={styles.signatureBlock}>
+            <View style={styles.emptyLine} />
+            <View style={styles.emptyLine} />
+            <Text style={styles.signatureLine}>{formData.sig.toUpperCase()}</Text>
+            {formData.delegationText && (
+              <Text style={styles.signatureLine}>{formData.delegationText}</Text>
+            )}
+          </View>
+        )}
+
+        {/* Copy to section */}
+        {copiesWithContent.length > 0 && (
+          <View style={styles.copyToSection}>
+            <View style={styles.emptyLine} />
+            <Text style={styles.copyToLabel}>
+              {formData.bodyFont === 'courier' ? 'Copy to:  ' : 'Copy to:'}
+            </Text>
+            {copiesWithContent.map((copy, i) => (
+              <Text key={i} style={styles.copyToLine}>
+                {formData.bodyFont === 'courier' ? '       ' : ''}{copy}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        {/* Footer - page number on pages after first */}
         <Text
           style={styles.footer}
           render={({ pageNumber }) => (pageNumber > 1 ? pageNumber : '')}
