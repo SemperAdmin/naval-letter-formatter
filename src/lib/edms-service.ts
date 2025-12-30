@@ -1,59 +1,48 @@
 /**
  * EDMS (Electronic Document Management System) Integration Service
  *
- * Handles all communication with external EDMS systems.
+ * Handles communication with Supabase backend for EDMS integration.
  * This service is only used when the NLF is launched from an EDMS
- * system with valid context parameters.
+ * system with valid Supabase context parameters.
  */
 
 import { EDMSContext, isValidEDMSContext } from '../hooks/useEDMSContext';
 import { FormData, ParagraphData } from '../types';
 
 /**
- * Payload structure for EDMS attachment API
+ * Payload structure for the Supabase Edge Function
  */
-export interface EDMSPayload {
-  /** Schema version for forward compatibility */
-  version: string;
-  /** ISO timestamp of creation */
-  createdAt: string;
-  /** EDMS record identifier this attachment belongs to */
-  edmsId: string;
-  /** Standard Subject Identification Code */
-  ssic: string;
-  /** SSIC title/description (if available) */
-  ssicTitle: string;
-  /** Letter subject line */
-  subject: string;
-  /** From field */
-  from: string;
-  /** To field */
-  to: string;
-  /** Via routing (intermediate addressees) */
-  via: string[];
-  /** Letter body paragraphs */
-  paragraphs: ParagraphData[];
-  /** References list */
-  references: string[];
-  /** Enclosures list */
-  enclosures: string[];
-  /** Copy to distribution list */
-  copyTos: string[];
-  /** Document type: basic letter or endorsement */
-  letterType: 'basic' | 'endorsement';
-  /** Header type: USMC or DON */
-  headerType: 'USMC' | 'DON';
-  /** Originator code */
-  originatorCode: string;
-  /** Letter date */
-  date: string;
-  /** Signature block */
-  signature: string;
-  /** Unit information */
-  unit: {
-    line1: string;
-    line2: string;
-    line3: string;
+export interface NLFPayload {
+  attachment: {
+    version: string;
+    createdAt: string;
+    edmsId: string;
+    ssic: string;
+    ssicTitle: string;
+    subject: string;
+    from: string;
+    to: string;
+    via: string[];
+    paragraphs: ParagraphData[];
+    references: string[];
+    enclosures: string[];
+    copyTos: string[];
+    letterType: 'basic' | 'endorsement';
+    headerType: 'USMC' | 'DON';
+    originatorCode: string;
+    date: string;
+    signature: string;
+    unit: {
+      line1: string;
+      line2: string;
+      line3: string;
+    };
+  };
+  filename: string;
+  unitCode: string | null;
+  recordUpdates: {
+    ssic: string;
+    subject: string;
   };
 }
 
@@ -61,21 +50,19 @@ export interface EDMSPayload {
  * Result of an EDMS send operation
  */
 export interface EDMSSendResult {
-  /** Whether the operation succeeded */
   success: boolean;
-  /** Error message if failed */
   error?: string;
-  /** Response data if successful */
   data?: {
-    attachmentId?: string;
+    documentId?: string;
+    fileUrl?: string;
     message?: string;
   };
 }
 
 /**
- * Build the EDMS payload from letter form data
+ * Build the NLF payload for the Supabase Edge Function
  */
-export function buildEDMSPayload(
+export function buildNLFPayload(
   formData: FormData,
   vias: string[],
   references: string[],
@@ -83,52 +70,58 @@ export function buildEDMSPayload(
   copyTos: string[],
   paragraphs: ParagraphData[],
   edmsId: string,
+  unitCode: string | null,
   ssicTitle: string = ''
-): EDMSPayload {
+): NLFPayload {
+  const timestamp = Date.now();
+  const sanitizedSubject = formData.subj
+    .replace(/[^a-zA-Z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .substring(0, 50);
+
   return {
-    version: '1.0',
-    createdAt: new Date().toISOString(),
-    edmsId,
-    ssic: formData.ssic,
-    ssicTitle,
-    subject: formData.subj,
-    from: formData.from,
-    to: formData.to,
-    via: vias.filter(v => v.trim() !== ''),
-    paragraphs,
-    references: references.filter(r => r.trim() !== ''),
-    enclosures: enclosures.filter(e => e.trim() !== ''),
-    copyTos: copyTos.filter(c => c.trim() !== ''),
-    letterType: formData.documentType,
-    headerType: formData.headerType,
-    originatorCode: formData.originatorCode,
-    date: formData.date,
-    signature: formData.sig,
-    unit: {
-      line1: formData.line1,
-      line2: formData.line2,
-      line3: formData.line3
+    attachment: {
+      version: '1.0',
+      createdAt: new Date().toISOString(),
+      edmsId,
+      ssic: formData.ssic,
+      ssicTitle,
+      subject: formData.subj,
+      from: formData.from,
+      to: formData.to,
+      via: vias.filter(v => v.trim() !== ''),
+      paragraphs,
+      references: references.filter(r => r.trim() !== ''),
+      enclosures: enclosures.filter(e => e.trim() !== ''),
+      copyTos: copyTos.filter(c => c.trim() !== ''),
+      letterType: formData.documentType,
+      headerType: formData.headerType,
+      originatorCode: formData.originatorCode,
+      date: formData.date,
+      signature: formData.sig,
+      unit: {
+        line1: formData.line1,
+        line2: formData.line2,
+        line3: formData.line3
+      }
+    },
+    filename: `naval-letter-${formData.ssic || 'draft'}-${sanitizedSubject || 'untitled'}-${timestamp}.json`,
+    unitCode,
+    recordUpdates: {
+      ssic: formData.ssic,
+      subject: formData.subj
     }
   };
 }
 
 /**
- * Generate a filename for the EDMS attachment
- */
-export function generateEDMSFilename(ssic: string, subject: string): string {
-  const sanitizedSubject = subject
-    .replace(/[^a-zA-Z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .substring(0, 50);
-  const timestamp = Date.now();
-  return `naval-letter-${ssic || 'draft'}-${sanitizedSubject || 'untitled'}-${timestamp}.json`;
-}
-
-/**
- * Send letter data to the EDMS system
+ * Send letter data to EDMS via Supabase Edge Function
  *
- * This function sends the structured letter data to the EDMS API endpoint.
- * The EDMS system can then store this as an attachment to the parent record.
+ * This function sends the structured letter data to the Supabase Edge Function
+ * which handles:
+ * 1. Uploading the JSON to Supabase Storage (edms-docs bucket)
+ * 2. Creating a record in edms_documents table
+ * 3. Updating the edms_requests record with ssic, subject, and document_ids
  *
  * @param formData - The letter form data
  * @param vias - Via routing list
@@ -150,15 +143,15 @@ export async function sendToEDMS(
   edmsContext: EDMSContext,
   ssicTitle: string = ''
 ): Promise<EDMSSendResult> {
-  // Validate EDMS context
+  // Validate EDMS context has Supabase credentials
   if (!isValidEDMSContext(edmsContext)) {
     return {
       success: false,
-      error: 'Invalid EDMS context: missing required fields (edmsId or returnUrl)'
+      error: 'Invalid EDMS context: missing required fields (edmsId, supabaseUrl, or supabaseKey)'
     };
   }
 
-  const payload = buildEDMSPayload(
+  const payload = buildNLFPayload(
     formData,
     vias,
     references,
@@ -166,54 +159,42 @@ export async function sendToEDMS(
     copyTos,
     paragraphs,
     edmsContext.edmsId,
+    edmsContext.unitCode,
     ssicTitle
   );
 
-  const filename = generateEDMSFilename(formData.ssic, formData.subj);
-
   try {
-    // Construct the API endpoint URL
-    const apiUrl = new URL('/api/attachments', edmsContext.returnUrl);
+    // Call the Supabase Edge Function
+    const edgeFunctionUrl = `${edmsContext.supabaseUrl}/functions/v1/receive-naval-letter`;
 
-    const response = await fetch(apiUrl.toString(), {
+    const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Authorization': `Bearer ${edmsContext.supabaseKey}`,
+        'apikey': edmsContext.supabaseKey
       },
-      body: JSON.stringify({
-        attachment: payload,
-        filename,
-        recordUpdates: {
-          ssic: formData.ssic,
-          subject: formData.subj,
-          date: formData.date,
-          from: formData.from,
-          to: formData.to
-        }
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      throw new Error(`EDMS responded with ${response.status}: ${errorText}`);
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Edge function returned ${response.status}`);
     }
 
-    const data = await response.json().catch(() => ({}));
+    const data = await response.json();
 
     return {
       success: true,
       data: {
-        attachmentId: data.attachmentId,
-        message: data.message || 'Successfully sent to EDMS'
+        documentId: data.documentId,
+        fileUrl: data.fileUrl,
+        message: data.message || 'Successfully saved to EDMS'
       }
     };
 
   } catch (error) {
-    // Handle network errors and other exceptions
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-
-    // Log for debugging (in production, this would go to a logging service)
     console.error('[EDMS Service] Send failed:', errorMessage);
 
     return {
@@ -224,44 +205,8 @@ export async function sendToEDMS(
 }
 
 /**
- * Check EDMS connection status
- *
- * Validates that the EDMS system is reachable and the token is valid.
- * This can be used to show connection status in the UI.
+ * Check if EDMS integration is properly configured
  */
-export async function checkEDMSConnection(edmsContext: EDMSContext): Promise<{
-  connected: boolean;
-  error?: string;
-}> {
-  if (!isValidEDMSContext(edmsContext)) {
-    return { connected: false, error: 'Invalid EDMS context' };
-  }
-
-  try {
-    const healthUrl = new URL('/api/health', edmsContext.returnUrl);
-
-    const response = await fetch(healthUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
-      // Short timeout for health check
-      signal: AbortSignal.timeout(5000)
-    });
-
-    if (response.ok) {
-      return { connected: true };
-    }
-
-    return {
-      connected: false,
-      error: `EDMS returned status ${response.status}`
-    };
-
-  } catch (error) {
-    return {
-      connected: false,
-      error: error instanceof Error ? error.message : 'Connection failed'
-    };
-  }
+export function isEDMSConfigured(edmsContext: EDMSContext): boolean {
+  return isValidEDMSContext(edmsContext);
 }
