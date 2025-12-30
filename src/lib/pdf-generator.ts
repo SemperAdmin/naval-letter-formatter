@@ -67,17 +67,10 @@ export async function downloadPDF(
     filename = `${formData.subj || 'NavalLetter'}.pdf`;
   }
 
-  // Create download link
+  // Open in new tab for download
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  window.open(url, '_blank');
 
-  // Clean up the blob URL after a short delay
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Clean up the blob URL after a delay (give time for new tab to load)
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
