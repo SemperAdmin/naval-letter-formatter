@@ -40,17 +40,19 @@ export async function generatePDFBlob(
   // Generate initial PDF blob
   const initialBlob = await pdf(document).toBlob();
 
-  // Convert blob to bytes for pdf-lib processing
-  const pdfBytes = await initialBlob.arrayBuffer();
-
-  // Add digital signature field for CAC signing
-  const signedPdfBytes = await addSignatureField(pdfBytes, {
-    signerName: formData.sig || 'Signer',
-    fieldName: 'CAC_Signature',
-  });
-
-  // Return the modified PDF as a blob
-  return new Blob([signedPdfBytes], { type: 'application/pdf' });
+  // Try to add digital signature field for CAC signing
+  try {
+    const pdfBytes = await initialBlob.arrayBuffer();
+    const signedPdfBytes = await addSignatureField(pdfBytes, {
+      signerName: formData.sig || 'Signer',
+      fieldName: 'CAC_Signature',
+    });
+    return new Blob([signedPdfBytes], { type: 'application/pdf' });
+  } catch (error) {
+    // If signature field addition fails, return the original PDF
+    console.warn('Could not add signature field to PDF:', error);
+    return initialBlob;
+  }
 }
 
 /**

@@ -5,7 +5,7 @@
  * The field is positioned above the signature block, aligned with the signer's name.
  */
 
-import { PDFDocument, PDFName, PDFDict, PDFArray, PDFString, PDFNumber, rgb } from 'pdf-lib';
+import { PDFDocument, rgb } from 'pdf-lib';
 import { PDF_INDENTS, PDF_PAGE } from './pdf-settings';
 
 // Signature field dimensions in points (1 inch = 72 points)
@@ -29,8 +29,9 @@ export interface SignatureFieldConfig {
 }
 
 /**
- * Adds an empty digital signature field to the last page of a PDF.
- * The signature field can be clicked in Adobe Reader to sign with a CAC/PIV card.
+ * Adds a visual signature placeholder to the last page of a PDF.
+ * Users can click this area in Adobe Reader and use Tools > Certificates > Digitally Sign
+ * to add their CAC/PKI signature.
  *
  * @param pdfBytes - The PDF as a Uint8Array or ArrayBuffer
  * @param config - Optional configuration for field placement
@@ -40,11 +41,6 @@ export async function addSignatureField(
   pdfBytes: Uint8Array | ArrayBuffer,
   config: SignatureFieldConfig = {}
 ): Promise<Uint8Array> {
-  const {
-    fieldName = 'DigitalSignature',
-    signerName = 'Signer',
-  } = config;
-
   // Load the PDF
   const pdfDoc = await PDFDocument.load(pdfBytes);
   const pages = pdfDoc.getPages();
@@ -67,77 +63,13 @@ export async function addSignatureField(
     opacity: 0.5,
   });
 
-  // Add "Click to sign" text inside the box
-  lastPage.drawText('Click to sign', {
-    x: SIGNATURE_FIELD.xOffset + 10,
+  // Add "SIGN HERE" text inside the box
+  lastPage.drawText('SIGN HERE', {
+    x: SIGNATURE_FIELD.xOffset + 25,
     y: yPosition + SIGNATURE_FIELD.height / 2 - 4,
-    size: 8,
+    size: 10,
     color: rgb(0.4, 0.4, 0.6),
   });
-
-  // Create the signature field using low-level pdf-lib API
-  const context = pdfDoc.context;
-
-  // Create the rectangle array for the signature field
-  const rectArray = context.obj([
-    PDFNumber.of(SIGNATURE_FIELD.xOffset),
-    PDFNumber.of(yPosition),
-    PDFNumber.of(SIGNATURE_FIELD.xOffset + SIGNATURE_FIELD.width),
-    PDFNumber.of(yPosition + SIGNATURE_FIELD.height),
-  ]);
-
-  // Create the MK (appearance) dictionary
-  const mkDict = context.obj({});
-  mkDict.set(PDFName.of('BG'), context.obj([PDFNumber.of(0.9), PDFNumber.of(0.95), PDFNumber.of(1.0)]));
-  mkDict.set(PDFName.of('BC'), context.obj([PDFNumber.of(0.4), PDFNumber.of(0.4), PDFNumber.of(0.8)]));
-
-  // Create the signature field widget annotation dictionary
-  const sigFieldDict = context.obj({});
-  sigFieldDict.set(PDFName.of('Type'), PDFName.of('Annot'));
-  sigFieldDict.set(PDFName.of('Subtype'), PDFName.of('Widget'));
-  sigFieldDict.set(PDFName.of('FT'), PDFName.of('Sig'));
-  sigFieldDict.set(PDFName.of('T'), PDFString.of(fieldName));
-  sigFieldDict.set(PDFName.of('Rect'), rectArray);
-  sigFieldDict.set(PDFName.of('F'), PDFNumber.of(4)); // Print flag
-  sigFieldDict.set(PDFName.of('P'), lastPage.ref);
-  sigFieldDict.set(PDFName.of('MK'), mkDict);
-  sigFieldDict.set(PDFName.of('TU'), PDFString.of(`Click to sign with CAC - ${signerName}`));
-
-  // Register the signature field dictionary
-  const sigFieldRef = context.register(sigFieldDict);
-
-  // Add the widget annotation to the page's Annots array
-  const pageDict = lastPage.node;
-  let annots = pageDict.lookup(PDFName.of('Annots'), PDFArray);
-
-  if (!annots) {
-    annots = context.obj([]) as PDFArray;
-    pageDict.set(PDFName.of('Annots'), annots);
-  }
-
-  annots.push(sigFieldRef);
-
-  // Get or create the AcroForm dictionary
-  const catalogDict = pdfDoc.catalog;
-  let acroFormDict = catalogDict.lookup(PDFName.of('AcroForm'), PDFDict);
-
-  if (!acroFormDict) {
-    acroFormDict = context.obj({}) as PDFDict;
-    acroFormDict.set(PDFName.of('SigFlags'), PDFNumber.of(3));
-    acroFormDict.set(PDFName.of('Fields'), context.obj([]));
-    catalogDict.set(PDFName.of('AcroForm'), acroFormDict);
-  } else {
-    // Ensure SigFlags is set
-    acroFormDict.set(PDFName.of('SigFlags'), PDFNumber.of(3));
-  }
-
-  // Add the signature field to the AcroForm's Fields array
-  let fieldsArray = acroFormDict.lookup(PDFName.of('Fields'), PDFArray);
-  if (!fieldsArray) {
-    fieldsArray = context.obj([]) as PDFArray;
-    acroFormDict.set(PDFName.of('Fields'), fieldsArray);
-  }
-  fieldsArray.push(sigFieldRef);
 
   // Save and return the modified PDF
   return pdfDoc.save();
