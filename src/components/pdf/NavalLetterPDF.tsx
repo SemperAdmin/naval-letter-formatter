@@ -35,20 +35,14 @@ interface NavalLetterPDFProps {
 }
 
 /**
- * Create styles matching Word document layout exactly
- * 
- * Word Layout Structure:
- * - Seal: absolute positioned at 0.5" from page top-left, 1"x1"
- * - Letterhead: centered text, positioned to align with seal vertically
- * - SSIC block: right-aligned at 5.5" from left margin
- * - From/To/etc: standard body content with tab stops
+ * UPDATED: Tight spacing - no extra blank lines between sections
+ * Spacing between all sections matches paragraph spacing
  */
 const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON') => {
   const fontFamily = getPDFBodyFont(bodyFont);
   const headerColor = headerType === 'DON' ? PDF_COLORS.don : PDF_COLORS.usmc;
 
   return StyleSheet.create({
-    // Page with standard margins
     page: {
       paddingTop: PDF_MARGINS.top,
       paddingBottom: PDF_MARGINS.bottom,
@@ -58,23 +52,20 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       fontSize: PDF_FONT_SIZES.body,
     },
     
-    // Seal - ABSOLUTE position from PAGE edge (not margin)
-    // Word: 0.5" from left, 0.5" from top, 1"x1"
+    // Seal - absolute from page edge
     seal: {
       position: 'absolute',
-      top: PDF_SEAL.offsetY,       // 36pt = 0.5" from page top
-      left: PDF_SEAL.offsetX,      // 36pt = 0.5" from page left
-      width: PDF_SEAL.width,       // 72pt = 1"
-      height: PDF_SEAL.height,     // 72pt = 1"
+      top: PDF_SEAL.offsetY,
+      left: PDF_SEAL.offsetX,
+      width: PDF_SEAL.width,
+      height: PDF_SEAL.height,
     },
     
-    // Letterhead container - centered, at top of content area
-    // In Word, this starts at the header position and is centered
+    // Letterhead - no bottom margin, tight spacing
     letterhead: {
-      marginBottom: PDF_SPACING.emptyLine,
+      marginBottom: 0,
     },
     
-    // Header title (UNITED STATES MARINE CORPS) - centered, bold
     headerTitle: {
       fontFamily: PDF_FONTS.SERIF,
       fontSize: PDF_FONT_SIZES.title,
@@ -83,7 +74,6 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       color: headerColor,
     },
     
-    // Unit address lines - centered, smaller
     headerLine: {
       fontFamily: PDF_FONTS.SERIF,
       fontSize: PDF_FONT_SIZES.unitLines,
@@ -91,19 +81,17 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       color: headerColor,
     },
     
-    // SSIC/Code/Date block - right aligned
-    // Word: w:ind w:left="7920" = 5.5" from left margin = 396pt
-    // Relative to content area (after 1" left margin): 396 - 72 = 324pt
+    // SSIC block - no extra margins
     addressBlock: {
       marginLeft: PDF_INDENTS.ssicBlock,
-      marginBottom: PDF_SPACING.emptyLine,
+      marginBottom: 0,
     },
     addressLine: {
       fontFamily: fontFamily,
       fontSize: PDF_FONT_SIZES.body,
     },
     
-    // From/To/Via section
+    // From/To section - no extra margins
     fromToSection: {
       marginBottom: 0,
     },
@@ -116,10 +104,10 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       width: PDF_INDENTS.tabStop1,
     },
     
-    // Subject section
+    // Subject - no extra margins
     subjectSection: {
-      marginTop: PDF_SPACING.emptyLine,
-      marginBottom: PDF_SPACING.emptyLine,
+      marginTop: 0,
+      marginBottom: 0,
     },
     subjectLine: {
       flexDirection: 'row',
@@ -133,9 +121,9 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       marginLeft: PDF_INDENTS.tabStop1,
     },
     
-    // References and Enclosures
+    // Ref/Encl - no extra margins
     refEnclSection: {
-      marginBottom: PDF_SPACING.emptyLine,
+      marginBottom: 0,
     },
     refEnclLine: {
       flexDirection: 'row',
@@ -149,18 +137,18 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       flex: 1,
     },
     
-    // Body paragraphs
+    // Body paragraphs - no extra margins
     bodySection: {
-      marginBottom: PDF_SPACING.paragraph,
+      marginBottom: 0,
     },
     paragraphRow: {
       flexDirection: 'row',
-      marginBottom: PDF_SPACING.paragraph,
+      marginBottom: 0,
       fontFamily: fontFamily,
       fontSize: PDF_FONT_SIZES.body,
     },
     
-    // Signature block - indented 3.25"
+    // Signature block
     signatureBlock: {
       marginTop: 24,
       marginLeft: PDF_INDENTS.signature,
@@ -170,9 +158,9 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       fontSize: PDF_FONT_SIZES.body,
     },
     
-    // Copy to section
+    // Copy to
     copyToSection: {
-      marginTop: PDF_SPACING.emptyLine,
+      marginTop: 0,
     },
     copyToLabel: {
       fontFamily: fontFamily,
@@ -184,12 +172,12 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       fontSize: PDF_FONT_SIZES.body,
     },
     
-    // Empty line spacer
+    // Empty line - only used where Word doc has explicit blank line
     emptyLine: {
       height: PDF_SPACING.emptyLine,
     },
     
-    // Footer with page number
+    // Footer
     footer: {
       position: 'absolute',
       bottom: 36,
@@ -202,9 +190,6 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
   });
 };
 
-/**
- * Generate citation string for a paragraph
- */
 function generateCitation(
   paragraph: ParagraphData,
   index: number,
@@ -247,9 +232,6 @@ function generateCitation(
   }
 }
 
-/**
- * Render a body paragraph with proper indentation and numbering
- */
 function ParagraphItem({
   paragraph,
   index,
@@ -271,7 +253,7 @@ function ParagraphItem({
     const spacesAfterCitation = citation.endsWith('.') ? '\u00A0\u00A0' : '\u00A0';
 
     return (
-      <View style={{ flexDirection: 'row', marginBottom: PDF_SPACING.paragraph }}>
+      <View style={{ flexDirection: 'row' }}>
         <Text>
           {indentSpaces}
           {isUnderlined ? (
@@ -292,7 +274,7 @@ function ParagraphItem({
   }
 
   return (
-    <View style={{ flexDirection: 'row', marginBottom: PDF_SPACING.paragraph }}>
+    <View style={{ flexDirection: 'row' }}>
       <View style={{ width: tabs.text, paddingLeft: tabs.citation }}>
         {isUnderlined ? (
           <Text>
@@ -313,9 +295,6 @@ function ParagraphItem({
   );
 }
 
-/**
- * Main Naval Letter PDF Document Component
- */
 export function NavalLetterPDF({
   formData,
   vias,
@@ -336,7 +315,6 @@ export function NavalLetterPDF({
 
   const formattedSubjLines = splitSubject(formData.subj.toUpperCase(), PDF_SUBJECT.maxLineLength);
 
-  // Courier spacing helpers
   const getFromToSpacing = (label: string): string => {
     if (formData.bodyFont === 'courier') {
       if (label === 'From') return 'From:  ';
@@ -363,13 +341,10 @@ export function NavalLetterPDF({
       subject="Generated Naval Letter Format"
     >
       <Page size="LETTER" style={styles.page}>
-        {/* 
-          DoD Seal - ABSOLUTE positioned from PAGE edge
-          Must be 0.5" from top and left of page (not margin)
-        */}
+        {/* Seal */}
         <Image src={sealDataUrl} style={styles.seal} />
 
-        {/* Letterhead - centered text block */}
+        {/* Letterhead */}
         <View style={styles.letterhead}>
           <Text style={styles.headerTitle}>
             {formData.headerType === 'USMC'
@@ -381,20 +356,19 @@ export function NavalLetterPDF({
           {formData.line3 && <Text style={styles.headerLine}>{formData.line3}</Text>}
         </View>
 
-        {/* Empty line after letterhead */}
+        {/* ONE empty line after letterhead (matches Word) */}
         <View style={styles.emptyLine} />
 
-        {/* SSIC, Originator Code, Date - right aligned */}
+        {/* SSIC block */}
         <View style={styles.addressBlock}>
           <Text style={styles.addressLine}>{formData.ssic || ''}</Text>
           <Text style={styles.addressLine}>{formData.originatorCode || ''}</Text>
           <Text style={styles.addressLine}>{formattedDate}</Text>
         </View>
 
-        {/* Empty line */}
-        <View style={styles.emptyLine} />
+        {/* NO empty line - tight spacing to From */}
 
-        {/* From/To/Via section */}
+        {/* From/To/Via */}
         <View style={styles.fromToSection}>
           {formData.bodyFont === 'courier' ? (
             <>
@@ -414,7 +388,6 @@ export function NavalLetterPDF({
             </>
           )}
 
-          {/* Via entries */}
           {viasWithContent.map((via, i) => (
             formData.bodyFont === 'courier' ? (
               <Text key={i} style={styles.addressLine}>
@@ -433,10 +406,9 @@ export function NavalLetterPDF({
           ))}
         </View>
 
-        {/* Empty line before subject */}
-        <View style={styles.emptyLine} />
+        {/* NO empty line - tight spacing to Subj */}
 
-        {/* Subject line */}
+        {/* Subject */}
         <View style={styles.subjectSection}>
           {formData.bodyFont === 'courier' ? (
             <>
@@ -460,8 +432,7 @@ export function NavalLetterPDF({
           )}
         </View>
 
-        {/* Empty line */}
-        <View style={styles.emptyLine} />
+        {/* NO empty line - tight spacing to Ref */}
 
         {/* References */}
         {refsWithContent.length > 0 && (
@@ -484,10 +455,9 @@ export function NavalLetterPDF({
           </View>
         )}
 
-        {/* Enclosures */}
+        {/* Enclosures - tight spacing */}
         {enclsWithContent.length > 0 && (
           <View style={styles.refEnclSection}>
-            {refsWithContent.length > 0 && <View style={styles.emptyLine} />}
             {enclsWithContent.map((encl, i) => {
               const enclNum = i + 1;
               if (formData.bodyFont === 'courier') {
@@ -506,10 +476,7 @@ export function NavalLetterPDF({
           </View>
         )}
 
-        {/* Empty line before body */}
-        {(refsWithContent.length > 0 || enclsWithContent.length > 0) && (
-          <View style={styles.emptyLine} />
-        )}
+        {/* NO empty line - tight spacing to body */}
 
         {/* Body paragraphs */}
         <View style={styles.bodySection}>
@@ -536,10 +503,9 @@ export function NavalLetterPDF({
           </View>
         )}
 
-        {/* Copy to section */}
+        {/* Copy to */}
         {copiesWithContent.length > 0 && (
           <View style={styles.copyToSection}>
-            <View style={styles.emptyLine} />
             <Text style={styles.copyToLabel}>
               {formData.bodyFont === 'courier' ? 'Copy to:  ' : 'Copy to:'}
             </Text>
@@ -551,7 +517,7 @@ export function NavalLetterPDF({
           </View>
         )}
 
-        {/* Footer - page number on pages after first */}
+        {/* Footer */}
         <Text
           style={styles.footer}
           render={({ pageNumber }) => (pageNumber > 1 ? pageNumber : '')}
