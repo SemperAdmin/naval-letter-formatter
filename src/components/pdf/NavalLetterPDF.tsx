@@ -23,8 +23,8 @@ import {
 } from '@/lib/pdf-settings';
 
 // Height reserved for continuation page header (Subj line + spacing)
-// Approximately 2 lines of text + sectionGap
-const CONTINUATION_HEADER_HEIGHT = 50;
+// This creates top margin space on pages 2+ so content doesn't overlap the header
+const CONTINUATION_HEADER_HEIGHT = 36;
 import { getPDFSealDataUrl } from '@/lib/pdf-seal';
 import { parseAndFormatDate } from '@/lib/date-utils';
 import { splitSubject } from '@/lib/naval-format-utils';
@@ -181,26 +181,21 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     },
     
     // Continuation page header (pages 2+)
-    // This is a fixed header that reserves space at the top of continuation pages
+    // Absolutely positioned at top of page, only visible on pages 2+
     continuationHeader: {
-      height: CONTINUATION_HEADER_HEIGHT,
-      marginBottom: PDF_SPACING.sectionGap,
-    },
-    continuationHeaderHidden: {
-      height: 0,
+      position: 'absolute',
+      top: PDF_MARGINS.top,
+      left: PDF_MARGINS.left,
+      right: PDF_MARGINS.right,
     },
     continuationSubjLabel: {
       width: PDF_INDENTS.tabStop1,
     },
     continuationSubjLine: {
       flexDirection: 'row',
-      fontFamily: fontFamily,
-      fontSize: PDF_FONT_SIZES.body,
     },
     continuationSubjText: {
       flex: 1,
-      fontFamily: fontFamily,
-      fontSize: PDF_FONT_SIZES.body,
     },
   });
 };
@@ -361,6 +356,30 @@ export function NavalLetterPDF({
       subject="Generated Naval Letter Format"
     >
       <Page size="LETTER" style={styles.page}>
+        {/* Continuation page header - Subject line on pages 2+ (absolutely positioned) */}
+        <View
+          style={styles.continuationHeader}
+          fixed
+          render={({ pageNumber }) => (
+            pageNumber > 1 ? (
+              <View style={styles.continuationSubjLine}>
+                <Text style={styles.continuationSubjLabel}>Subj:</Text>
+                <Text style={styles.continuationSubjText}>{formData.subj.toUpperCase()}</Text>
+              </View>
+            ) : null
+          )}
+        />
+        
+        {/* Fixed spacer - reserves space at top for continuation header on pages 2+ */}
+        <View
+          fixed
+          render={({ pageNumber }) => (
+            pageNumber > 1 ? (
+              <View style={{ height: CONTINUATION_HEADER_HEIGHT }} />
+            ) : null
+          )}
+        />
+        
         {/* Seal */}
         <Image src={sealDataUrl} style={styles.seal} />
 
@@ -534,24 +553,6 @@ export function NavalLetterPDF({
           style={styles.footer}
           render={({ pageNumber }) => (pageNumber > 1 ? pageNumber : '')}
           fixed
-        />
-        
-        {/* Continuation page header - Subject line on pages 2+ */}
-        {/* This fixed View reserves space at top and shows subject on continuation pages */}
-        <View
-          fixed
-          render={({ pageNumber }) => (
-            pageNumber > 1 ? (
-              <View style={styles.continuationHeader}>
-                <View style={styles.continuationSubjLine}>
-                  <Text style={styles.continuationSubjLabel}>Subj:</Text>
-                  <Text style={styles.continuationSubjText}>{formData.subj.toUpperCase()}</Text>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.continuationHeaderHidden} />
-            )
-          )}
         />
       </Page>
     </Document>
