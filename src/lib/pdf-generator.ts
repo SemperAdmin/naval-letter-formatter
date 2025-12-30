@@ -10,11 +10,6 @@ import { logError } from './console-utils';
 // Track if fonts have been registered
 let fontsRegistered = false;
 
-// Estimated line count for fixed header content:
-// Header title (1) + unit lines (3) + blank (1) + SSIC/code/date (3) + blank (1) +
-// from/to (2) + subj (2) + blank (1) = 14 lines, rounded up to 15 for margin
-const FIXED_HEADER_LINES = 15;
-
 /**
  * Generate a PDF blob from the naval letter data
  * Includes a digital signature field for CAC/PKI signing in Adobe Reader
@@ -50,17 +45,9 @@ export async function generatePDFBlob(
   try {
     const pdfBytes = await initialBlob.arrayBuffer();
 
-    // Estimate content lines for signature positioning
-    const LINES_PER_PARAGRAPH = 3; // Average lines per body paragraph
-    const estimatedContentLines =
-      FIXED_HEADER_LINES +
-      vias.filter(v => v.trim()).length +
-      references.filter(r => r.trim()).length +
-      enclosures.filter(e => e.trim()).length +
-      paragraphs.length * LINES_PER_PARAGRAPH;
-
+    // Pass signer name to help locate where to place the signature field
     const signedPdfBytes = await addSignatureField(pdfBytes, {
-      contentLines: estimatedContentLines,
+      signerName: formData.sig,
     });
     return new Blob([signedPdfBytes], { type: 'application/pdf' });
   } catch (error) {
