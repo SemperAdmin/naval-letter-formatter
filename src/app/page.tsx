@@ -1261,7 +1261,7 @@ if (enclsWithContent.length > 0) {
         const url = URL.createObjectURL(blob);
 
         // Open in new tab for download
-        window.open(url, '_blank');
+        window.open(url, '_blank', 'noopener,noreferrer');
 
         // Clean up the blob URL after a delay (give time for new tab to load)
         setTimeout(() => URL.revokeObjectURL(url), 10000);
