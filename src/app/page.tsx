@@ -1190,6 +1190,34 @@ if (enclsWithContent.length > 0) {
     });
   }
 
+  // Helper function to handle EDMS submission after document generation
+  const handleEdmsSubmission = async () => {
+    if (!edmsContext.isLinked) return;
+
+    const ssicMatch = SSICS.find(s => s.code === formData.ssic);
+    const ssicTitle = ssicMatch ? ssicMatch.title : '';
+
+    const result = await sendToEDMS(
+      formData,
+      vias,
+      references,
+      enclosures,
+      copyTos,
+      paragraphs,
+      edmsContext,
+      ssicTitle
+    );
+
+    if (result.success) {
+      debugUserAction('EDMS Send Success', { edmsId: edmsContext.edmsId });
+      setEdmsError(null);
+    } else {
+      debugUserAction('EDMS Send Failed', { error: result.error });
+      setEdmsError(result.error || 'Failed to send to EDMS');
+    }
+    setShowReturnDialog(true);
+  };
+
   const generateDocument = async (format: ExportFormat = 'docx') => {
     debugUserAction('Generate Document', {
       documentType: formData.documentType,
@@ -1212,47 +1240,12 @@ if (enclsWithContent.length > 0) {
           copyTos,
           paragraphs
         );
-
-        let filename: string;
-        if (formData.documentType === 'endorsement') {
-          filename = `${formData.endorsementLevel}_ENDORSEMENT_on_${formData.subj || 'letter'}_Page${formData.startingPageNumber}.pdf`;
-        } else {
-          filename = `${formData.subj || 'NavalLetter'}.pdf`;
-        }
-
-        debugUserAction('PDF Generated Successfully', { filename });
-
-        // If linked to EDMS, send data back to the EDMS system
-        if (edmsContext.isLinked) {
-          const ssicMatch = SSICS.find(s => s.code === formData.ssic);
-          const ssicTitle = ssicMatch ? ssicMatch.title : '';
-
-          const result = await sendToEDMS(
-            formData,
-            vias,
-            references,
-            enclosures,
-            copyTos,
-            paragraphs,
-            edmsContext,
-            ssicTitle
-          );
-
-          if (result.success) {
-            debugUserAction('EDMS Send Success', { edmsId: edmsContext.edmsId });
-            setEdmsError(null);
-            setShowReturnDialog(true);
-          } else {
-            debugUserAction('EDMS Send Failed', { error: result.error });
-            setEdmsError(result.error || 'Failed to send to EDMS');
-            setShowReturnDialog(true);
-          }
-        }
-
+        debugUserAction('PDF Generated Successfully', { format: 'pdf' });
+        await handleEdmsSubmission();
         return;
       }
 
-      // Handle Word export (existing logic)
+      // Handle Word export
       let doc;
       let filename;
 
@@ -1268,7 +1261,6 @@ if (enclsWithContent.length > 0) {
         const blob = await Packer.toBlob(doc);
         const url = URL.createObjectURL(blob);
 
-        // Open in new tab and trigger download
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
@@ -1278,39 +1270,10 @@ if (enclsWithContent.length > 0) {
         link.click();
         document.body.removeChild(link);
 
-        // Clean up the blob URL after a short delay
         setTimeout(() => URL.revokeObjectURL(url), 1000);
 
         debugUserAction('Document Generated Successfully', { filename });
-
-        // If linked to EDMS, send data back to the EDMS system
-        if (edmsContext.isLinked) {
-          // Get SSIC title if available
-          const ssicMatch = SSICS.find(s => s.code === formData.ssic);
-          const ssicTitle = ssicMatch ? ssicMatch.title : '';
-
-          const result = await sendToEDMS(
-            formData,
-            vias,
-            references,
-            enclosures,
-            copyTos,
-            paragraphs,
-            edmsContext,
-            ssicTitle
-          );
-
-          if (result.success) {
-            debugUserAction('EDMS Send Success', { edmsId: edmsContext.edmsId });
-            setEdmsError(null);
-            setShowReturnDialog(true);
-          } else {
-            // Document still generated successfully, but EDMS send failed
-            debugUserAction('EDMS Send Failed', { error: result.error });
-            setEdmsError(result.error || 'Failed to send to EDMS');
-            setShowReturnDialog(true);
-          }
-        }
+        await handleEdmsSubmission();
       }
 
     } catch (error) {
