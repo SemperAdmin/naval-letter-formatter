@@ -5,15 +5,15 @@
  * The field is positioned above the signature block, aligned with the signer's name.
  */
 
-import { PDFDocument, rgb } from 'pdf-lib';
-import { PDF_INDENTS, PDF_PAGE, PDF_SPACING, PDF_MARGINS } from './pdf-settings';
+import { PDFDocument, rgb, PDFPage, PDFName, PDFDict, PDFArray } from 'pdf-lib';
+import { PDF_INDENTS } from './pdf-settings';
 
 // Signature field dimensions in points (1 inch = 72 points)
 const SIGNATURE_FIELD = {
   width: 108,          // 1.5 inches
   height: 36,          // ~0.5 inches (2 lines at ~18pt)
   xOffset: PDF_INDENTS.signature,  // 3.25" from page left (aligned with signature block)
-  yAboveName: 36,      // Space above the typed name where signature appears
+  yAboveName: 24,      // Points to shift up from the signature name position
 };
 
 // Text appearance constants for the placeholder
@@ -25,10 +25,8 @@ const PLACEHOLDER_TEXT = {
   color: rgb(0.4, 0.4, 0.6),
 };
 
-// Position estimation bounds
-const MIN_Y_RATIO = 0.20;
-const MAX_Y_RATIO = 0.60;
-const DEFAULT_Y_RATIO = 0.25;
+// Default Y position as percentage from bottom if text search fails
+const DEFAULT_Y_RATIO = 0.35;
 
 /**
  * Configuration for signature field placement
@@ -36,37 +34,79 @@ const DEFAULT_Y_RATIO = 0.25;
 export interface SignatureFieldConfig {
   /** Y position from bottom of page in points (if known) */
   yPosition?: number;
-  /** Field name for the signature */
-  fieldName?: string;
-  /** Signer's name (for field tooltip) */
+  /** Signer's name to search for in the PDF to determine positioning */
   signerName?: string;
-  /** Approximate number of content lines for position estimation */
-  contentLines?: number;
 }
 
 /**
- * Estimates the Y position of the signature block based on typical naval letter layout.
+ * Attempts to find text in a PDF page and return its Y position.
+ * Searches through the page's content stream for text operations.
  *
- * @param pageHeight - Height of the page in points
- * @param contentLines - Approximate number of content lines on the page
- * @returns Estimated Y position for the signature field
+ * @param page - The PDF page to search
+ * @param searchText - Text to search for (case-insensitive)
+ * @returns Y position if found, undefined otherwise
  */
-export function estimateSignatureYPosition(
-  pageHeight: number = PDF_PAGE.height,
-  contentLines: number = 30
-): number {
-  // Typical naval letter has signature block 2-3 inches from bottom on last page
-  // Adjust based on content density
-  const contentHeight = contentLines * PDF_SPACING.emptyLine;
+function findTextYPosition(page: PDFPage, searchText: string): number | undefined {
+  try {
+    const contents = page.node.Contents();
+    if (!contents) return undefined;
 
-  // Position signature about 3 lines above where typed name would be
-  const estimatedNamePosition = pageHeight - PDF_MARGINS.bottom - contentHeight;
+    // Get the content stream data
+    const contentStream = contents instanceof PDFArray
+      ? contents.lookup(0)
+      : contents;
 
-  // Ensure reasonable bounds (between 20% and 60% from bottom)
-  const minY = pageHeight * MIN_Y_RATIO;
-  const maxY = pageHeight * MAX_Y_RATIO;
+    if (!contentStream) return undefined;
 
-  return Math.max(minY, Math.min(maxY, estimatedNamePosition + SIGNATURE_FIELD.yAboveName));
+    const streamDict = contentStream as PDFDict;
+    const streamData = streamDict.lookup(PDFName.of('stream'));
+
+    // Try to decode the stream - this is a simplified approach
+    // that looks for Tj/TJ operators with the search text
+    const node = page.node;
+    const rawContent = node.Contents();
+    if (!rawContent) return undefined;
+
+    // Get raw bytes from content stream
+    let contentBytes: Uint8Array | undefined;
+    if (rawContent instanceof PDFDict) {
+      // Try to get decoded stream content
+      const stream = rawContent as any;
+      if (stream.getContents) {
+        contentBytes = stream.getContents();
+      }
+    }
+
+    if (!contentBytes) return undefined;
+
+    // Decode content as string and search for text patterns
+    const contentStr = new TextDecoder('latin1').decode(contentBytes);
+
+    // Search for the text - check both hex encoded and regular strings
+    const searchUpper = searchText.toUpperCase();
+    const searchHex = Array.from(searchUpper).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+
+    // Look for text matrix (Tm) operations followed by text show (Tj/TJ)
+    // Pattern: x y x y x y Tm ... (text) Tj
+    const tmPattern = /(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+Tm/g;
+
+    let lastY = 0;
+    let match;
+    while ((match = tmPattern.exec(contentStr)) !== null) {
+      const y = parseFloat(match[6]); // Y position is the 6th number in Tm matrix
+      lastY = y;
+    }
+
+    // Check if our search text appears in the content
+    if (contentStr.includes(searchUpper) || contentStr.toLowerCase().includes(searchHex.toLowerCase())) {
+      // Return the last Y position we found (signature is typically near the end)
+      return lastY > 0 ? lastY : undefined;
+    }
+
+    return undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -88,12 +128,25 @@ export async function addSignatureField(
   const lastPage = pages[pages.length - 1];
   const { height } = lastPage.getSize();
 
-  // Calculate Y position using estimation if contentLines provided, otherwise use default
-  const yPosition =
-    config.yPosition ??
-    (config.contentLines
-      ? estimateSignatureYPosition(height, config.contentLines)
-      : height * DEFAULT_Y_RATIO);
+  // Determine Y position:
+  // 1. Use explicit yPosition if provided
+  // 2. Try to find the signer's name text and position above it
+  // 3. Fall back to default position
+  let yPosition = config.yPosition;
+
+  if (yPosition === undefined && config.signerName) {
+    const textY = findTextYPosition(lastPage, config.signerName);
+    if (textY !== undefined) {
+      // Position the signature box directly above the signer's name
+      // Add yAboveName to shift it up from the text baseline
+      yPosition = textY + SIGNATURE_FIELD.yAboveName;
+    }
+  }
+
+  // Fall back to default position if text search didn't work
+  if (yPosition === undefined) {
+    yPosition = height * DEFAULT_Y_RATIO;
+  }
 
   // Draw a visual indicator for the signature box (visible placeholder)
   lastPage.drawRectangle({
