@@ -1,9 +1,10 @@
 /**
  * PDF Settings for Naval Letter Generation
  * 
- * UPDATED: Removed extra blank lines between sections
- * Spacing now matches the tight spacing between paragraphs
- * (like between "2. Points of contact." and "a. Primary CDDM")
+ * UPDATED:
+ * - Header moved down (half spacing from top)
+ * - SSIC block pushed right by ~1 inch
+ * - Body text wraps to left margin (not indented)
  */
 
 // Page dimensions
@@ -15,7 +16,7 @@ export const PDF_PAGE = {
 
 // Page margins
 export const PDF_MARGINS = {
-  top: 72,           // 1"
+  top: 36,           // 0.5" - REDUCED from 1" to move header down less
   bottom: 72,        // 1"
   left: 72,          // 1"
   right: 72,         // 1"
@@ -44,9 +45,13 @@ export const PDF_SEAL = {
 
 // Indentation positions in points
 export const PDF_INDENTS = {
-  tabStop1: 36,
+  tabStop1: 36,      // 0.5" for From/To/Subj labels
   tabStop2: 52.3,
-  ssicBlock: 324,
+  
+  // SSIC block - PUSHED RIGHT by ~1 inch
+  // Was 324pt (4.5" from content left), now 396pt (5.5" from content left)
+  ssicBlock: 396,
+  
   signature: 234,
   refHangingTimes: 54,
   refHangingCourier: 79.2,
@@ -72,15 +77,10 @@ export const PDF_SUBJECT = {
   continuationIndent: 36,
 };
 
-// Line spacing - NO extra blank lines between sections
+// Line spacing
 export const PDF_SPACING = {
-  // Standard paragraph spacing (bottom margin after each paragraph/line)
-  paragraph: 0,      // No extra space - just line height
-  
-  // Empty line height when explicitly needed
+  paragraph: 0,
   emptyLine: 14.4,
-  
-  // Section spacing - same as normal line flow (NO blank line)
   sectionGap: 0,
 };
 
