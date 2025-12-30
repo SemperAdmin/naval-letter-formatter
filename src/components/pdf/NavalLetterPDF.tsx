@@ -24,7 +24,8 @@ import {
 
 // Height reserved for continuation page header (Subj line + spacing)
 // This creates top margin space on pages 2+ so content doesn't overlap the header
-const CONTINUATION_HEADER_HEIGHT = 36;
+// Needs to accommodate 2 lines of subject text + spacing
+const CONTINUATION_HEADER_HEIGHT = 48;
 import { getPDFSealDataUrl } from '@/lib/pdf-seal';
 import { parseAndFormatDate } from '@/lib/date-utils';
 import { splitSubject } from '@/lib/naval-format-utils';
@@ -362,9 +363,14 @@ export function NavalLetterPDF({
           fixed
           render={({ pageNumber }) => (
             pageNumber > 1 ? (
-              <View style={styles.continuationSubjLine}>
-                <Text style={styles.continuationSubjLabel}>Subj:</Text>
-                <Text style={styles.continuationSubjText}>{formData.subj.toUpperCase()}</Text>
+              <View>
+                <View style={styles.continuationSubjLine}>
+                  <Text style={styles.continuationSubjLabel}>Subj:</Text>
+                  <Text style={styles.continuationSubjText}>{formattedSubjLines[0]}</Text>
+                </View>
+                {formattedSubjLines.slice(1).map((line, i) => (
+                  <Text key={i} style={{ marginLeft: PDF_INDENTS.tabStop1 }}>{line}</Text>
+                ))}
               </View>
             ) : null
           )}
