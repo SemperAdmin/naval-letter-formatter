@@ -2,6 +2,18 @@ import { Font } from '@react-pdf/renderer';
 import { resolvePublicPath } from './path-utils';
 
 /**
+ * Get the full URL for fonts based on deployment environment
+ * Isolated for testability and to handle browser-specific logic
+ */
+function getFullFontUrl(fontPath: string): string {
+  if (typeof window !== 'undefined') {
+    const basePath = resolvePublicPath(fontPath);
+    return `${window.location.origin}${basePath}`;
+  }
+  return fontPath;
+}
+
+/**
  * Register Liberation fonts for PDF generation
  * Liberation fonts are metrically compatible with Times New Roman and Courier New
  *
@@ -9,15 +21,6 @@ import { resolvePublicPath } from './path-utils';
  * - Liberation Mono → Courier New equivalent
  */
 export function registerPDFFonts() {
-  // Get the full URL for fonts based on deployment environment
-  const getFullFontUrl = (fontPath: string): string => {
-    if (typeof window !== 'undefined') {
-      const basePath = resolvePublicPath(fontPath);
-      return `${window.location.origin}${basePath}`;
-    }
-    return fontPath;
-  };
-
   // Liberation Serif (Times New Roman equivalent)
   Font.register({
     family: 'Liberation Serif',
