@@ -5,8 +5,8 @@
  * The field is positioned above the signature block, aligned with the signer's name.
  */
 
-import { PDFDocument, PDFPage, PDFName, PDFDict, PDFArray, PDFString, PDFNumber, rgb } from 'pdf-lib';
-import { PDF_INDENTS, PDF_MARGINS, PDF_PAGE } from './pdf-settings';
+import { PDFDocument, PDFName, PDFDict, PDFArray, PDFString, PDFNumber, rgb } from 'pdf-lib';
+import { PDF_INDENTS, PDF_PAGE } from './pdf-settings';
 
 // Signature field dimensions in points (1 inch = 72 points)
 const SIGNATURE_FIELD = {
@@ -55,76 +55,6 @@ export async function addSignatureField(
   // In PDF coordinates, Y=0 is at bottom
   const yPosition = config.yPosition ?? (height * 0.25); // ~25% from bottom of page
 
-  // Create the signature field rectangle [x1, y1, x2, y2]
-  const sigFieldRect = [
-    SIGNATURE_FIELD.xOffset,                              // x1: left edge
-    yPosition,                                             // y1: bottom edge
-    SIGNATURE_FIELD.xOffset + SIGNATURE_FIELD.width,      // x2: right edge
-    yPosition + SIGNATURE_FIELD.height,                    // y2: top edge
-  ];
-
-  // Get or create the AcroForm
-  const form = pdfDoc.getForm();
-
-  // Create signature field using pdf-lib's form API
-  // Note: pdf-lib doesn't have createSignature, so we need to do this at the low level
-  const context = pdfDoc.context;
-
-  // Create the signature field dictionary
-  const sigFieldDict = context.obj({
-    Type: 'Annot',
-    Subtype: 'Widget',
-    FT: 'Sig',                    // Field Type: Signature
-    T: PDFString.of(fieldName),   // Field name
-    Rect: sigFieldRect,
-    F: 4,                         // Annotation flags: Print
-    P: lastPage.ref,              // Reference to the page
-    // Visual appearance - light blue background to show clickable area
-    MK: {
-      BG: [0.9, 0.95, 1.0],       // Light blue background
-      BC: [0.4, 0.4, 0.8],        // Blue border
-    },
-    // Tooltip when hovering
-    TU: PDFString.of(`Click to sign with CAC - ${signerName}`),
-  });
-
-  // Register the signature field dictionary
-  const sigFieldRef = context.register(sigFieldDict);
-
-  // Add the widget annotation to the page's Annots array
-  const pageDict = lastPage.node;
-  let annots = pageDict.lookup(PDFName.of('Annots'), PDFArray);
-
-  if (!annots) {
-    annots = context.obj([]);
-    pageDict.set(PDFName.of('Annots'), annots);
-  }
-
-  annots.push(sigFieldRef);
-
-  // Get or create the AcroForm dictionary
-  const catalogDict = pdfDoc.catalog;
-  let acroFormDict = catalogDict.lookup(PDFName.of('AcroForm'), PDFDict);
-
-  if (!acroFormDict) {
-    acroFormDict = context.obj({
-      Fields: [],
-      SigFlags: 3,  // SignaturesExist | AppendOnly
-    });
-    catalogDict.set(PDFName.of('AcroForm'), acroFormDict);
-  } else {
-    // Ensure SigFlags is set
-    acroFormDict.set(PDFName.of('SigFlags'), PDFNumber.of(3));
-  }
-
-  // Add the signature field to the AcroForm's Fields array
-  let fieldsArray = acroFormDict.lookup(PDFName.of('Fields'), PDFArray);
-  if (!fieldsArray) {
-    fieldsArray = context.obj([]);
-    acroFormDict.set(PDFName.of('Fields'), fieldsArray);
-  }
-  fieldsArray.push(sigFieldRef);
-
   // Draw a visual indicator for the signature box (visible placeholder)
   lastPage.drawRectangle({
     x: SIGNATURE_FIELD.xOffset,
@@ -144,6 +74,70 @@ export async function addSignatureField(
     size: 8,
     color: rgb(0.4, 0.4, 0.6),
   });
+
+  // Create the signature field using low-level pdf-lib API
+  const context = pdfDoc.context;
+
+  // Create the rectangle array for the signature field
+  const rectArray = context.obj([
+    PDFNumber.of(SIGNATURE_FIELD.xOffset),
+    PDFNumber.of(yPosition),
+    PDFNumber.of(SIGNATURE_FIELD.xOffset + SIGNATURE_FIELD.width),
+    PDFNumber.of(yPosition + SIGNATURE_FIELD.height),
+  ]);
+
+  // Create the MK (appearance) dictionary
+  const mkDict = context.obj({});
+  mkDict.set(PDFName.of('BG'), context.obj([PDFNumber.of(0.9), PDFNumber.of(0.95), PDFNumber.of(1.0)]));
+  mkDict.set(PDFName.of('BC'), context.obj([PDFNumber.of(0.4), PDFNumber.of(0.4), PDFNumber.of(0.8)]));
+
+  // Create the signature field widget annotation dictionary
+  const sigFieldDict = context.obj({});
+  sigFieldDict.set(PDFName.of('Type'), PDFName.of('Annot'));
+  sigFieldDict.set(PDFName.of('Subtype'), PDFName.of('Widget'));
+  sigFieldDict.set(PDFName.of('FT'), PDFName.of('Sig'));
+  sigFieldDict.set(PDFName.of('T'), PDFString.of(fieldName));
+  sigFieldDict.set(PDFName.of('Rect'), rectArray);
+  sigFieldDict.set(PDFName.of('F'), PDFNumber.of(4)); // Print flag
+  sigFieldDict.set(PDFName.of('P'), lastPage.ref);
+  sigFieldDict.set(PDFName.of('MK'), mkDict);
+  sigFieldDict.set(PDFName.of('TU'), PDFString.of(`Click to sign with CAC - ${signerName}`));
+
+  // Register the signature field dictionary
+  const sigFieldRef = context.register(sigFieldDict);
+
+  // Add the widget annotation to the page's Annots array
+  const pageDict = lastPage.node;
+  let annots = pageDict.lookup(PDFName.of('Annots'), PDFArray);
+
+  if (!annots) {
+    annots = context.obj([]) as PDFArray;
+    pageDict.set(PDFName.of('Annots'), annots);
+  }
+
+  annots.push(sigFieldRef);
+
+  // Get or create the AcroForm dictionary
+  const catalogDict = pdfDoc.catalog;
+  let acroFormDict = catalogDict.lookup(PDFName.of('AcroForm'), PDFDict);
+
+  if (!acroFormDict) {
+    acroFormDict = context.obj({}) as PDFDict;
+    acroFormDict.set(PDFName.of('SigFlags'), PDFNumber.of(3));
+    acroFormDict.set(PDFName.of('Fields'), context.obj([]));
+    catalogDict.set(PDFName.of('AcroForm'), acroFormDict);
+  } else {
+    // Ensure SigFlags is set
+    acroFormDict.set(PDFName.of('SigFlags'), PDFNumber.of(3));
+  }
+
+  // Add the signature field to the AcroForm's Fields array
+  let fieldsArray = acroFormDict.lookup(PDFName.of('Fields'), PDFArray);
+  if (!fieldsArray) {
+    fieldsArray = context.obj([]) as PDFArray;
+    acroFormDict.set(PDFName.of('Fields'), fieldsArray);
+  }
+  fieldsArray.push(sigFieldRef);
 
   // Save and return the modified PDF
   return pdfDoc.save();
