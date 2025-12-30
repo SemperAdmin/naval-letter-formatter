@@ -1,4 +1,5 @@
 import { Font } from '@react-pdf/renderer';
+import { resolvePublicPath } from './path-utils';
 
 /**
  * Register Liberation fonts for PDF generation
@@ -8,19 +9,28 @@ import { Font } from '@react-pdf/renderer';
  * - Liberation Mono → Courier New equivalent
  */
 export function registerPDFFonts() {
+  // Get the full URL for fonts based on deployment environment
+  const getFullFontUrl = (fontPath: string): string => {
+    if (typeof window !== 'undefined') {
+      const basePath = resolvePublicPath(fontPath);
+      return `${window.location.origin}${basePath}`;
+    }
+    return fontPath;
+  };
+
   // Liberation Serif (Times New Roman equivalent)
   Font.register({
     family: 'Liberation Serif',
     fonts: [
-      { src: '/fonts/LiberationSerif-Regular.ttf', fontWeight: 'normal' },
-      { src: '/fonts/LiberationSerif-Bold.ttf', fontWeight: 'bold' },
+      { src: getFullFontUrl('/fonts/LiberationSerif-Regular.ttf'), fontWeight: 'normal' },
+      { src: getFullFontUrl('/fonts/LiberationSerif-Bold.ttf'), fontWeight: 'bold' },
     ],
   });
 
   // Liberation Mono (Courier New equivalent)
   Font.register({
     family: 'Liberation Mono',
-    src: '/fonts/LiberationMono-Regular.ttf',
+    src: getFullFontUrl('/fonts/LiberationMono-Regular.ttf'),
   });
 
   // Disable hyphenation to match Word behavior
