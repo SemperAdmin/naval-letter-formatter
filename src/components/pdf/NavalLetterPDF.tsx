@@ -132,7 +132,7 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     
     // Body - uses sectionGap for spacing after
     bodySection: {
-      marginBottom: PDF_SPACING.sectionGap,
+      marginBottom: 12,
     },
     
     // Individual paragraph spacing
