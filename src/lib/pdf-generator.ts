@@ -43,9 +43,20 @@ export async function generatePDFBlob(
   // Try to add digital signature field for CAC signing
   try {
     const pdfBytes = await initialBlob.arrayBuffer();
+
+    // Estimate content lines for signature positioning:
+    // Header (~5 lines) + date block (3) + from/to (2) + subj (2) + paragraphs + refs/encls
+    const estimatedContentLines =
+      15 + // Fixed header content (header, date, from/to, subj)
+      vias.filter(v => v.trim()).length +
+      references.filter(r => r.trim()).length +
+      enclosures.filter(e => e.trim()).length +
+      paragraphs.length * 3; // Average ~3 lines per paragraph
+
     const signedPdfBytes = await addSignatureField(pdfBytes, {
       signerName: formData.sig || 'Signer',
       fieldName: 'CAC_Signature',
+      contentLines: estimatedContentLines,
     });
     return new Blob([signedPdfBytes], { type: 'application/pdf' });
   } catch (error) {
