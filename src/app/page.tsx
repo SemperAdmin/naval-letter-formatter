@@ -18,6 +18,7 @@ import { numbersOnly, autoUppercase } from '@/lib/string-utils';
 import { REFERENCE_TYPES, COMMON_ORIGINATORS } from '@/lib/constants';
 import { validateSSIC, validateSubject, validateFromTo, ValidationResult } from '@/lib/validation-utils';
 import { loadSavedLetters, saveLetterToStorage, findLetterById } from '@/lib/storage-utils';
+import { openBlobInNewTab } from '@/lib/blob-utils';
 import { StructuredReferenceInput } from '@/components/letter/StructuredReferenceInput';
 import { ReferencesSection } from '@/components/letter/ReferencesSection';
 import { EnclosuresSection } from '@/components/letter/EnclosuresSection';
@@ -1258,13 +1259,7 @@ if (enclsWithContent.length > 0) {
 
       if (doc) {
         const blob = await Packer.toBlob(doc);
-        const url = URL.createObjectURL(blob);
-
-        // Open in new tab for download
-        window.open(url, '_blank', 'noopener,noreferrer');
-
-        // Clean up the blob URL after a delay (give time for new tab to load)
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        openBlobInNewTab(blob, filename);
 
         debugUserAction('Document Generated Successfully', { filename });
         await handleEdmsSubmission();
