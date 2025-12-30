@@ -132,12 +132,12 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
     
     // Body - uses sectionGap for spacing after
     bodySection: {
-      marginBottom: 12,
+      marginBottom: PDF_SPACING.sectionGap,
     },
     
     // Individual paragraph spacing
     paragraphItem: {
-      marginBottom: 12,
+      marginBottom: 0,
     },
     
     signatureBlock: {
@@ -247,7 +247,7 @@ function ParagraphItem({
     const spacesAfterCitation = citation.endsWith('.') ? '\u00A0\u00A0' : '\u00A0';
 
     return (
-      <View style={{ marginLeft: leftMargin }}>
+      <View style={{ marginLeft: leftMargin, marginBottom: PDF_SPACING.paragraph }}>
         <Text>
           {isUnderlined ? (
             <>
@@ -269,7 +269,7 @@ function ParagraphItem({
   // Times New Roman - citation on same line, text wraps to citation position (left margin)
   // Use a single Text block so wrapping goes to the left edge of the container
   return (
-    <View style={{ marginLeft: leftMargin }}>
+    <View style={{ marginLeft: leftMargin, marginBottom: PDF_SPACING.paragraph }}>
       <Text>
         {isUnderlined ? (
           <>
