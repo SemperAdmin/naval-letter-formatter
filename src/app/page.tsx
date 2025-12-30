@@ -951,7 +951,7 @@ if (viasWithContent.length > 0) {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.SQUARE } } })] })] : [] }),
+          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.NONE } } })] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
@@ -1178,7 +1178,7 @@ if (enclsWithContent.length > 0) {
           titlePage: true
         },
         headers: {
-          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.SQUARE } } })] })] : [] }),
+          first: new Header({ children: sealBuffer ? [new Paragraph({ children: [new ImageRun({ data: sealBuffer, transformation: { width: 96, height: 96 }, floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 458700 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 458700 }, wrap: { type: TextWrappingType.NONE } } })] })] : [] }),
           default: new Header({ children: headerParagraphs })
         },
         footers: {
