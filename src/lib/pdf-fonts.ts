@@ -5,7 +5,7 @@ import { resolvePublicPath } from './path-utils';
  * Get the full URL for fonts based on deployment environment
  * Isolated for testability and to handle browser-specific logic
  */
-function getFullFontUrl(fontPath: string): string {
+export function getFullFontUrl(fontPath: string): string {
   if (typeof window !== 'undefined') {
     const basePath = resolvePublicPath(fontPath);
     return `${window.location.origin}${basePath}`;
