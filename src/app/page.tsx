@@ -1261,16 +1261,11 @@ if (enclsWithContent.length > 0) {
         const blob = await Packer.toBlob(doc);
         const url = URL.createObjectURL(blob);
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Open in new tab for download
+        window.open(url, '_blank');
 
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        // Clean up the blob URL after a delay (give time for new tab to load)
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
 
         debugUserAction('Document Generated Successfully', { filename });
         await handleEdmsSubmission();
