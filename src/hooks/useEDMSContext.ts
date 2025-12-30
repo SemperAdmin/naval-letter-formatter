@@ -10,12 +10,16 @@
  * - returnUrl: URL to redirect back to EDMS after completion
  * - supabaseUrl: Supabase project URL for API calls
  * - supabaseKey: Supabase anon key for authentication
+ * - mode: 'edit' to load existing letter, 'new' or omitted for new letter
+ * - fileUrl: URL to fetch existing letter JSON (required when mode=edit)
  */
 
 'use client';
 
 import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
+
+export type EDMSMode = 'new' | 'edit';
 
 export interface EDMSContext {
   /** Whether the NLF was launched from an EDMS system */
@@ -30,6 +34,12 @@ export interface EDMSContext {
   supabaseUrl: string | null;
   /** Supabase anon key */
   supabaseKey: string | null;
+  /** Mode: 'new' for new letter, 'edit' for editing existing */
+  mode: EDMSMode;
+  /** URL to fetch existing letter data (for edit mode) */
+  fileUrl: string | null;
+  /** Document ID being edited (for updates) */
+  documentId: string | null;
 }
 
 /**
@@ -76,6 +86,12 @@ export function useEDMSContext(): EDMSContext {
     const returnUrl = decodeUrlParam(searchParams.get('returnUrl'));
     const supabaseUrl = decodeUrlParam(searchParams.get('supabaseUrl'));
     const supabaseKey = searchParams.get('supabaseKey');
+    const modeParam = searchParams.get('mode');
+    const fileUrl = decodeUrlParam(searchParams.get('fileUrl'));
+    const documentId = searchParams.get('documentId');
+
+    // Determine mode: 'edit' if explicitly set and fileUrl provided, otherwise 'new'
+    const mode: EDMSMode = (modeParam === 'edit' && fileUrl) ? 'edit' : 'new';
 
     return {
       isLinked: !!edmsId,
@@ -83,7 +99,10 @@ export function useEDMSContext(): EDMSContext {
       unitCode,
       returnUrl,
       supabaseUrl,
-      supabaseKey
+      supabaseKey,
+      mode,
+      fileUrl,
+      documentId
     };
   }, [searchParams]);
 
@@ -108,4 +127,14 @@ export function hasReturnUrl(context: EDMSContext): context is EDMSContext & {
   returnUrl: string;
 } {
   return !!context.returnUrl;
+}
+
+/**
+ * Type guard to check if context is in edit mode with valid fileUrl
+ */
+export function isEditMode(context: EDMSContext): context is EDMSContext & {
+  mode: 'edit';
+  fileUrl: string;
+} {
+  return context.mode === 'edit' && !!context.fileUrl;
 }

@@ -34,7 +34,7 @@ import { FormData, ParagraphData, SavedLetter, ValidationState } from '@/types';
 import '../styles/letter-form.css';
 import { importNLDPFile, sanitizeImportedData } from '@/lib/nldp-utils';
 import { resolvePublicPath } from '@/lib/path-utils';
-import { useEDMSContext } from '@/hooks/useEDMSContext';
+import { useEDMSContext, isEditMode } from '@/hooks/useEDMSContext';
 import { sendToEDMS } from '@/lib/edms-service';
 import { EDMSLinkBadge } from '@/components/EDMSLinkBadge';
 import { ReturnToEDMSDialog } from '@/components/ReturnToEDMSDialog';
@@ -105,6 +105,7 @@ const [formData, setFormData] = useState<FormData>({
   const edmsContext = useEDMSContext();
   const [showReturnDialog, setShowReturnDialog] = useState(false);
   const [edmsError, setEdmsError] = useState<string | null>(null);
+  const [isLoadingFromEDMS, setIsLoadingFromEDMS] = useState(false);
 
   // Unit selection state (moved here for EDMS auto-selection)
   const [currentUnitCode, setCurrentUnitCode] = useState<string | undefined>(undefined);
@@ -179,6 +180,65 @@ const [formData, setFormData] = useState<FormData>({
       }
     }
   }, [edmsContext.isLinked, edmsContext.unitCode]);
+
+  // Load existing letter data when in edit mode
+  useEffect(() => {
+    if (isEditMode(edmsContext)) {
+      setIsLoadingFromEDMS(true);
+      debugUserAction('EDMS Edit Mode', { fileUrl: edmsContext.fileUrl, documentId: edmsContext.documentId });
+
+      fetch(edmsContext.fileUrl)
+        .then(res => {
+          if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+          return res.json();
+        })
+        .then(letterData => {
+          // Map the EDMS letter data to NLF form structure
+          setFormData(prev => ({
+            ...prev,
+            ssic: letterData.ssic || '',
+            subj: letterData.subject || '',
+            from: letterData.from || '',
+            to: letterData.to || '',
+            date: letterData.date || prev.date,
+            sig: letterData.signature || '',
+            originatorCode: letterData.originatorCode || '',
+            documentType: letterData.letterType || 'basic',
+            headerType: letterData.headerType || 'USMC',
+            line1: letterData.unit?.line1 || prev.line1,
+            line2: letterData.unit?.line2 || prev.line2,
+            line3: letterData.unit?.line3 || prev.line3,
+          }));
+
+          // Load arrays
+          if (letterData.via?.length) setVias(letterData.via);
+          if (letterData.references?.length) setReferences(letterData.references);
+          if (letterData.enclosures?.length) setEnclosures(letterData.enclosures);
+          if (letterData.copyTos?.length) setCopyTos(letterData.copyTos);
+          if (letterData.paragraphs?.length) setParagraphs(letterData.paragraphs);
+
+          // Show refs/enclosures sections if they have content
+          setShowRef(letterData.references?.some((r: string) => r.trim() !== '') || false);
+          setShowEncl(letterData.enclosures?.some((e: string) => e.trim() !== '') || false);
+
+          // Re-validate fields after loading
+          if (letterData.ssic) handleValidateSSIC(letterData.ssic);
+          if (letterData.subject) handleValidateSubject(letterData.subject);
+          if (letterData.from) handleValidateFromTo(letterData.from, 'from');
+          if (letterData.to) handleValidateFromTo(letterData.to, 'to');
+
+          setNotification({ message: 'Letter loaded from EDMS', type: 'success' });
+          debugUserAction('EDMS Letter Loaded', { subject: letterData.subject });
+        })
+        .catch(err => {
+          console.error('Failed to load letter from EDMS:', err);
+          setNotification({ message: `Failed to load letter: ${err.message}`, type: 'error' });
+        })
+        .finally(() => {
+          setIsLoadingFromEDMS(false);
+        });
+    }
+  }, [edmsContext.mode, edmsContext.fileUrl]);
 
   const saveLetter = () => {
     debugUserAction('Save Letter', {
