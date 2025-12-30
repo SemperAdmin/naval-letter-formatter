@@ -75,10 +75,10 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       color: headerColor,
     },
     
-    // SSIC block - pushed right
+    // SSIC block - uses sectionGap for spacing after
     addressBlock: {
       marginLeft: PDF_INDENTS.ssicBlock,
-      marginBottom: 12,
+      marginBottom: PDF_SPACING.sectionGap,
     },
     addressLine: {
       fontFamily: fontFamily,
@@ -97,9 +97,10 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       width: PDF_INDENTS.tabStop1,
     },
     
+    // Subject - uses sectionGap for spacing before and after
     subjectSection: {
-      marginTop: 12,
-      marginBottom: 12,
+      marginTop: PDF_SPACING.sectionGap,
+      marginBottom: PDF_SPACING.sectionGap,
     },
     subjectLine: {
       flexDirection: 'row',
@@ -113,8 +114,9 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       marginLeft: PDF_INDENTS.tabStop1,
     },
     
+    // Ref/Encl - uses sectionGap for spacing after
     refEnclSection: {
-      marginBottom: 12,
+      marginBottom: PDF_SPACING.sectionGap,
     },
     refEnclLine: {
       flexDirection: 'row',
@@ -128,7 +130,13 @@ const createStyles = (bodyFont: 'times' | 'courier', headerType: 'USMC' | 'DON')
       flex: 1,
     },
     
+    // Body - uses sectionGap for spacing after
     bodySection: {
+      marginBottom: PDF_SPACING.sectionGap,
+    },
+    
+    // Individual paragraph spacing
+    paragraphItem: {
       marginBottom: 12,
     },
     
@@ -236,7 +244,6 @@ function ParagraphItem({
   const leftMargin = tabs.citation;
 
   if (bodyFont === 'courier') {
-    const indentSpaces = '\u00A0'.repeat((level - 1) * 4);
     const spacesAfterCitation = citation.endsWith('.') ? '\u00A0\u00A0' : '\u00A0';
 
     return (
