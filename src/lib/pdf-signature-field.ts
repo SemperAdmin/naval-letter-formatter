@@ -85,7 +85,7 @@ function findTextYPosition(page: PDFPage, searchText: string): number | undefine
     // We need to find the Tm that precedes the text we're searching for
 
     // Split content into segments at each Tm operator to track position context
-    const tmSegments = contentStr.split(/(\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+Tm)/);
+    const tmSegments = contentStr.split(/(-?\d+\.?\d*\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+Tm)/);
 
     let currentY = 0;
     let foundY: number | undefined;
@@ -94,7 +94,7 @@ function findTextYPosition(page: PDFPage, searchText: string): number | undefine
       const segment = tmSegments[i];
 
       // Check if this segment is a Tm operator
-      const tmMatch = segment.match(/(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+Tm/);
+      const tmMatch = segment.match(/(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s+Tm/);
       if (tmMatch) {
         currentY = parseFloat(tmMatch[6]); // Y position is the 6th number
         continue;
