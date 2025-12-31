@@ -5,7 +5,7 @@
  * The field is positioned above the signature block, aligned with the signer's name.
  */
 
-import { PDFDocument, rgb, PDFPage, PDFName, PDFDict, PDFArray } from 'pdf-lib';
+import { PDFDocument, rgb, PDFPage, PDFDict, PDFArray } from 'pdf-lib';
 import { PDF_INDENTS } from './pdf-settings';
 
 // Signature field dimensions in points (1 inch = 72 points)
@@ -58,9 +58,6 @@ function findTextYPosition(page: PDFPage, searchText: string): number | undefine
 
     if (!contentStream) return undefined;
 
-    const streamDict = contentStream as PDFDict;
-    const streamData = streamDict.lookup(PDFName.of('stream'));
-
     // Try to decode the stream - this is a simplified approach
     // that looks for Tj/TJ operators with the search text
     const node = page.node;
@@ -70,9 +67,9 @@ function findTextYPosition(page: PDFPage, searchText: string): number | undefine
     // Get raw bytes from content stream
     let contentBytes: Uint8Array | undefined;
     if (rawContent instanceof PDFDict) {
-      // Try to get decoded stream content
+      // WARN: This uses an internal `getContents` method which may break in future `pdf-lib` updates.
       const stream = rawContent as any;
-      if (stream.getContents) {
+      if (stream && typeof stream.getContents === 'function') {
         contentBytes = stream.getContents();
       }
     }
@@ -81,30 +78,41 @@ function findTextYPosition(page: PDFPage, searchText: string): number | undefine
 
     // Decode content as string and search for text patterns
     const contentStr = new TextDecoder('latin1').decode(contentBytes);
-
-    // Search for the text - check both hex encoded and regular strings
     const searchUpper = searchText.toUpperCase();
-    const searchHex = Array.from(searchUpper).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
 
-    // Look for text matrix (Tm) operations followed by text show (Tj/TJ)
-    // Pattern: x y x y x y Tm ... (text) Tj
-    const tmPattern = /(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+Tm/g;
+    // Find the text and its associated Y position by looking for patterns like:
+    // 1 0 0 1 x y Tm ... (TEXT) Tj
+    // We need to find the Tm that precedes the text we're searching for
 
-    let lastY = 0;
-    let match;
-    while ((match = tmPattern.exec(contentStr)) !== null) {
-      const y = parseFloat(match[6]); // Y position is the 6th number in Tm matrix
-      lastY = y;
+    // Split content into segments at each Tm operator to track position context
+    const tmSegments = contentStr.split(/(\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+Tm)/);
+
+    let currentY = 0;
+    let foundY: number | undefined;
+
+    for (let i = 0; i < tmSegments.length; i++) {
+      const segment = tmSegments[i];
+
+      // Check if this segment is a Tm operator
+      const tmMatch = segment.match(/(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+Tm/);
+      if (tmMatch) {
+        currentY = parseFloat(tmMatch[6]); // Y position is the 6th number
+        continue;
+      }
+
+      // Check if this segment contains our search text
+      // Look in the text that follows this Tm operator
+      if (currentY > 0 && segment.toUpperCase().includes(searchUpper)) {
+        foundY = currentY;
+        // Don't break - keep looking in case there's a more specific match later
+      }
     }
 
-    // Check if our search text appears in the content
-    if (contentStr.includes(searchUpper) || contentStr.toLowerCase().includes(searchHex.toLowerCase())) {
-      // Return the last Y position we found (signature is typically near the end)
-      return lastY > 0 ? lastY : undefined;
+    return foundY;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error parsing PDF content to find text position:', error);
     }
-
-    return undefined;
-  } catch {
     return undefined;
   }
 }
