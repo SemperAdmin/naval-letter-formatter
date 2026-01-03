@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { FeedbackButton } from "@/components/FeedbackButton";
 // Remove Vercel Analytics since we're deploying to GitHub Pages
 // import { Analytics } from '@vercel/analytics/next';
 
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         {children}
         <Toaster />
+        <FeedbackButton />
         {/* Analytics removed for GitHub Pages deployment */}
       </body>
     </html>
